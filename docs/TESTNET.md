@@ -87,6 +87,8 @@ Ctrl+C stops the monitor, not the exchange position. Check the exchange account 
 
 ## Sources
 
+For read-only evidence capture and the mandatory funded scenarios, see [TESTNET-ACCEPTANCE.md](TESTNET-ACCEPTANCE.md). Tooling preparation does not complete funded acceptance.
+
 - [Exchange orders and client order IDs](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/exchange-endpoint)
 - [API wallets and nonce ownership](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/nonces-and-api-wallets)
 - [Order/fill queries](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint)
