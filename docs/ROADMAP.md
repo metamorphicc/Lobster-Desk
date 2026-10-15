@@ -10,7 +10,7 @@ Each checked substage has its own local commit. No pushes or deployments. A stag
 
 ## Stage 1 — Financial core
 
-- [ ] **1.1 Risk and capital contracts.** Decimal calculations, BTC allowlist, leverage/notional/loss limits, freshness, expiry, position sizing and invariant tests.
+- [x] **1.1 Risk and capital contracts.** Decimal calculations, BTC allowlist, leverage/notional/loss limits, freshness, expiry, position sizing. Verified: 25 invariant/validation tests.
 - [ ] **1.2 Persistent paper broker.** Atomic reservations, idempotent fills, append-only events, position lifecycle, restart and fee accounting tests.
 
 ## Stage 2 — Data and agents
