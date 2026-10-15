@@ -452,3 +452,25 @@ input[aria-invalid=true] + .field-helper, textarea[aria-invalid=true] + .field-h
 .user-consent-plan summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--color-ink); }
 .user-consent-plan summary:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
 .user-consent-plan pre { margin: 0; max-height: 260px; overflow: auto; padding: var(--space-sm); background: var(--color-field); border: 1px solid var(--color-rule); border-radius: .375rem; font-family: var(--font-mono); font-size: 11px; }
+
+.ops-panel { margin-top: var(--space-lg); border: 1px solid var(--color-rule); border-radius: var(--radius); background: var(--color-panel); min-width: 0; }
+.ops-panel .panel-heading { flex-wrap: wrap; }
+.ops-panel h2, .ops-actions { display: flex; align-items: center; gap: var(--space-xs); flex-wrap: wrap; }
+.ops-actions { gap: var(--space-md); }
+.ops-body { padding: var(--space-lg); display: grid; gap: var(--space-md); min-width: 0; }
+.ops-metrics { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); }
+.ops-metrics dt { font-size: 11px; color: var(--color-faint); }
+.ops-metrics dd { margin: var(--space-2xs) 0 0; font-size: 22px; overflow-wrap: anywhere; }
+.ops-alerts { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-sm); }
+.ops-alerts li { display: flex; gap: var(--space-sm); padding: var(--space-sm); border: 1px solid var(--color-rule); border-radius: .375rem; color: var(--color-accent); }
+.ops-alerts li.negative { color: var(--color-negative); }
+.ops-alerts svg { margin-top: var(--space-2xs); }
+.ops-alerts p { font-size: 12px; margin-top: var(--space-2xs); }
+.ops-details summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; gap: var(--space-sm); font-size: 12px; color: var(--color-muted); }
+.ops-details[open] summary svg { transform: rotate(180deg); }
+.ops-details ul { list-style: none; margin: 0; padding: 0; }
+.ops-details li { display: flex; justify-content: space-between; gap: var(--space-md); padding-block: var(--space-xs); border-top: 1px solid var(--color-rule); font-size: 12px; }
+.ops-details strong { font-family: var(--font-mono); font-size: 11px; font-weight: 400; }
+@media (min-width: 40rem) {
+  .ops-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}

@@ -11,6 +11,7 @@ A public trading tank: pitch a BTC setup, watch three crustacean agents challeng
 - `docs/ROADMAP.md`: stages, substages, acceptance criteria, and completion status.
 - `docs/ARCHITECTURE.md`: financial authority, data flow, and safety boundaries.
 - `docs/BACKUP-RESTORE.md`: verified SQLite snapshots and isolated recovery drills.
+- `docs/OPERATIONS.md`: local readiness panel, scoped alerts and loopback probe command.
 
 ## Run locally
 
@@ -62,6 +63,8 @@ node scripts/python.mjs scripts/check-market.py
 ```
 
 The last command is an optional public-network smoke check, separate from deterministic tests. It reads Hyperliquid prices and candles without signing or trading. See `docs/VERIFICATION.md` for the tested scope and limitations.
+
+With services running, `node scripts/python.mjs scripts/check-health.py` checks local paper readiness; add `--web` to include the frontend proxy. It does not activate execution or establish production readiness. See [OPERATIONS.md](docs/OPERATIONS.md) for exit codes and alert scope.
 
 For a production-mode local frontend after building, run `npm run start --workspace @lobster/web` and start the API separately:
 

@@ -20,6 +20,19 @@ Paper pause, a latched risk halt, occupied execution slot and exhausted review b
 
 Alerts distinguish service, paper and testnet scopes. An open paper position without fresh market observations produces a critical paper alert. Testnet uncertainty is derived only from the local execution ledger: reconciliation/cleanup/protection states and latched halts are surfaced without claiming current exchange exposure. Testnet alerts may coexist with a ready independent paper runtime. Use the separate owner runner and exchange observations for actual reconciliation.
 
+## Local dashboard and command
+
+The dashboard's **Local paper runtime** panel refreshes every ten seconds and on demand. It exposes scoped alerts, entry blockers, market age, queued reviews and the UTC review-call budget. Expand **Inspect runtime checks** for individual results. Failed requests clear the previous ready report and show unknown status. A ready paper service may still have a critical testnet alert; the separate alert count includes all scopes.
+
+With local services running, use:
+
+```powershell
+node scripts/python.mjs scripts/check-health.py
+node scripts/python.mjs scripts/check-health.py --web
+```
+
+The first command probes the fixed loopback API; `--web` also exercises Next's loopback proxy. Exit codes are **0** for a ready paper service without critical alerts, **1** for a blocked service or any critical alert, and **2** for timeout, unavailable service or malformed/inconsistent diagnostics. Redirects and environment HTTP proxies are disabled. Neither command loads signer settings or changes execution state. These are single checks, not scheduled monitors or external notifications.
+
 ## Operational limits
 
 These are current local observations, not durable alert delivery or a hosted monitoring system. They do not elect a worker, supervise a signer, configure external notification services, replace off-machine backups or complete funded acceptance. Production identity, distributed controls, external alerts and an independent security review remain under stage 6.1c.

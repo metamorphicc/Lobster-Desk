@@ -7,6 +7,7 @@ import { ArrowDownLeft, ArrowRight, ArrowUpRight, BookOpen, ChevronRight, Circle
 import { Creature } from "./creature";
 import { PriceChart } from "./price-chart";
 import { TestnetWorkbench } from "./testnet-workbench";
+import { OpsStatus } from "./ops-status";
 import { money, number, signed, statusLabel, type Episode, type Pitch, type Position, type State } from "@/lib/types";
 
 type Tab = "tank" | "journal" | "treasury" | "testnet";
@@ -203,6 +204,7 @@ export function Desk() {
           {exportError && <p role="alert" className="form-error">{exportError}</p>}
           <div className="event-list">{state?.events.length ? state.events.slice(-12).reverse().map(event => <div className="event-row" key={event.id}><time dateTime={event.timestamp}>{new Date(event.timestamp).toLocaleTimeString("en-GB", { hour12: false })}</time><span className={`event-actor event-actor--${event.actor}`}>{event.actor}</span><p>{event.message}</p></div>) : <p className="empty-note">The journal starts when the local API is ready. Every decision and paper fill will appear here.</p>}</div>
         </section>}
+        <OpsStatus />
         <footer className="footer"><span><Waves size={15} /> Lobster Desk</span><span>{tab === "testnet" ? "Testnet inspection & local staging · Separate owner signer" : `Paper execution · ${state?.service.agent_provider === "anthropic" ? "AI reviews" : "Scripted demo reviews"} · Funding excluded from PnL`}</span><a href="https://hyperliquid.gitbook.io/hyperliquid-docs" target="_blank" rel="noreferrer">Hyperliquid docs <ArrowUpRight size={12} /></a></footer>
       </main>
     </div>
