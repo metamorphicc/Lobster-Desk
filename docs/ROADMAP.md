@@ -15,7 +15,7 @@ Each checked substage has its own local commit. No pushes or deployments. A stag
 
 ## Stage 2 — Data and agents
 
-- [ ] **2.1 Market feeds.** Explicit synthetic demo feed and read-only Hyperliquid feed; no silent fallback from live to synthetic data.
+- [x] **2.1 Market feeds.** Explicit synthetic demo feed and read-only Hyperliquid feed; no silent fallback from live to synthetic data. Verified: parsing, caching and outage behavior; 40 tests total.
 - [ ] **2.2 Decision pipeline.** Analyst, risk reviewer, banker, durable transitions and recorded reasons; deterministic demo provider plus optional real model adapter.
 
 ## Stage 3 — Local service
