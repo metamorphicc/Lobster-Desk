@@ -38,7 +38,7 @@ Each checked substage has its own local commit. No pushes or deployments. A stag
 - [ ] **5.2 User-owned trading.** Wallet connection, builder-fee approval, explicit user signatures, fee disclosure, order status and account isolation. Verify approval and revocation before enabling collection.
   - [x] **5.2a Public account boundary.** Independent read-only testnet user accounts, validated public addresses, exact fee units and current builder approval inspection. No authentication, server-held user keys or order route.
   - [x] **5.2b Wallet interface.** EIP-6963 discovery, explicit EIP-1193 connection, account/network-change isolation and public-address watch mode in the Testnet tab. Verified: 11 wallet-session tests, production build and responsive browser lookup; real extension signing remains outside this read-only substage.
-  - [ ] **5.2c Builder consent plans.** Exact fee previews and SDK-compatible unsigned approval/revocation payloads. No automatic signing or collection.
+  - [x] **5.2c Builder consent plans.** Exact fee previews and SDK-compatible unsigned approval/revocation payloads, account binding and downloadable plans. Verified: 155 Python tests, 11 wallet tests, build and browser cost/download/revocation checks. No automatic signing or collection.
   - [ ] **5.2d User execution acceptance.** Explicit user signing, actual testnet orders/protection, builder eligibility, approval/revocation and fee receipts. Requires owner-reviewed exchange evidence before activation.
 
 ## Stage 6 — Controlled production release

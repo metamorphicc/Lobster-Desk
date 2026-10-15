@@ -26,6 +26,7 @@ from .execution.settings import TestnetSettings
 from .execution.workbench import TestnetWorkbench
 from .users.contracts import Address, UserTestnetSettings
 from .users.service import UserTestnetService
+from .users.fees import ConsentInput, FeeQuoteInput, consent_plan, fee_quote
 
 logger = logging.getLogger(__name__)
 
@@ -194,6 +195,30 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
             return await request.app.state.users.inspect(address)
         except Exception:
             raise HTTPException(502, "Testnet account data is unavailable or malformed. No exchange write was attempted.") from None
+
+    async def fresh_user_account(request: Request, address: str):
+        try:
+            return await request.app.state.users.inspect(address)
+        except Exception:
+            raise HTTPException(502, "A fresh testnet account observation is unavailable. No permission or order was submitted.") from None
+
+    @app.post("/api/v1/users/testnet/fee-quote")
+    async def user_fee_quote(body: FeeQuoteInput, request: Request):
+        account = await fresh_user_account(request, body.address)
+        try:
+            return fee_quote(body, account)
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from None
+
+    @app.post("/api/v1/users/testnet/consent-preview")
+    async def user_consent_preview(body: ConsentInput, request: Request):
+        if not user_config.builder_address:
+            raise HTTPException(409, "Configure a public testnet builder address first.")
+        account = await fresh_user_account(request, body.address)
+        try:
+            return consent_plan(body, user_config, account)
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from None
 
     @app.get("/api/v1/testnet/inspect")
     async def testnet_inspect(request: Request):

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Check, Eye, LoaderCircle, RefreshCw, Wallet as WalletIcon } from "lucide-react";
 import { money, number } from "@/lib/types";
 import { discoverWallets, normalizeAddress, WalletSession, type Wallet, type WalletState } from "@/lib/wallet";
+import { BuilderConsent } from "./builder-consent";
 
 type UserConfig = { builder_address: string | null; builder_fee_percent: string; builder_fee_tenths_bps: number };
 type Account = UserConfig & {
@@ -104,6 +105,7 @@ export function UserAccount() {
         <dl className="testnet-addresses"><div><dt>Builder recipient</dt><dd>{availableConfig?.builder_address || "Not configured"}</dd></div></dl>
         {data && <p>Approval: <strong>{data.builder_approval_status.replaceAll("_", " ")}</strong>{data.approved_builder_fee_tenths_bps != null ? ` · Maximum ${(data.approved_builder_fee_tenths_bps / 1000).toLocaleString("en-US", { maximumFractionDigits: 3 })}%` : ""}. Reported account taker rate {(Number(data.reported_taker_rate) * 100).toLocaleString("en-US", { maximumFractionDigits: 5 })}%.</p>}
       </div>
+      {address && <BuilderConsent key={key} address={address} configured={!!availableConfig?.builder_address} now={now} />}
     </div>
   </section>;
 }

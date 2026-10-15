@@ -100,6 +100,13 @@ def test_account_api_validates_addresses_and_does_not_enable_execution(tmp_path)
                 assert client.get(base + "/accounts/0x123").status_code == 422
                 assert client.get(base + "/accounts/" + OWNER).json()["address"] == OWNER
                 assert client.post(base + "/orders", json={"address": OWNER}).status_code == 404
+                quote = client.post(base + "/fee-quote", json={"address": OWNER, "notional": "50"})
+                assert quote.status_code == 200 and quote.json()["estimated_total_if_applied"] == "0.03250"
+                for intent in ("approve", "revoke"):
+                    plan = client.post(base + "/consent-preview", json={"address": OWNER, "intent": intent})
+                    assert plan.status_code == 200 and not plan.json()["signed"] and not plan.json()["submitted"]
+                assert client.post(base + "/consent-preview", json={"address": OWNER, "intent": "approve", "builder": OWNER}).status_code == 422
+                assert client.post(base + "/consent-submit", json={"signature": "not-accepted"}).status_code == 404
                 assert app.state.runtime.store.state(None)["account"]["cash"] == "1000"
     asyncio.run(run())
 

@@ -443,3 +443,12 @@ input[aria-invalid=true] + .field-helper, textarea[aria-invalid=true] + .field-h
 @media (min-width: 48rem) {
   .user-account-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); }
 }
+.builder-consent { display: grid; gap: var(--space-md); border-top: 1px solid var(--color-rule); padding-top: var(--space-lg); min-width: 0; }
+.builder-consent h3 { color: var(--color-ink); }
+.builder-consent > label { max-width: 300px; }
+.user-consent-actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+.user-consent-plan { display: grid; gap: var(--space-md); min-width: 0; }
+.user-consent-plan details { min-width: 0; }
+.user-consent-plan summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--color-ink); }
+.user-consent-plan summary:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+.user-consent-plan pre { margin: 0; max-height: 260px; overflow: auto; padding: var(--space-sm); background: var(--color-field); border: 1px solid var(--color-rule); border-radius: .375rem; font-family: var(--font-mono); font-size: 11px; }

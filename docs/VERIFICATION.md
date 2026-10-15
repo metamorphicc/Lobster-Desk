@@ -4,7 +4,7 @@ Date: 2026-10-16 (Asia/Novosibirsk).
 
 ## Automated
 
-- 124 passing Python tests: schema validation, finite monetary input, direction/stop/target checks, leverage, expiry/freshness, sizing, loss thresholds, concurrent reservation, fill idempotency, transaction rollback, gap losses, fee accounting, provider failure, review budgets, feed isolation, HTTP endpoints and restart recovery. Testnet additions cover official SDK signatures/domain/expiry, atomic nonce/command claims, partial fills, uncertain requests without replay, protection failure, fixed-host HTTP, public-only readiness/preflight and operator-controlled local staging/cancellation.
+- 155 passing Python tests: schema validation, finite monetary input, direction/stop/target checks, leverage, expiry/freshness, sizing, loss thresholds, concurrent reservation, fill idempotency, transaction rollback, gap losses, fee accounting, provider failure, review budgets, feed isolation, HTTP endpoints and restart recovery. Testnet additions cover official SDK signatures/domain/expiry, atomic nonce/command claims, partial fills, uncertain requests without replay, protection failure, fixed-host HTTP, public-only readiness/preflight and operator-controlled local staging/cancellation.
 - End-to-end API scenario: pitch -> reviews -> capital reservation -> paper fill -> stop -> restart -> identical cash and journal.
 - TypeScript check passes.
 - Next.js production build passes.
@@ -13,6 +13,10 @@ Date: 2026-10-16 (Asia/Novosibirsk).
 The installed Starlette test client emits one upstream deprecation warning about its httpx compatibility path. Tests pass; this does not affect the application's HTTP client or paper broker.
 
 ## Browser
+
+Stage 5 updates: 155 Python tests and 11 Node wallet-session tests pass, alongside TypeScript and the production build. User-account tests cover separate balances, address validation, exact fee units, malformed approval data and static upstream errors. Consent tests verify Decimal cost illustrations, official SDK-compatible unsigned approval/revocation payloads, domain/recipient/rate/nonce binding and lack of any submission route.
+
+The wallet/account interface passed public testnet lookup, validation, stale-observation feedback and 320/375/414/768/1280px layout checks. With a temporary public sample builder address supplied only to the development process, browser fee preview for $50 notional returned $0.022500 estimated exchange fee, $0.010000 hypothetical builder fee and $0.032500 total if applied. Approval and zero-rate revocation plans rendered; the downloaded unsigned approval JSON was parsed and its hash verified. No wallet authorization, signature, approval or exchange order was submitted. Real injected-wallet behavior and funded user trading remain unverified.
 
 - Actual local browser interaction: submit a sample pitch, observe review and capital reservation, submit an invalid-stop pitch and observe rejection.
 - The sample entry subsequently filled. Restarting the actual local services preserved the open position and cash; the browser displayed its fill price, quantity and fees without creating a duplicate position.

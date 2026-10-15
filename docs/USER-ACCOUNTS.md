@@ -20,4 +20,16 @@ Public watch mode does not authenticate ownership. **Disconnect view** removes l
 
 Automated wallet tests use an in-memory EIP-1193 provider, including rejected requests, changes during pending requests and old responses arriving after a newer provider connected. Browser verification covered missing-wallet feedback, address validation, live public testnet account inspection and mobile layout. Actual wallet-extension authorization remains unverified in this environment; no wallet permission was granted during development.
 
+## Cost and consent previews
+
+After selecting an account, enter executed notional and choose **Preview costs**. `POST /api/v1/users/testnet/fee-quote` rereads the requested account, rejects stale or wrong-network observations and calculates Decimal amounts for a single taker fill. The configured builder fee is hypothetical while collection is disabled. Funding, slippage, rebates and variable final exchange fees are not promised by this illustration.
+
+With a configured public builder recipient, **Approval plan** and **Revocation plan** call `POST /api/v1/users/testnet/consent-preview`. These are preview operations despite using POST. They do not sign anything or send an exchange request. The client cannot supply an alternative builder, fee rate, network or signing domain. Self-paid builder fees are refused.
+
+Approval uses the configured fee cap; revocation previews `approveBuilderFee` with a zero-percent cap. Both use `hyperliquidChain=Testnet` and the official SDK's user-signed EIP-712 layout. The current preview domain is chain ID 421614, matching the SDK signing default. Future wallet signing must explicitly verify the domain, actual signer and current intent rather than trusting a downloaded JSON file. Offline tests compare both payloads with the installed official SDK, recover the expected public test key and reject changed recipient/rate/nonce/environment.
+
+**Download unsigned plan** exports the complete plan and its hash. It is never an exchange receipt or evidence of permission. Plans have a 30-second local preview deadline to avoid presenting an old nonce as current. This metadata is **not a cryptographic action expiry**, and no durable signer nonce is reserved. A future submission path must generate and validate a fresh plan, recover the actual main-wallet signer, journal consent, serialize nonce ownership and confirm the resulting approval/revocation from the exchange. There is currently no endpoint that accepts a signed plan for submission.
+
+The API must not infer ownership from `expected_signer`; this is application metadata outside the protocol's signed fields. Approval requires the user's main wallet, and collection additionally requires builder eligibility and per-order fee disclosure. Those external checks and actual user-order execution remain open under stage 5.2d.
+
 Sources: [builder codes](https://hyperliquid.gitbook.io/hyperliquid-docs/trading/builder-codes), [approval queries](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint#check-builder-fee-approval), [official builder example](https://github.com/hyperliquid-dex/hyperliquid-python-sdk/blob/master/examples/basic_builder_fee.py).
