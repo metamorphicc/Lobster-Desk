@@ -1,0 +1,15 @@
+{
+  "name": "lobster-desk",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": ["apps/web"],
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:web": "npm run dev --workspace @lobster/web",
+    "build": "npm run build --workspace @lobster/web",
+    "typecheck": "npm run typecheck --workspace @lobster/web",
+    "test:api": "node scripts/python.mjs -m pytest apps/api/tests -q"
+  },
+  "engines": { "node": ">=22" }
+}
+
