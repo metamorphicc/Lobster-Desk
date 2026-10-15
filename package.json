@@ -8,7 +8,8 @@
     "dev:web": "npm run dev --workspace @lobster/web",
     "build": "npm run build --workspace @lobster/web",
     "typecheck": "npm run typecheck --workspace @lobster/web",
-    "test:api": "node scripts/python.mjs -m pytest apps/api/tests -q"
+    "test:api": "node scripts/python.mjs -m pytest apps/api/tests -q",
+    "test:web": "node --experimental-strip-types --test apps/web/tests/*.test.mjs"
   },
   "engines": { "node": ">=22" }
 }

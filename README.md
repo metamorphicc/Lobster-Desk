@@ -53,6 +53,7 @@ Scripted demo reviewers are deterministic checks, not real AI. Synthetic price, 
 
 ```powershell
 npm run test:api
+npm run test:web
 npm run typecheck
 npm run build
 node scripts/python.mjs scripts/check-market.py

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ArrowRight, Check, FlaskConical, LoaderCircle, ShieldCheck } from "lucide-react";
 import { money, number, type State } from "@/lib/types";
+import { UserAccount } from "./user-account";
 
 type Order = { side: string; quantity: string; price: string; cloid: string };
 type Ledger = {
@@ -83,6 +84,7 @@ export function TestnetWorkbench({ state }: { state: State | null }) {
   const episodes = state?.episodes.filter(ep => ["approved", "filled"].includes(ep.status)) || [];
   const ledger = status?.ledger;
   return <div className="testnet-workbench">
+    <UserAccount />
     <div className="testnet-boundary"><FlaskConical size={22} /><div><strong>Testnet only. Exchange submission runs separately.</strong>
       <p>This page checks public account data and saves local intents. The API never loads a trading key. Funded exchange acceptance is still unverified.</p></div></div>
     {error && <div className="notice notice--error" role="alert">{error}<button disabled={!!busy} onClick={() => { void run("inspect"); }}>Retry</button></div>}

@@ -426,3 +426,20 @@ input[aria-invalid=true] + .field-helper, textarea[aria-invalid=true] + .field-h
 @media (min-width: 80rem) {
   .testnet-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
 }
+
+/* Hallmark · existing Midnight theme · P4 H4 E4 S5 R5 V4 */
+.user-account .panel-heading h2 { display: flex; gap: var(--space-xs); align-items: center; }
+.user-account-layout, .user-account-controls, .user-account-data, .user-watch-form { display: grid; gap: var(--space-md); min-width: 0; align-content: start; }
+.user-account-layout { gap: var(--space-xl); }
+.user-watch-form { border-top: 1px solid var(--color-rule); padding-top: var(--space-md); }
+.user-connected { display: flex; gap: var(--space-xs); align-items: center; }
+.user-observation-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--space-xs); flex-wrap: wrap; }
+.user-position-list { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-xs); }
+.user-position-list li { display: flex; justify-content: space-between; gap: var(--space-md); flex-wrap: wrap; padding-block: var(--space-xs); border-bottom: 1px solid var(--color-rule); overflow-wrap: anywhere; }
+.user-position-list strong { color: var(--color-ink); font-weight: 500; }
+.user-fee-note { display: grid; gap: var(--space-sm); border-top: 1px solid var(--color-rule); padding-top: var(--space-lg); }
+.user-fee-note > strong { color: var(--color-ink); font-weight: 500; }
+.user-account .notice { display: block; }
+@media (min-width: 48rem) {
+  .user-account-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); }
+}
