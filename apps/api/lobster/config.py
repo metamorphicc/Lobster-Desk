@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
     database_url: str = "sqlite:///data/lobster.db"
     initial_capital: Decimal = Field(default=Decimal("1000"), gt=0, allow_inf_nan=False)
-    market_source: Literal["demo", "hyperliquid"] = "demo"
+    market_source: Literal["demo", "hyperliquid", "hyperliquid-testnet"] = "demo"
     agent_provider: Literal["demo", "anthropic"] = "demo"
     anthropic_api_key: SecretStr | None = None
     anthropic_model: str | None = None

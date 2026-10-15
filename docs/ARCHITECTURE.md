@@ -16,9 +16,11 @@ The analyst proposes or rejects. The risk reviewer can only veto. The banker rep
 
 - `MARKET_SOURCE=demo`: labelled synthetic prices, reproducible local fixtures.
 - `MARKET_SOURCE=hyperliquid`: read-only public mainnet market data. Failure marks data unavailable/stale; it never switches to demo.
+- `MARKET_SOURCE=hyperliquid-testnet`: public testnet prices drive the paper review pipeline; eligible bound reviews can be separately staged for testnet submission.
 - `AGENT_PROVIDER=demo`: labelled deterministic scripted reviewers; not represented as real AI.
 - `AGENT_PROVIDER=anthropic`: optional hosted model adapter, credentials supplied only through environment variables, strict validated outputs and bounded calls.
-- Execution remains `paper` in the first release. No live-order endpoint exists.
+- The tank remains `paper`. The HTTP Testnet workbench can inspect public account state and save/cancel unsent local intents. It has no order submission endpoint and loads no signing key.
+- A separately enabled owner CLI uses the official SDK, fixed testnet host and dedicated API wallet. Its own ledger owns nonces, command claims, fills and confirmed protection. See `TESTNET.md`; funded exchange behavior remains unverified.
 
 ## Accounting
 

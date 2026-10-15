@@ -73,7 +73,7 @@ class ReviewedSetup(Contract):
 
     @classmethod
     def from_episode(cls, episode: dict, policy: RiskPolicy):
-        if episode.get("status") != "approved" or episode.get("approval_hash") != digest(episode):
+        if episode.get("status") not in {"approved", "filled"} or episode.get("approval_hash") != digest(episode):
             raise ValueError("The episode has no current, bound capital approval.")
         if episode.get("snapshot", {}).get("source") != "hyperliquid-testnet":
             raise ValueError("Only an episode reviewed against testnet data can authorize testnet execution.")

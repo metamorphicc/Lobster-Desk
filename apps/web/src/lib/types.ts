@@ -24,7 +24,7 @@ export type JournalEvent = {
   episode_id: string | null; data: Record<string, unknown>;
 };
 export type Market = {
-  source: "demo" | "hyperliquid"; price: string; timestamp: string;
+  source: "demo" | "hyperliquid" | "hyperliquid-testnet"; price: string; timestamp: string;
   funding: string; open_interest: string; change_24h: string;
   candles: { time: number; open: string; high: string; low: string; close: string }[];
 };

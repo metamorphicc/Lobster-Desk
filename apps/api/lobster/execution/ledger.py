@@ -122,6 +122,8 @@ class ExecutionLedger:
             if existing:
                 if existing.payload["setup_hash"] != binding:
                     raise ValueError("This episode already has a different testnet execution intent.")
+                if existing.payload["status"] != "staged":
+                    raise ValueError("This episode already has a submitted or terminal intent. Pitch a new setup for a new entry.")
                 return existing.payload
             if session.get(Control, 1).payload["halt_reason"]:
                 raise ValueError("The testnet execution ledger is halted.")
@@ -134,6 +136,20 @@ class ExecutionLedger:
             session.add(Trade(id=setup.episode_id, payload=data))
             self.event(session, "staged", data["reason"], setup.episode_id)
             return data
+
+    def cancel_staged(self, trade_id: str) -> dict:
+        with self.transaction() as session:
+            row = session.get(Trade, trade_id)
+            if not row:
+                raise ValueError("Testnet execution intent not found.")
+            if row.payload["status"] == "cancelled":
+                return row.payload
+            commands = session.scalar(select(Command).where(Command.trade_id == trade_id).limit(1))
+            if row.payload["status"] != "staged" or commands is not None:
+                raise ValueError("Only an unsent local intent can be cancelled here. Reconcile submitted commands with the owner runner.")
+            row.payload = row.payload | {"status": "cancelled", "reason": "Unsent intent cancelled locally. No exchange action was sent."}
+            self.event(session, "cancelled", row.payload["reason"], trade_id)
+            return row.payload
 
     def trade(self, trade_id: str) -> dict:
         with Session(self.engine) as session:
@@ -164,8 +180,11 @@ class ExecutionLedger:
                 if row.trade_id != trade_id or row.payload["request"] != payload:
                     raise ValueError("Command ID collision or changed request.")
                 return row.payload
-            if not session.get(Trade, trade_id):
+            trade = session.get(Trade, trade_id)
+            if not trade:
                 raise ValueError("Stage an execution intent before preparing commands.")
+            if kind in {"entry", "leverage"} and trade.payload["status"] in {"closed", "rejected", "expired", "cancelled"}:
+                raise ValueError("A terminal intent cannot authorize an entry command.")
             data = {"id": key, "kind": kind, "request": payload, "status": "prepared", "nonce": None,
                     "result": None, "created_at": utcnow().isoformat()}
             session.add(Command(id=key, trade_id=trade_id, payload=data))

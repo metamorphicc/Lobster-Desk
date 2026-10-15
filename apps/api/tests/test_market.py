@@ -16,10 +16,12 @@ def test_demo_is_labelled_and_has_ohlc_history():
     assert snapshot.timestamp > utcnow() - timedelta(seconds=2)
 
 
-def test_live_feed_parses_btc_without_assuming_asset_index():
+@pytest.mark.parametrize("testnet", [False, True])
+def test_live_feed_parses_btc_without_assuming_asset_index(testnet):
     requests = []
     def respond(request):
         import json
+        assert request.url.host == ("api.hyperliquid-testnet.xyz" if testnet else "api.hyperliquid.xyz")
         kind = json.loads(request.content)["type"]
         requests.append(kind)
         if kind == "metaAndAssetCtxs":
@@ -28,10 +30,10 @@ def test_live_feed_parses_btc_without_assuming_asset_index():
         return httpx.Response(200, json=[{"t": 1700000000000, "o": "69900", "h": "70100", "l": "69800", "c": "70000"}])
     async def run():
         async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as client:
-            feed = HyperliquidFeed(client)
+            feed = HyperliquidFeed(client, testnet=testnet)
             first = await feed.fetch()
             second = await feed.fetch()
-            assert first.price == 70000 and second.source == "hyperliquid"
+            assert first.price == 70000 and second.source == ("hyperliquid-testnet" if testnet else "hyperliquid")
             assert len(second.candles) == 1
     asyncio.run(run())
     assert requests.count("candleSnapshot") == 1

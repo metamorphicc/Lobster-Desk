@@ -35,8 +35,10 @@ class DemoFeed:
 class HyperliquidFeed:
     endpoint = "https://api.hyperliquid.xyz/info"
 
-    def __init__(self, client: httpx.AsyncClient):
+    def __init__(self, client: httpx.AsyncClient, *, testnet: bool = False):
         self.client = client
+        self.endpoint = "https://api.hyperliquid-testnet.xyz/info" if testnet else self.endpoint
+        self.source = "hyperliquid-testnet" if testnet else "hyperliquid"
         self.candles: list[Candle] = []
         self.candles_fetched_at = 0.0
 
@@ -58,7 +60,7 @@ class HyperliquidFeed:
             self.candles = [Candle(time=int(c["t"]) // 1000, open=c["o"], high=c["h"], low=c["l"], close=c["c"])
                             for c in candles.json()][-90:]
             self.candles_fetched_at = time.monotonic()
-        return Snapshot(source="hyperliquid", price=price, timestamp=observed,
+        return Snapshot(source=self.source, price=price, timestamp=observed,
             funding=context["funding"], open_interest=context["openInterest"],
             change_24h=(price / previous - 1) * 100 if previous else D("0"), candles=self.candles)
 

@@ -12,11 +12,16 @@ from .contracts import BtcRules, ExchangeAccount, TESTNET_URL
 class HyperliquidTestnet:
     __test__ = False
 
-    def __init__(self, client: httpx.AsyncClient, account_address: str):
-        if not re.fullmatch(r"0x[0-9a-fA-F]{40}", account_address) or int(account_address, 16) == 0:
+    def __init__(self, client: httpx.AsyncClient, account_address: str | None = None):
+        if account_address is not None and (not re.fullmatch(r"0x[0-9a-fA-F]{40}", account_address) or int(account_address, 16) == 0):
             raise ValueError("A nonzero testnet account address is required.")
         self.client = client
-        self.account_address = account_address.lower()
+        self.account_address = account_address.lower() if account_address else None
+
+    def owner(self) -> str:
+        if not self.account_address:
+            raise ValueError("Configure a testnet account address first.")
+        return self.account_address
 
     async def info(self, kind: str, **fields):
         response = await self.client.post(TESTNET_URL + "/info", json={"type": kind, **fields},
@@ -38,30 +43,30 @@ class HyperliquidTestnet:
 
     async def account(self) -> ExchangeAccount:
         observed = utcnow()
-        state = await self.info("clearinghouseState", user=self.account_address)
+        state = await self.info("clearinghouseState", user=self.owner())
         orders = await self.open_orders()
         positions = [item["position"] for item in state["assetPositions"]]
         btc = next((p for p in positions if p["coin"] == "BTC"), {})
         leverage = btc.get("leverage", {})
-        return ExchangeAccount(address=self.account_address, observed_at=observed,
+        return ExchangeAccount(address=self.owner(), observed_at=observed,
             equity=state["marginSummary"]["accountValue"], withdrawable=state["withdrawable"],
             btc_size=btc.get("szi", "0"), open_order_count=len(orders),
             other_positions=any(p["coin"] != "BTC" and D(p["szi"]) != 0 for p in positions),
             btc_leverage=leverage.get("value"), btc_is_cross=leverage.get("type") == "cross" if leverage else None)
 
     async def open_orders(self) -> list[dict]:
-        return await self.info("frontendOpenOrders", user=self.account_address)
+        return await self.info("frontendOpenOrders", user=self.owner())
 
     async def agent_approved(self, agent_address: str) -> bool:
-        agents = await self.info("extraAgents", user=self.account_address)
+        agents = await self.info("extraAgents", user=self.owner())
         now = int(utcnow().timestamp() * 1000)
         return any(a["address"].lower() == agent_address.lower() and int(a["validUntil"]) > now + 60000 for a in agents)
 
     async def order_status(self, order_cloid: str) -> dict:
-        return await self.info("orderStatus", user=self.account_address, oid=order_cloid)
+        return await self.info("orderStatus", user=self.owner(), oid=order_cloid)
 
     async def fills(self) -> list[dict]:
-        return await self.info("userFills", user=self.account_address, aggregateByTime=False)
+        return await self.info("userFills", user=self.owner(), aggregateByTime=False)
 
     async def send(self, envelope: dict) -> dict:
         if envelope.get("vaultAddress") is not None or envelope["action"]["type"] not in {"order", "updateLeverage", "cancelByCloid"}:

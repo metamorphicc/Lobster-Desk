@@ -6,9 +6,10 @@ import { ArrowDownLeft, ArrowRight, ArrowUpRight, BookOpen, ChevronRight, Circle
   Terminal, Waves, X } from "lucide-react";
 import { Creature } from "./creature";
 import { PriceChart } from "./price-chart";
+import { TestnetWorkbench } from "./testnet-workbench";
 import { money, number, signed, statusLabel, type Episode, type Pitch, type Position, type State } from "@/lib/types";
 
-type Tab = "tank" | "journal" | "treasury";
+type Tab = "tank" | "journal" | "treasury" | "testnet";
 const active = new Set(["queued", "analyzing", "risk_check", "capital_check", "approved", "filled"]);
 const roles = [
   { name: "Clawdius", role: "Analyst", key: "analyst", kind: "lobster", line: "Find the setup. Defend the thesis." },
@@ -104,7 +105,7 @@ export function Desk() {
       <a className="wordmark" href="/" aria-label="Lobster Desk home"><span className="brand-symbol"><Waves size={25} /></span><span>LOBSTER<span className="wordmark-bottom">DESK<span className="brand-period">.</span></span></span></a>
       <div className="sidebar-caption">A LITTLE COLLECTIVE INTELLIGENCE.</div>
       <nav aria-label="Main navigation">
-        {([{ id: "tank", label: "The tank", icon: Radio }, { id: "journal", label: "Trade journal", icon: FileClock }, { id: "treasury", label: "Treasury", icon: Landmark }] as const).map(item =>
+        {([{ id: "tank", label: "The tank", icon: Radio }, { id: "journal", label: "Journal", icon: FileClock }, { id: "treasury", label: "Treasury", icon: Landmark }, { id: "testnet", label: "Testnet", icon: FlaskConical }] as const).map(item =>
           <button key={item.id} className={`nav-item ${tab === item.id ? "is-current" : ""}`} aria-current={tab === item.id ? "page" : undefined} onClick={() => { setTab(item.id); if (item.id === "tank") setSelectedId(null); }}><item.icon size={18} /><span>{item.label}</span>{item.id === "tank" && <span className="nav-dot" />}</button>)}
       </nav>
       <div className="sidebar-bottom">
@@ -117,8 +118,8 @@ export function Desk() {
 
     <div className="workspace">
       <header className="topbar">
-        <div className="breadcrumb"><span>Lobster Desk</span><ChevronRight size={13} /><strong>{tab === "tank" ? "The tank" : tab === "journal" ? "Trade journal" : "Treasury"}</strong></div>
-        <div className="topbar-right"><span className="mode-badge"><FlaskConical size={13} /> PAPER MODE</span><button className="icon-button" aria-label="Open operator controls" onClick={() => operatorDialog.current?.showModal()}><SlidersHorizontal size={17} /></button></div>
+        <div className="breadcrumb"><span>Lobster Desk</span><ChevronRight size={13} /><strong>{tab === "tank" ? "The tank" : tab === "journal" ? "Trade journal" : tab === "testnet" ? "Testnet workbench" : "Treasury"}</strong></div>
+        <div className="topbar-right"><span className="mode-badge"><FlaskConical size={13} /> {tab === "testnet" ? "TESTNET LAB" : "PAPER MODE"}</span><button className="icon-button" aria-label="Open operator controls" onClick={() => operatorDialog.current?.showModal()}><SlidersHorizontal size={17} /></button></div>
       </header>
 
       <main id="main">
@@ -128,16 +129,16 @@ export function Desk() {
         {(state?.account.paused || state?.account.halt_reason) && <div className="notice" role="status">New entries paused. {state.account.halt_reason || "The operator paused the tank. Existing position protection remains active."}</div>}
 
         <div className="page-heading">
-          <div><h1>{tab === "tank" ? "The tank is in session." : tab === "journal" ? "Every call. On record." : "Follow the money."}</h1><p>{tab === "tank" ? "Three minds. One small trading account. You bring the next idea." : tab === "journal" ? "Accepted, rejected, expired. The whole story stays here." : "Capital, trading costs and revenue, accounted for separately."}</p></div>
+          <div><h1>{tab === "tank" ? "The tank is in session." : tab === "journal" ? "Every call. On record." : tab === "testnet" ? "Check before the first fill." : "Follow the money."}</h1><p>{tab === "tank" ? "Three minds. One small trading account. You bring the next idea." : tab === "journal" ? "Accepted, rejected, expired. The whole story stays here." : tab === "testnet" ? "Inspect the account. Review the size. Stage a local intent." : "Capital, trading costs and revenue, accounted for separately."}</p></div>
           <button className="button button--primary" onClick={() => pitchDialog.current?.showModal()}><span>Pitch a setup</span><ArrowUpRight size={17} /></button>
         </div>
 
-        <section className="account-strip" aria-label="Paper account performance">
+        {tab !== "testnet" && <section className="account-strip" aria-label="Paper account performance">
           <Metric label="Tank equity" value={money(state?.account.equity)} note="Simulated USDC" />
           <Metric label="Net realized PnL" value={state ? signed(state.account.net_realized_pnl) : "—"} note="After modeled trading fees" tone={Number(state?.account.net_realized_pnl || 0) < 0 ? "negative" : ""} />
           <Metric label="Open PnL" value={state?.market ? signed(pnl) : "—"} note={openPosition ? "1 paper position" : "No open position"} />
           <Metric label="Risk per setup" value={state ? `${Number(state.policy.risk_fraction) * 100}%` : "—"} note="Maximum planned loss" />
-        </section>
+        </section>}
 
         {tab === "tank" && <>
           <div className="tank-layout">
@@ -171,7 +172,7 @@ export function Desk() {
               </section>
 
               <section className="market-panel" aria-labelledby="market-title">
-                <div className="market-header"><div><h2 id="market-title">BTC <span>/ USDC</span></h2><div className="market-price">{money(state?.market?.price)} <span className={Number(state?.market?.change_24h || 0) < 0 ? "negative" : "positive"}>{state?.market ? `${Number(state.market.change_24h) >= 0 ? "+" : ""}${number(state.market.change_24h)}%` : "—"}</span></div></div><div className="market-source"><span className="tag">1 MIN</span><span>{state?.market?.source === "hyperliquid" ? "Hyperliquid · live data" : "Synthetic demo data"}</span></div></div>
+                <div className="market-header"><div><h2 id="market-title">BTC <span>/ USDC</span></h2><div className="market-price">{money(state?.market?.price)} <span className={Number(state?.market?.change_24h || 0) < 0 ? "negative" : "positive"}>{state?.market ? `${Number(state.market.change_24h) >= 0 ? "+" : ""}${number(state.market.change_24h)}%` : "—"}</span></div></div><div className="market-source"><span className="tag">1 MIN</span><span>{state?.market?.source === "hyperliquid" ? "Hyperliquid · live data" : state?.market?.source === "hyperliquid-testnet" ? "Hyperliquid · testnet data" : "Synthetic demo data"}</span></div></div>
                 {state?.market ? <PriceChart market={state.market} episode={current} /> : <div className="chart-empty"><Waves size={30} /><p>Waiting for a market snapshot</p><span>The chart appears when the local data worker is ready.</span></div>}
                 <div className="market-footer"><span>Funding / hour <strong>{state?.market ? `${number(Number(state.market.funding) * 100, 4)}%` : "—"}</strong></span><span>Open interest <strong>{state?.market ? `${number(state.market.open_interest, 0)} BTC` : "—"}</strong></span><span className="data-disclosure">{state?.market?.source === "demo" ? "All market figures are synthetic." : "Read-only market feed. Execution is simulated."}</span></div>
               </section>
@@ -196,12 +197,13 @@ export function Desk() {
         </>}
 
         {tab === "treasury" && <Treasury state={state} />}
+        {tab === "testnet" && <TestnetWorkbench state={state} />}
 
-        <section className="event-panel" aria-labelledby="event-title"><div className="panel-heading"><h2 id="event-title"><Terminal size={16} /> Decision feed</h2><button className="text-button" onClick={() => { void exportJournal(); }} disabled={exporting || !state}>{exporting ? <LoaderCircle size={14} className="spinner" /> : <Download size={14} />}{exporting ? "Exporting…" : "Export journal"}</button></div>
+        {tab !== "testnet" && <section className="event-panel" aria-labelledby="event-title"><div className="panel-heading"><h2 id="event-title"><Terminal size={16} /> Decision feed</h2><button className="text-button" onClick={() => { void exportJournal(); }} disabled={exporting || !state}>{exporting ? <LoaderCircle size={14} className="spinner" /> : <Download size={14} />}{exporting ? "Exporting…" : "Export journal"}</button></div>
           {exportError && <p role="alert" className="form-error">{exportError}</p>}
           <div className="event-list">{state?.events.length ? state.events.slice(-12).reverse().map(event => <div className="event-row" key={event.id}><time dateTime={event.timestamp}>{new Date(event.timestamp).toLocaleTimeString("en-GB", { hour12: false })}</time><span className={`event-actor event-actor--${event.actor}`}>{event.actor}</span><p>{event.message}</p></div>) : <p className="empty-note">The journal starts when the local API is ready. Every decision and paper fill will appear here.</p>}</div>
-        </section>
-        <footer className="footer"><span><Waves size={15} /> Lobster Desk</span><span>Paper execution · {state?.service.agent_provider === "anthropic" ? "AI reviews" : "Scripted demo reviews"} · Funding excluded from PnL</span><a href="https://hyperliquid.gitbook.io/hyperliquid-docs" target="_blank" rel="noreferrer">Hyperliquid docs <ArrowUpRight size={12} /></a></footer>
+        </section>}
+        <footer className="footer"><span><Waves size={15} /> Lobster Desk</span><span>{tab === "testnet" ? "Testnet inspection & local staging · Separate owner signer" : `Paper execution · ${state?.service.agent_provider === "anthropic" ? "AI reviews" : "Scripted demo reviews"} · Funding excluded from PnL`}</span><a href="https://hyperliquid.gitbook.io/hyperliquid-docs" target="_blank" rel="noreferrer">Hyperliquid docs <ArrowUpRight size={12} /></a></footer>
       </main>
     </div>
 

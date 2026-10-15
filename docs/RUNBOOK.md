@@ -29,6 +29,12 @@ On restart, the account, active approvals, positions and event IDs are loaded fr
 
 To start a separate experiment, set a new database file in `DATABASE_URL`. Do not delete a database to hide losses. Preserve and export its journal first. There is no automatic cleanup of historical records.
 
+## Testnet workbench and signer
+
+The **Testnet** tab performs read-only readiness/preflight and operator-protected local staging/cancellation. These controls do not activate exchange submission. The separate owner runner, isolated environment file, recovery commands and funded acceptance limits are documented in [TESTNET.md](TESTNET.md).
+
+Paper operator pause/close controls apply only to the simulated tank account. They do not pause the separate signer or close exchange positions. Stopping `npm run dev` also does not stop an independently launched signer runner. Inspect the exchange account and protective orders when stopping either process.
+
 ## Public deployment gate
 
 Before exposing this app publicly: add user identity, durable distributed rate limits, request body limits, proper database migrations, worker leadership, TLS, secret storage, backups, alerting and independent review. Test signer permissions, partial fills, exchange stops, fee approval and revocation on testnet before mainnet activation. These gates are tracked in stages 5–6.

@@ -12,15 +12,18 @@ import time
 from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from pydantic import Field
 
 import httpx
 
 from .agents import AnthropicReviewer, DemoReviewer
 from .config import Settings
-from .domain import OperatorAction, PitchInput, Snapshot, utcnow
+from .domain import Contract, OperatorAction, PitchInput, Snapshot, utcnow
 from .market import DemoFeed, HyperliquidFeed
 from .pipeline import Pipeline
 from .store import Store
+from .execution.settings import TestnetSettings
+from .execution.workbench import TestnetWorkbench
 
 logger = logging.getLogger(__name__)
 
@@ -76,8 +79,20 @@ class Runtime:
                 "fee_collection_enabled": False, "worker_enabled": self.settings.worker_enabled}}
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+class StageTestnetInput(Contract):
+    episode_id: str = Field(min_length=1, max_length=64)
+
+
+def create_app(settings: Settings | None = None, testnet_settings: TestnetSettings | None = None) -> FastAPI:
     config = settings or Settings()
+    testnet_config = testnet_settings or TestnetSettings()
+
+    def require_operator(authorization: str | None):
+        if not config.operator_token:
+            raise HTTPException(503, "Operator controls are disabled. Configure OPERATOR_TOKEN locally.")
+        expected = "Bearer " + config.operator_token.get_secret_value()
+        if not authorization or not hmac.compare_digest(authorization, expected):
+            raise HTTPException(401, "Invalid operator credentials.")
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -85,7 +100,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         runtime.store.bind_market_source(config.market_source)
         app.state.runtime = runtime
         async with httpx.AsyncClient(timeout=10) as client:
-            feed = DemoFeed() if config.market_source == "demo" else HyperliquidFeed(client)
+            app.state.testnet = TestnetWorkbench(testnet_config, client, config.database_url)
+            feed = DemoFeed() if config.market_source == "demo" else HyperliquidFeed(client, testnet=config.market_source == "hyperliquid-testnet")
             reviewer = DemoReviewer() if config.agent_provider == "demo" else AnthropicReviewer(client, config)
             tasks = []
             if config.worker_enabled:
@@ -97,6 +113,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 with suppress(asyncio.CancelledError):
                     await task
         runtime.store.engine.dispose()
+        if app.state.testnet.ledger:
+            app.state.testnet.ledger.engine.dispose()
 
     app = FastAPI(title="Lobster Desk", version="0.1.0", lifespan=lifespan)
     app.add_middleware(CORSMiddleware, allow_origins=["http://127.0.0.1:3000", "http://localhost:3000"],
@@ -157,13 +175,47 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def journal(request: Request, after: int = Query(default=0, ge=0), limit: int = Query(default=100, ge=1, le=1000)):
         return {"events": request.app.state.runtime.store.events(after, limit)}
 
+    @app.get("/api/v1/testnet/status")
+    def testnet_status(request: Request):
+        return request.app.state.testnet.status()
+
+    @app.get("/api/v1/testnet/inspect")
+    async def testnet_inspect(request: Request):
+        return await request.app.state.testnet.inspect()
+
+    @app.get("/api/v1/testnet/preflight/{episode_id}")
+    async def testnet_preflight(episode_id: str, request: Request):
+        ep = request.app.state.runtime.store.get_episode(episode_id)
+        if not ep:
+            raise HTTPException(404, "Episode not found.")
+        report, _ = await request.app.state.testnet.preflight(ep)
+        return report
+
+    @app.post("/api/v1/testnet/stage", status_code=201)
+    async def testnet_stage(body: StageTestnetInput, request: Request, authorization: str | None = Header(default=None)):
+        require_operator(authorization)
+        ep = request.app.state.runtime.store.get_episode(body.episode_id)
+        if not ep:
+            raise HTTPException(404, "Episode not found.")
+        try:
+            return await request.app.state.testnet.stage(ep)
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from None
+
+    @app.post("/api/v1/testnet/cancel")
+    def testnet_cancel(body: StageTestnetInput, request: Request, authorization: str | None = Header(default=None)):
+        require_operator(authorization)
+        ledger = request.app.state.testnet.ledger
+        if not ledger:
+            raise HTTPException(409, "Configure both public testnet addresses first.")
+        try:
+            return ledger.cancel_staged(body.episode_id)
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from None
+
     @app.post("/api/v1/operator")
     def operate(action: OperatorAction, request: Request, authorization: str | None = Header(default=None)):
-        if not config.operator_token:
-            raise HTTPException(503, "Operator controls are disabled. Configure OPERATOR_TOKEN locally.")
-        expected = "Bearer " + config.operator_token.get_secret_value()
-        if not authorization or not hmac.compare_digest(authorization, expected):
-            raise HTTPException(401, "Invalid operator credentials.")
+        require_operator(authorization)
         runtime = request.app.state.runtime
         try:
             runtime.store.operate(action.action, runtime.market)

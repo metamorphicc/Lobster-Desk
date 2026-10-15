@@ -35,6 +35,7 @@ To configure the optional modes, copy `.env.example` to `.env` at the repository
 - `AGENT_PROVIDER=anthropic` requires your own `ANTHROPIC_API_KEY` and an explicit `ANTHROPIC_MODEL` supporting structured outputs. Model calls incur provider charges. No paid calls were made during development.
 - `MAX_REVIEW_CALLS_PER_DAY=100` caps review attempts across restarts, using a UTC day. A normal pitch uses at most two calls. Interrupted calls are not automatically retried.
 - `OPERATOR_TOKEN` enables pause/resume/close controls; use at least 24 characters. It is never exposed in the public state response.
+- `MARKET_SOURCE=hyperliquid-testnet` evaluates setups on public testnet data. Use a new paper `DATABASE_URL`. The **Testnet** tab can inspect readiness and stage an intent locally; exchange submission requires a separate owner-run signer. See [the testnet guide](docs/TESTNET.md).
 - Use a separate `DATABASE_URL` when switching between demo and live-market experiments. Switching feeds with an open position or pending reviewed setup is blocked.
 
 ## Try the flow
@@ -67,7 +68,7 @@ node scripts/python.mjs -m uvicorn lobster.main:create_app --factory --app-dir a
 
 ## Delivery status
 
-Stages 0–4 implement the local paper MVP. Exchange testnet execution, user wallet trading, actual builder-fee collection and token operations remain separate roadmap stages. This release has no mainnet order endpoint and should not be deployed as a public financial service.
+Stages 0–4 implement the local paper MVP. Stage 5 adds a testnet-only signer, persistent execution lifecycle and local workbench, verified with offline exchange fixtures. Funded exchange acceptance is still outstanding. User wallet trading, actual builder-fee collection and token operations remain separate roadmap stages. This release has no mainnet order endpoint and should not be deployed as a public financial service.
 
 Every completed substage is a separate local commit on `codex/mvp-foundation`. The `origin` remote points to `https://github.com/metamorphicc/Lobster-Desk.git`; nothing is pushed automatically.
 
