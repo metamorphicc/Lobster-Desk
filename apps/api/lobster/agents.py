@@ -30,7 +30,8 @@ class DemoReviewer:
         approve = valid and ratio >= D("1.5") and pitch.leverage <= 2
         if role == "analyst":
             summary = (f"A defined BTC {pitch.direction} breakout: entry {pitch.entry}, invalidation {pitch.stop}. "
-                       "The structure is reviewable; this scripted check does not establish an edge.")
+                       "The structure is reviewable; this scripted check does not establish an edge." if approve else
+                       "I reject this structure. Check that the stop and target match the direction, reward/risk is at least 1.5, and leverage is at most 2x.")
             evidence = [f"Observed price: {snapshot.price}; source: {snapshot.source}.",
                         f"Gross reward/risk: {ratio:.2f}."]
         else:

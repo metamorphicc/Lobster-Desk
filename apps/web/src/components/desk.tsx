@@ -6,7 +6,7 @@ import { ArrowDownLeft, ArrowRight, ArrowUpRight, BookOpen, ChevronRight, Circle
   Terminal, Waves, X } from "lucide-react";
 import { Creature } from "./creature";
 import { PriceChart } from "./price-chart";
-import { money, number, signed, statusLabel, type Episode, type Pitch, type State } from "@/lib/types";
+import { money, number, signed, statusLabel, type Episode, type Pitch, type Position, type State } from "@/lib/types";
 
 type Tab = "tank" | "journal" | "treasury";
 const active = new Set(["queued", "analyzing", "risk_check", "capital_check", "approved", "filled"]);
@@ -76,7 +76,7 @@ export function Desk() {
   const selected = state?.episodes.find(ep => ep.id === selectedId);
   const current = selected || state?.episodes.find(ep => active.has(ep.status)) || state?.episodes[0];
   const openPosition = state?.positions.find(p => p.status === "open");
-  const pending = state?.episodes.filter(ep => active.has(ep.status)) || [];
+  const pending = state?.episodes.filter(ep => active.has(ep.status) && ep.status !== "filled") || [];
   const pnl = openPosition && state?.market ?
     (Number(state.market.price) - Number(openPosition.entry_price)) * Number(openPosition.quantity) * (openPosition.direction === "long" ? 1 : -1) : 0;
 
@@ -105,7 +105,7 @@ export function Desk() {
       <div className="sidebar-caption">A LITTLE COLLECTIVE INTELLIGENCE.</div>
       <nav aria-label="Main navigation">
         {([{ id: "tank", label: "The tank", icon: Radio }, { id: "journal", label: "Trade journal", icon: FileClock }, { id: "treasury", label: "Treasury", icon: Landmark }] as const).map(item =>
-          <button key={item.id} className={`nav-item ${tab === item.id ? "is-current" : ""}`} aria-current={tab === item.id ? "page" : undefined} onClick={() => setTab(item.id)}><item.icon size={18} /><span>{item.label}</span>{item.id === "tank" && <span className="nav-dot" />}</button>)}
+          <button key={item.id} className={`nav-item ${tab === item.id ? "is-current" : ""}`} aria-current={tab === item.id ? "page" : undefined} onClick={() => { setTab(item.id); if (item.id === "tank") setSelectedId(null); }}><item.icon size={18} /><span>{item.label}</span>{item.id === "tank" && <span className="nav-dot" />}</button>)}
       </nav>
       <div className="sidebar-bottom">
         <div className="network-note"><span className="status-dot" /><span>Hyperliquid ecosystem</span><ArrowUpRight size={13} /></div>
@@ -146,8 +146,8 @@ export function Desk() {
                 <div className="panel-heading"><h2 id="tank-title"><span className="status-dot" /> Inside the tank</h2><span className="micro-label">{state?.service.agent_provider === "anthropic" ? "AI REVIEWS" : "SCRIPTED DEMO"}</span></div>
                 <div className="tank-scene">
                   <div className="scene-caption"><span className="scene-coordinate">BTC / USDC</span><span>EST. 2026</span></div>
-                  <div className="porthole porthole--one" /><div className="porthole porthole--two" />
-                  <div className="scene-waterline" /><span className="scene-word">THE TANK</span>
+                  <div className="porthole porthole--one" aria-hidden="true" /><div className="porthole porthole--two" aria-hidden="true" />
+                  <div className="scene-waterline" aria-hidden="true" /><span className="scene-word" aria-hidden="true">THE TANK</span>
                   <div className="agents">
                     {roles.map(agent => {
                       const speaking = (agent.key === "analyst" && current?.status === "analyzing") || (agent.key === "risk" && current?.status === "risk_check") || (agent.key === "banker" && current?.status === "capital_check");
@@ -179,7 +179,7 @@ export function Desk() {
 
             <aside className="right-column">
               <section className="setup-panel"><div className="panel-heading"><h2>On the table</h2><BookOpen size={16} /></div>
-                {current ? <Setup episode={current} /> : <div className="empty-setup"><span className="empty-icon"><ArrowUpRight size={24} /></span><h3>Got a thesis?</h3><p>Pitch a BTC setup. The tank checks the idea, the risk and the budget.</p><button className="button button--secondary" onClick={() => pitchDialog.current?.showModal()}>Take the floor <ArrowRight size={15} /></button><span className="small-note">Free to pitch. No trade guaranteed.</span></div>}
+                {current ? <Setup episode={current} position={state?.positions.find(p => p.episode_id === current.id)} /> : <div className="empty-setup"><span className="empty-icon"><ArrowUpRight size={24} /></span><h3>Got a thesis?</h3><p>Pitch a BTC setup. The tank checks the idea, the risk and the budget.</p><button className="button button--secondary" onClick={() => pitchDialog.current?.showModal()}>Take the floor <ArrowRight size={15} /></button><span className="small-note">Free to pitch. No trade guaranteed.</span></div>}
               </section>
               <section className="queue-panel"><div className="panel-heading"><h2>In the queue</h2><span className="count-label">{pending.length}</span></div>
                 {pending.length ? pending.map(ep => <button className="queue-item" key={ep.id} onClick={() => setSelectedId(ep.id)}><span className={`direction-icon ${ep.pitch.direction}`}>{ep.pitch.direction === "long" ? <ArrowUpRight size={16} /> : <ArrowDownLeft size={16} />}</span><span><strong>BTC {ep.pitch.direction}</strong><small>{ep.pitch.author} · {statusLabel(ep.status)}</small></span><ChevronRight size={15} /></button>) : <p className="empty-note">No setups waiting.<br />Your idea could be next.</p>}
@@ -192,7 +192,7 @@ export function Desk() {
 
         {tab === "journal" && <>
           <Journal state={state} onSelect={setSelectedId} />
-          {current && <section className="detail-panel"><div className="panel-heading"><h2>Decision details</h2><span className="micro-label">{current.id.slice(0, 8)}</span></div><div className="detail-layout"><Setup episode={current} /><div className="review-details">{Object.entries(current.reviews).map(([role, review]) => review && <div key={role}><h3>{role === "analyst" ? "Clawdius · Analyst" : "Pinch · Risk manager"}</h3><p>{review.summary}</p><ul>{review.evidence.map(item => <li key={item}>{item}</li>)}</ul><small>{review.metadata.provider} / {review.metadata.model} · {review.metadata.input_tokens + review.metadata.output_tokens} tokens</small></div>)}{!Object.keys(current.reviews).length && <p className="empty-note">No reviews recorded yet. The worker will review this pitch when fresh market data is available.</p>}{current.approval_hash && <p className="hash-note">Approval binding <code>{current.approval_hash}</code></p>}</div></div></section>}
+          {current && <section className="detail-panel"><div className="panel-heading"><h2>Decision details</h2><span className="micro-label">{current.id.slice(0, 8)}</span></div><div className="detail-layout"><Setup episode={current} position={state?.positions.find(p => p.episode_id === current.id)} /><div className="review-details">{Object.entries(current.reviews).map(([role, review]) => review && <div key={role}><h3>{role === "analyst" ? "Clawdius · Analyst" : "Pinch · Risk manager"}</h3><p>{review.summary}</p><ul>{review.evidence.map(item => <li key={item}>{item}</li>)}</ul><small>{review.metadata.provider} / {review.metadata.model} · {review.metadata.input_tokens + review.metadata.output_tokens} tokens</small></div>)}{!Object.keys(current.reviews).length && <p className="empty-note">No reviews recorded yet. The worker will review this pitch when fresh market data is available.</p>}{current.approval_hash && <p className="hash-note">Approval binding <code>{current.approval_hash}</code></p>}</div></div></section>}
         </>}
 
         {tab === "treasury" && <Treasury state={state} />}
@@ -224,8 +224,8 @@ function Metric({ label, value, note, tone = "" }: { label: string; value: strin
   return <div className="metric"><span>{label}</span><strong className={tone}>{value}</strong><small>{note}</small></div>;
 }
 
-function Setup({ episode }: { episode: Episode }) {
-  return <div className="setup-content"><div className="setup-title"><span className={`direction-icon ${episode.pitch.direction}`}>{episode.pitch.direction === "long" ? <ArrowUpRight size={20} /> : <ArrowDownLeft size={20} />}</span><h3>BTC <span>{episode.pitch.direction.toUpperCase()}</span></h3><span className="tag">{episode.pitch.leverage}×</span></div><p className="pitch-author">Pitched by <strong>{episode.pitch.author}</strong></p><p className="setup-thesis">{episode.pitch.thesis}</p><dl className="levels"><div><dt>Entry trigger</dt><dd>{money(episode.pitch.entry)}</dd></div><div><dt><span className="level-dot level-dot--stop" /> Stop loss</dt><dd>{money(episode.pitch.stop)}</dd></div><div><dt><span className="level-dot level-dot--target" /> Take profit</dt><dd>{money(episode.pitch.target)}</dd></div>{episode.risk?.approved && <><div><dt>Allocated notional</dt><dd>{money(episode.risk.notional)}</dd></div><div><dt>Planned loss</dt><dd>{money(episode.risk.planned_loss)}</dd></div></>}</dl><div className={`setup-verdict verdict--${episode.status}`}><span>{statusLabel(episode.status)}</span><p>{episode.reason}</p></div><span className="small-note">Paper trade · Project capital</span></div>;
+function Setup({ episode, position }: { episode: Episode; position?: Position }) {
+  return <div className="setup-content"><div className="setup-title"><span className={`direction-icon ${episode.pitch.direction}`}>{episode.pitch.direction === "long" ? <ArrowUpRight size={20} /> : <ArrowDownLeft size={20} />}</span><h3>BTC <span>{episode.pitch.direction.toUpperCase()}</span></h3><span className="tag">{episode.pitch.leverage}×</span></div><p className="pitch-author">Pitched by <strong>{episode.pitch.author}</strong></p><p className="setup-thesis">{episode.pitch.thesis}</p><dl className="levels"><div><dt>Entry trigger</dt><dd>{money(episode.pitch.entry)}</dd></div><div><dt><span className="level-dot level-dot--stop" /> Stop loss</dt><dd>{money(episode.pitch.stop)}</dd></div><div><dt><span className="level-dot level-dot--target" /> Take profit</dt><dd>{money(episode.pitch.target)}</dd></div>{episode.risk?.approved && <><div><dt>Allocated notional</dt><dd>{money(episode.risk.notional)}</dd></div><div><dt>Planned loss</dt><dd>{money(episode.risk.planned_loss)}</dd></div></>}</dl><div className={`setup-verdict verdict--${episode.status}`}><span>{statusLabel(episode.status)}</span><p>{episode.reason}</p></div>{position && <><dl className="levels"><div><dt>Paper fill price</dt><dd>{money(position.entry_price)}</dd></div><div><dt>Filled quantity</dt><dd>{number(position.quantity, 5)} BTC</dd></div><div><dt>Total fill fees</dt><dd>{money(Number(position.entry_fee) + Number(position.exit_fee), 4)}</dd></div>{position.exit_price && <div><dt>Exit price</dt><dd>{money(position.exit_price)}</dd></div>}{position.net_pnl != null && <div><dt>Trade net PnL</dt><dd>{signed(position.net_pnl)}</dd></div>}</dl><p className="small-note">Fill {position.entry_fill_id.slice(0, 8)} · {position.market_source} prices{position.close_reason ? ` · Closed: ${position.close_reason}` : ""}</p></>}<span className="small-note">Paper trade · Project capital</span></div>;
 }
 
 function Journal({ state, compact = false, onSelect }: { state: State | null; compact?: boolean; onSelect: (id: string) => void }) {
@@ -241,7 +241,7 @@ function PitchForm({ state, onSent }: { state: State | null; onSent: (id: string
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const attempt = useRef<{ body: string; key: string } | null>(null);
   function validate(name: string, value: string) {
-    if (name === "author") return /^[\w .-]{2,32}$/u.test(value.trim()) ? "" : "Use 2–32 letters, numbers, spaces, dots or hyphens.";
+    if (name === "author") return /^[\p{L}\p{N}_ .-]{2,32}$/u.test(value.trim()) ? "" : "Use 2–32 letters, numbers, spaces, dots or hyphens.";
     if (["entry", "stop", "target"].includes(name)) return /^\d+(\.\d{1,2})?$/.test(value) && Number(value) > 0 && Number(value) <= 10000000 ? "" : "Use a positive price with up to 2 decimal places.";
     if (name === "thesis") return value.trim().length >= 20 ? "" : "Explain the setup in at least 20 characters.";
     return "";

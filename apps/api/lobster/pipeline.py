@@ -12,13 +12,14 @@ ACTIVE = {"queued", "analyzing", "risk_check", "capital_check"}
 
 
 class Pipeline:
-    def __init__(self, store: Store, reviewer: Reviewer):
+    def __init__(self, store: Store, reviewer: Reviewer, daily_limit: int = 100):
         self.store = store
         self.reviewer = reviewer
+        self.daily_limit = daily_limit
 
     async def step(self, market: Snapshot | None):
         state = self.store.state(market)
-        pending = sorted((ep for ep in state["episodes"] if ep["status"] in ACTIVE), key=lambda ep: ep["created_at"])
+        pending = sorted((ep for ep in self.store.working_episodes() if ep["status"] in ACTIVE), key=lambda ep: ep["created_at"])
         if not pending:
             return
         ep = pending[0]
@@ -35,13 +36,8 @@ class Pipeline:
         try:
             if status in {"analyzing", "risk_check"}:
                 role = "analyst" if status == "analyzing" else "risk"
-                attempts = ep.get("review_attempts", {})
-                if attempts.get(role, 0):
-                    self.store.advance(ep["id"], status, "rejected", "system",
-                        "A previous model call was interrupted. No automatic paid retry was made.")
+                if not self.store.reserve_review(ep["id"], status, role, self.daily_limit):
                     return
-                self.store.advance(ep["id"], status, status, role, f"Starting the {role} review.",
-                    {"review_attempts": attempts | {role: 1}})
                 outcomes = [{"status": e["status"], "reason": e["reason"]} for e in state["episodes"]
                             if e["status"] in {"closed", "rejected"}][:5]
                 review, metadata = await self.reviewer.review(role, PitchInput.model_validate(ep["pitch"]),

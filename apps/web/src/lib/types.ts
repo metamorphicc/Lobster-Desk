@@ -17,6 +17,7 @@ export type Position = {
   quantity: string; entry_price: string; exit_price: string | null; stop: string; target: string;
   entry_fee: string; exit_fee: string; net_pnl: string | null; margin: string;
   opened_at: string; closed_at: string | null; close_reason: string | null;
+  market_source: string; entry_fill_id: string; exit_fill_id: string | null;
 };
 export type JournalEvent = {
   id: number; timestamp: string; actor: string; kind: string; message: string;

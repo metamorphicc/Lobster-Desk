@@ -41,7 +41,7 @@ class Runtime:
                 self.market_error = None
                 # Protection runs independently from model latency.
                 self.store.mark(self.market)
-                for ep in self.store.state(self.market)["episodes"]:
+                for ep in self.store.working_episodes():
                     if ep["status"] == "approved":
                         self.store.try_fill(ep["id"], self.market)
                 self.store.mark(self.market)
@@ -53,7 +53,7 @@ class Runtime:
             await asyncio.sleep(self.settings.market_poll_seconds)
 
     async def decision_loop(self, reviewer):
-        pipeline = Pipeline(self.store, reviewer)
+        pipeline = Pipeline(self.store, reviewer, self.settings.max_review_calls_per_day)
         while True:
             try:
                 await pipeline.step(self.market)
@@ -82,6 +82,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         runtime = Runtime(config, Store(config.database_url, config.initial_capital))
+        runtime.store.bind_market_source(config.market_source)
         app.state.runtime = runtime
         async with httpx.AsyncClient(timeout=10) as client:
             feed = DemoFeed() if config.market_source == "demo" else HyperliquidFeed(client)

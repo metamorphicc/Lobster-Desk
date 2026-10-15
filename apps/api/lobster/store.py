@@ -119,6 +119,45 @@ class Store:
             high_water_equity=D(account["high_water_equity"]), occupied=occupied,
             paused=account["paused"] or account["halt_reason"] is not None)
 
+    def bind_market_source(self, source: str):
+        with self.transaction() as session:
+            account = session.get(Account, 1)
+            previous = account.payload.get("market_source")
+            open_sources = {p.payload["market_source"] for p in session.scalars(select(Position)) if p.payload["status"] == "open"}
+            open_sources.update(e.payload["snapshot"]["source"] for e in session.scalars(select(Episode))
+                if e.payload["status"] in {"analyzing", "risk_check", "capital_check", "approved"} and e.payload.get("snapshot"))
+            if any(value != source for value in open_sources):
+                raise ValueError("Close open positions and finish pending reviews before changing MARKET_SOURCE. Use a separate DATABASE_URL for a different feed.")
+            if previous != source:
+                account.payload = account.payload | {"market_source": source}
+                self.event(session, "system", "market_source", f"Market source bound to {source}; execution remains paper.")
+
+    def working_episodes(self) -> list[dict]:
+        # Execution must never depend on a paginated presentation of the history.
+        with self.lock, Session(self.engine) as session:
+            return [e.payload for e in session.scalars(select(Episode))
+                    if e.payload["status"] in {"queued", "analyzing", "risk_check", "capital_check", "approved"}]
+
+    def reserve_review(self, episode_id: str, status: str, role: str, daily_limit: int) -> bool:
+        with self.transaction() as session:
+            row = session.get(Episode, episode_id)
+            if not row or row.payload["status"] != status:
+                return False
+            ep = row.payload
+            attempts = ep.get("review_attempts", {})
+            day = utcnow().date().isoformat()
+            count = sum(1 for event in session.scalars(select(Event))
+                        if event.payload["kind"] == "review_started" and event.payload["timestamp"].startswith(day))
+            reason = ("A previous reviewer call was interrupted. No automatic retry was made." if attempts.get(role)
+                      else "The daily review-call budget is exhausted. Submit a new pitch after the UTC day resets." if count >= daily_limit else None)
+            if reason:
+                row.payload = ep | {"status": "rejected", "reason": reason}
+                self.event(session, "system", "rejected", reason, episode_id)
+                return False
+            row.payload = ep | {"review_attempts": attempts | {role: 1}}
+            self.event(session, role, "review_started", f"Starting the {role} review.", episode_id)
+            return True
+
     def submit(self, pitch: PitchInput, request_id: str) -> dict:
         with self.transaction() as session:
             existing = session.scalar(select(Episode).where(Episode.request_id == request_id))
@@ -182,7 +221,7 @@ class Store:
             if not row or row.payload["status"] != "approved":
                 return None
             ep = row.payload
-            if ep["approval_hash"] != digest(ep) or ep["policy"] != self.policy.model_dump(mode="json"):
+            if ep["approval_hash"] != digest(ep) or ep["policy"] != self.policy.model_dump(mode="json") or ep["snapshot"]["source"] != market.source:
                 row.payload = ep | {"status": "rejected", "reason": "Approval binding or risk policy changed."}
                 self.event(session, "executor", "rejected", row.payload["reason"], episode_id)
                 return None
@@ -212,6 +251,10 @@ class Store:
                 return None
             quantity = min(D(ep["risk"]["quantity"]), final.quantity)
             notional = quantity * fill_price
+            if notional < self.policy.min_notional:
+                row.payload = ep | {"status": "rejected", "reason": "Final rounded notional is below the $10 minimum."}
+                self.event(session, "executor", "rejected", row.payload["reason"], episode_id)
+                return None
             fee = notional * self.policy.fee_rate
             account = session.get(Account, 1)
             account.payload = account.payload | {"cash": str(D(account.payload["cash"]) - fee),

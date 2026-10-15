@@ -68,7 +68,11 @@ export function PriceChart({ market, episode }: { market: Market; episode?: Epis
       return instance.createPriceLine({ price: Number(episode.pitch[key]), color: `rgb(${r},${g},${b})`,
         lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: key });
     });
-    return () => lines.forEach(line => instance.removePriceLine(line));
+    return () => {
+      // React runs effect cleanups in declaration order. The chart may already
+      // be disposed by the first effect when navigation unmounts this component.
+      if (series.current === instance) lines.forEach(line => instance.removePriceLine(line));
+    };
   }, [episode]);
 
   return <div ref={element} className="price-chart" aria-label="BTC one-minute candlestick chart. Exact setup levels are listed in the pitch details." role="img" />;
