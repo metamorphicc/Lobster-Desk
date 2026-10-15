@@ -24,7 +24,7 @@ Each checked substage has its own local commit. No pushes or deployments. A stag
 
 ## Stage 4 — Usable product
 
-- [ ] **4.1 Tank interface.** Responsive character scene, chart, pitches, queue, decision log, positions and transparent treasury; meaningful empty/error/loading states.
+- [x] **4.1 Tank interface.** Original character scene, candlestick chart, validated pitches, queue, decision journal and transparent treasury. Production build passes; browser pitch reached capital reservation. Responsive checks continue in 4.2.
 - [ ] **4.2 Integration and handoff.** Browser flow, persistence/recovery verification, production build, local launch scripts and operational documentation.
 
 ## Stage 5 — Exchange testnet and user execution

@@ -1,0 +1,10 @@
+{
+  "date": "2026-10-16",
+  "existing_files": [],
+  "framework": "Next.js App Router (new project)",
+  "fonts": "Space Grotesk + IBM Plex Mono, self-hosted through fontsource",
+  "palette": "Midnight, warm dark neutrals, orange accent, semantic trade colors",
+  "motion": "CSS only, reduced-motion supported",
+  "scope": "Product workbench, not a marketing landing page"
+}
+
