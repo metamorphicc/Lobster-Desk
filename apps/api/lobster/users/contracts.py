@@ -1,0 +1,24 @@
+from decimal import Decimal
+from typing import Annotated
+
+from pydantic import AfterValidator, Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def nonzero_address(value: str) -> str:
+    if int(value, 16) == 0:
+        raise ValueError("Use a nonzero account address.")
+    return value.lower()
+
+
+Address = Annotated[str, Field(pattern=r"^0x[0-9a-fA-F]{40}$"), AfterValidator(nonzero_address)]
+
+
+def fee_percent(tenths_bps: int) -> str:
+    return format(Decimal(tenths_bps) / 1000, "f").rstrip("0").rstrip(".") + "%" if tenths_bps else "0%"
+
+
+class UserTestnetSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_prefix="USER_TESTNET_", extra="ignore")
+    builder_address: Address | None = None
+    builder_fee_tenths_bps: int = Field(default=20, ge=0, le=100)

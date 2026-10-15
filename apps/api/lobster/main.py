@@ -24,6 +24,8 @@ from .pipeline import Pipeline
 from .store import Store
 from .execution.settings import TestnetSettings
 from .execution.workbench import TestnetWorkbench
+from .users.contracts import Address, UserTestnetSettings
+from .users.service import UserTestnetService
 
 logger = logging.getLogger(__name__)
 
@@ -83,9 +85,11 @@ class StageTestnetInput(Contract):
     episode_id: str = Field(min_length=1, max_length=64)
 
 
-def create_app(settings: Settings | None = None, testnet_settings: TestnetSettings | None = None) -> FastAPI:
+def create_app(settings: Settings | None = None, testnet_settings: TestnetSettings | None = None,
+               user_settings: UserTestnetSettings | None = None) -> FastAPI:
     config = settings or Settings()
     testnet_config = testnet_settings or TestnetSettings()
+    user_config = user_settings or UserTestnetSettings()
 
     def require_operator(authorization: str | None):
         if not config.operator_token:
@@ -101,6 +105,7 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
         app.state.runtime = runtime
         async with httpx.AsyncClient(timeout=10) as client:
             app.state.testnet = TestnetWorkbench(testnet_config, client, config.database_url)
+            app.state.users = UserTestnetService(user_config, client)
             feed = DemoFeed() if config.market_source == "demo" else HyperliquidFeed(client, testnet=config.market_source == "hyperliquid-testnet")
             reviewer = DemoReviewer() if config.agent_provider == "demo" else AnthropicReviewer(client, config)
             tasks = []
@@ -178,6 +183,17 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
     @app.get("/api/v1/testnet/status")
     def testnet_status(request: Request):
         return request.app.state.testnet.status()
+
+    @app.get("/api/v1/users/testnet/config")
+    def user_testnet_config(request: Request):
+        return request.app.state.users.config()
+
+    @app.get("/api/v1/users/testnet/accounts/{address}")
+    async def user_testnet_account(address: Address, request: Request):
+        try:
+            return await request.app.state.users.inspect(address)
+        except Exception:
+            raise HTTPException(502, "Testnet account data is unavailable or malformed. No exchange write was attempted.") from None
 
     @app.get("/api/v1/testnet/inspect")
     async def testnet_inspect(request: Request):
