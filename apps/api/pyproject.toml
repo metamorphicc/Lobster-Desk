@@ -14,6 +14,7 @@ dependencies = [
   "pydantic-settings>=2.7,<3",
   "httpx>=0.28,<1",
   "psycopg[binary]>=3.2,<4",
+  "hyperliquid-python-sdk==0.24.0",
 ]
 
 [project.optional-dependencies]

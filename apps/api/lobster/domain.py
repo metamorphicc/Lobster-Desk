@@ -24,7 +24,7 @@ class Candle(Contract):
 
 
 class Snapshot(Contract):
-    source: Literal["demo", "hyperliquid"]
+    source: Literal["demo", "hyperliquid", "hyperliquid-testnet"]
     symbol: Literal["BTC"] = "BTC"
     price: Decimal = Field(gt=0, allow_inf_nan=False)
     timestamp: datetime

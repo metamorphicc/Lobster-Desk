@@ -30,6 +30,10 @@ Each checked substage has its own local commit. No pushes or deployments. A stag
 ## Stage 5 — Exchange testnet and user execution
 
 - [ ] **5.1 Testnet execution adapter.** Separate signer, official SDK, nonce ownership, partial fills, exchange-native stops and reconciliation. Requires a funded testnet account and dedicated API wallet for end-to-end verification.
+  - [x] **5.1a Contracts and restricted signer.** BTC precision, reviewed proposal binding including expiry/reviews, isolated leverage, official SDK testnet-domain signatures and $50 default entry cap. Verified offline: signature domain recovery and fail-closed constraints; 86 tests total.
+  - [ ] **5.1b Durable order lifecycle.** Persistent command claims/nonces, timeout reconciliation, fill deduplication and protection of actual filled size.
+  - [ ] **5.1c Local testnet workbench.** Read-only readiness/preflight, operator-only staging, separate journal and tests; no automatic activation.
+  - [ ] **5.1d Funded testnet acceptance.** Verify API wallet permissions, actual partial fills/stops and restart with a funded testnet account. Not complete until observed on the exchange.
 - [ ] **5.2 User-owned trading.** Wallet connection, builder-fee approval, explicit user signatures, fee disclosure, order status and account isolation. Verify approval and revocation before enabling collection.
 
 ## Stage 6 — Controlled production release

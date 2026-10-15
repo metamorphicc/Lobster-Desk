@@ -48,7 +48,7 @@ class Event(Base):
 
 
 def digest(episode: dict) -> str:
-    binding = {key: episode.get(key) for key in ("pitch", "snapshot", "risk", "policy")}
+    binding = {key: episode.get(key) for key in ("pitch", "snapshot", "risk", "policy", "expires_at", "reviews")}
     return sha256(json.dumps(binding, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
@@ -221,6 +221,10 @@ class Store:
             if not row or row.payload["status"] != "approved":
                 return None
             ep = row.payload
+            if utcnow() >= datetime.fromisoformat(ep["expires_at"]):
+                row.payload = ep | {"status": "expired", "reason": "The proposal has expired."}
+                self.event(session, "executor", "expired", row.payload["reason"], episode_id)
+                return None
             if ep["approval_hash"] != digest(ep) or ep["policy"] != self.policy.model_dump(mode="json") or ep["snapshot"]["source"] != market.source:
                 row.payload = ep | {"status": "rejected", "reason": "Approval binding or risk policy changed."}
                 self.event(session, "executor", "rejected", row.payload["reason"], episode_id)
