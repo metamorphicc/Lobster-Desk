@@ -14,7 +14,7 @@ def test_api_pitch_to_fill_to_stop_and_restart(tmp_path):
     url = f"sqlite:///{tmp_path / 'end-to-end.db'}"
     config = Settings(_env_file=None, database_url=url, worker_enabled=False)
     app = create_app(config)
-    with TestClient(app) as client:
+    with TestClient(app, base_url="http://127.0.0.1") as client:
         runtime = app.state.runtime
         runtime.market = Snapshot(source="demo", price="60000", timestamp=utcnow())
         response = client.post("/api/v1/pitches", headers={"Idempotency-Key": "e2e-request"}, json={
@@ -35,7 +35,7 @@ def test_api_pitch_to_fill_to_stop_and_restart(tmp_path):
         last_event = state["last_event_id"]
         final_cash = state["account"]["cash"]
 
-    with TestClient(create_app(config)) as restarted:
+    with TestClient(create_app(config), base_url="http://127.0.0.1") as restarted:
         state = restarted.get("/api/v1/state").json()
         assert state["account"]["cash"] == final_cash
         assert state["episodes"][0]["status"] == "closed"
@@ -45,7 +45,7 @@ def test_api_pitch_to_fill_to_stop_and_restart(tmp_path):
 
 def test_independent_review_veto_never_reserves_capital(tmp_path):
     app = create_app(Settings(_env_file=None, database_url=f"sqlite:///{tmp_path / 'veto.db'}", worker_enabled=False))
-    with TestClient(app) as client:
+    with TestClient(app, base_url="http://127.0.0.1") as client:
         runtime = app.state.runtime
         runtime.market = Snapshot(source="demo", price="60000", timestamp=utcnow())
         response = client.post("/api/v1/pitches", headers={"Idempotency-Key": "veto-request"}, json={

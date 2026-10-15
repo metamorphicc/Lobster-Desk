@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore", hide_input_in_errors=True)
     database_url: str = "sqlite:///data/lobster.db"
     initial_capital: Decimal = Field(default=Decimal("1000"), gt=0, allow_inf_nan=False)
     market_source: Literal["demo", "hyperliquid", "hyperliquid-testnet"] = "demo"

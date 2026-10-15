@@ -4,7 +4,7 @@ Date: 2026-10-16 (Asia/Novosibirsk).
 
 ## Automated
 
-- 155 passing Python tests: schema validation, finite monetary input, direction/stop/target checks, leverage, expiry/freshness, sizing, loss thresholds, concurrent reservation, fill idempotency, transaction rollback, gap losses, fee accounting, provider failure, review budgets, feed isolation, HTTP endpoints and restart recovery. Testnet additions cover official SDK signatures/domain/expiry, atomic nonce/command claims, partial fills, uncertain requests without replay, protection failure, fixed-host HTTP, public-only readiness/preflight and operator-controlled local staging/cancellation.
+- 172 passing Python tests: schema validation, finite monetary input, direction/stop/target checks, leverage, expiry/freshness, sizing, loss thresholds, concurrent reservation, fill idempotency, transaction rollback, gap losses, fee accounting, provider failure, review budgets, feed isolation, HTTP endpoints and restart recovery. Testnet additions cover official SDK signatures/domain/expiry, atomic nonce/command claims, partial fills, uncertain requests without replay, protection failure, fixed-host HTTP, public-only readiness/preflight and operator-controlled local staging/cancellation.
 - End-to-end API scenario: pitch -> reviews -> capital reservation -> paper fill -> stop -> restart -> identical cash and journal.
 - TypeScript check passes.
 - Next.js production build passes.
@@ -39,6 +39,10 @@ The Anthropic adapter's request/output contract is tested with mocked responses.
 ## Local recovery
 
 163 Python tests pass after adding SQLite snapshot/restore coverage. A real stopped-service paper snapshot was created at `artifacts/backups/20261015T225041-fbde6e34/manifest.json`, verified and restored to `artifacts/restore-drills/20261015-local-paper/`. Account, episode, position and event rows matched the original database exactly. Tests also preserved an uncertain testnet entry command and its durable nonce across an isolated restore without replaying entry. These are local/offline results; no restored signer was activated against the exchange.
+
+## Local API security
+
+172 Python tests and 11 Node wallet tests pass. Nine new boundary tests cover Host/Origin, declared and chunked bodies, slow reads, duplicate/oversized Content-Length, malformed bearer bytes, credential-error redaction and valid CORS/POST behavior. Live Next proxy and browser cost-preview checks passed after the middleware changes. The production build passes. The npm production audit reported no known advisories; Python dependency advisory coverage and independent review remain incomplete. See [SECURITY-REVIEW.md](SECURITY-REVIEW.md) for reproduced findings, fixes and remaining launch gates.
 
 ## Financial interpretation
 

@@ -6,6 +6,8 @@ Run `npm run dev` from the repository root. It starts the API and Next.js on loo
 
 Run one API process/worker per database. No multi-worker or multi-replica operation is supported yet. SQLite is the tested local backend; PostgreSQL is supported by the SQLAlchemy adapter but has not been exercised in this environment.
 
+The local API accepts loopback hosts and browser origins at localhost/127.0.0.1 ports 3000 and 8000. Mutating HTTP bodies are buffered only up to 64 KiB and must arrive within five seconds. Non-browser tools can omit Origin; this is not authentication. Operator controls still require the token. Custom public hosts/ingress require the separate production review rather than weakening these local boundaries.
+
 ## Pause, resume, close
 
 Configure an `OPERATOR_TOKEN` in the root `.env` and restart. Open the sliders control at the top right; enter the token in the dialog. It stays in page memory only.

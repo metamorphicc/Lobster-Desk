@@ -13,7 +13,7 @@ from lobster.main import create_app
 def client(tmp_path):
     app = create_app(Settings(_env_file=None, database_url=f"sqlite:///{tmp_path / 'api.db'}", worker_enabled=False,
                               operator_token="test-only-operator-token-12345"))
-    with TestClient(app) as client:
+    with TestClient(app, base_url="http://127.0.0.1") as client:
         app.state.runtime.market = Snapshot(source="demo", price="60000", timestamp=utcnow())
         yield client
 

@@ -126,7 +126,7 @@ def test_api_staging_requires_operator_and_exposes_no_dispatch(workbench, monkey
     monkeypatch.setenv("HL_SIGNER_ENABLED", "true")
     app = create_app(Settings(_env_file=None, database_url=paper_url, market_source="hyperliquid-testnet", worker_enabled=False,
                              operator_token="operator-token-for-test-12345"), config)
-    with TestClient(app) as client:
+    with TestClient(app, base_url="http://127.0.0.1") as client:
         app.state.testnet.gateway = exchange
         report = client.get("/api/v1/testnet/status").json()
         assert not report["private_key_loaded"] and not report["execution_enabled"]

@@ -11,6 +11,7 @@ import time
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import Field
 
@@ -27,6 +28,7 @@ from .execution.workbench import TestnetWorkbench
 from .users.contracts import Address, UserTestnetSettings
 from .users.service import UserTestnetService
 from .users.fees import ConsentInput, FeeQuoteInput, consent_plan, fee_quote
+from .http_boundary import LocalBoundary, LOCAL_ORIGINS
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +98,7 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
         if not config.operator_token:
             raise HTTPException(503, "Operator controls are disabled. Configure OPERATOR_TOKEN locally.")
         expected = "Bearer " + config.operator_token.get_secret_value()
-        if not authorization or not hmac.compare_digest(authorization, expected):
+        if not authorization or not hmac.compare_digest(authorization.encode("utf-8"), expected.encode("utf-8")):
             raise HTTPException(401, "Invalid operator credentials.")
 
     @asynccontextmanager
@@ -123,8 +125,10 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
             app.state.testnet.ledger.engine.dispose()
 
     app = FastAPI(title="Lobster Desk", version="0.1.0", lifespan=lifespan)
-    app.add_middleware(CORSMiddleware, allow_origins=["http://127.0.0.1:3000", "http://localhost:3000"],
+    app.add_middleware(CORSMiddleware, allow_origins=sorted(LOCAL_ORIGINS),
                        allow_methods=["GET", "POST"], allow_headers=["Content-Type", "Idempotency-Key", "Authorization"])
+    app.add_middleware(LocalBoundary)
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "[::1]"], www_redirect=False)
 
     @app.get("/api/health")
     def health(request: Request):

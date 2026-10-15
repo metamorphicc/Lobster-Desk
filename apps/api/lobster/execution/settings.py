@@ -18,7 +18,7 @@ def require_separate_database(paper_url: str, testnet_url: str):
 
 class TestnetSettings(BaseSettings):
     __test__ = False
-    model_config = SettingsConfigDict(env_file=".env", env_prefix="HL_TESTNET_", extra="ignore")
+    model_config = SettingsConfigDict(env_file=".env", env_prefix="HL_TESTNET_", extra="ignore", hide_input_in_errors=True)
     account_address: str | None = Field(default=None, pattern=r"^0x[0-9a-fA-F]{40}$")
     api_wallet_address: str | None = Field(default=None, pattern=r"^0x[0-9a-fA-F]{40}$")
     database_url: str = "sqlite:///data/testnet.db"

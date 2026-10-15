@@ -93,7 +93,7 @@ def test_account_api_validates_addresses_and_does_not_enable_execution(tmp_path)
                      user_settings=UserTestnetSettings(_env_file=None, builder_address=BUILDER))
     async def run():
         async with httpx.AsyncClient(transport=transport([])) as exchange_client:
-            with TestClient(app) as client:
+            with TestClient(app, base_url="http://127.0.0.1") as client:
                 app.state.users.client = exchange_client
                 base = "/api/v1/users/testnet"
                 assert not client.get(base + "/config").json()["fee_collection_enabled"]
@@ -115,7 +115,7 @@ def test_upstream_error_is_static_and_not_zero_balance(tmp_path):
     app = create_app(Settings(_env_file=None, database_url=f"sqlite:///{tmp_path / 'api.db'}", worker_enabled=False))
     async def run():
         async with httpx.AsyncClient(transport=transport([], bad_rate=True)) as exchange_client:
-            with TestClient(app) as client:
+            with TestClient(app, base_url="http://127.0.0.1") as client:
                 app.state.users.client = exchange_client
                 response = client.get("/api/v1/users/testnet/accounts/" + OWNER)
                 assert response.status_code == 502

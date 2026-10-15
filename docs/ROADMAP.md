@@ -45,7 +45,7 @@ Each checked substage has its own local commit. No pushes or deployments. A stag
 
 - [ ] **6.1 Operational readiness.** Independent security review, restore drill, alerting, credentials, supported jurisdictions, deployment and loss-budget configuration.
   - [x] **6.1a Local recovery tooling.** Verified SQLite snapshots, hashes/counts, committed WAL capture and restore into a new directory. Tested actual local paper recovery and offline unknown-command/nonce preservation; live ledgers are never replaced automatically.
-  - [ ] **6.1b Local API boundary review.** Body/origin/host limits, defensive verification and a scoped internal security report.
+  - [x] **6.1b Local API boundary review.** Exact loopback hosts/origins, bounded bodies/slow reads, redacted settings errors and scoped internal report. Verified: 172 Python tests, 11 wallet tests, build, live proxy/browser checks and npm production audit. Public launch remains gated by 6.1c.
   - [ ] **6.1c Production readiness.** Independent security review, authenticated public service, distributed limits/leadership, alerts, off-machine recovery, deployment and jurisdiction decisions. Local tests do not complete this gate.
 - [ ] **6.2 Small mainnet pilot.** Owner-authorized capital and activation; monitor actual fills, fees, funding, drawdown, retention and organic volume. Never infer readiness from paper profits alone.
 
