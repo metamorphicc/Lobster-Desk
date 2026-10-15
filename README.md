@@ -10,6 +10,7 @@ A public trading tank: pitch a BTC setup, watch three crustacean agents challeng
 - `apps/web`: Next.js trading tank and pitch interface.
 - `docs/ROADMAP.md`: stages, substages, acceptance criteria, and completion status.
 - `docs/ARCHITECTURE.md`: financial authority, data flow, and safety boundaries.
+- `docs/BACKUP-RESTORE.md`: verified SQLite snapshots and isolated recovery drills.
 
 ## Run locally
 

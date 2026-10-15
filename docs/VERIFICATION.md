@@ -36,6 +36,10 @@ Anonymous testnet CLI inspection succeeded against `api.hyperliquid-testnet.xyz`
 
 The Anthropic adapter's request/output contract is tested with mocked responses. Actual paid inference has not been verified because no provider credentials were supplied. Signing is verified offline with a public, unfunded test key. No signed request, exchange order, wallet approval, deposit or funded acceptance test was performed. PostgreSQL, multi-host signing and actual exchange protection remain unverified. Stage 5.1d stays open.
 
+## Local recovery
+
+163 Python tests pass after adding SQLite snapshot/restore coverage. A real stopped-service paper snapshot was created at `artifacts/backups/20261015T225041-fbde6e34/manifest.json`, verified and restored to `artifacts/restore-drills/20261015-local-paper/`. Account, episode, position and event rows matched the original database exactly. Tests also preserved an uncertain testnet entry command and its durable nonce across an isolated restore without replaying entry. These are local/offline results; no restored signer was activated against the exchange.
+
 ## Financial interpretation
 
 These checks establish local software behavior, not a trading edge or sustainable business economics. Paper fills assume full execution, modeled adverse slippage and taker fees; they do not model funding, order-book queue priority, partial fills or exchange outages faithfully. Performance figures must retain the paper label.

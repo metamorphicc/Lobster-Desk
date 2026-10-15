@@ -23,7 +23,7 @@ Paper positions cannot close while there is no fresh price or while the service 
 
 ## Recovery and backup
 
-Stop the service before backing up the local SQLite database. Copy `data/lobster.db` to an owner-controlled backup location. Keep `.env` separate and private. Restore to the same database path while the service is stopped.
+Use `node scripts/python.mjs scripts/backup.py` for a verified SQLite snapshot, then exercise `--restore` into a new isolated directory. The tool includes committed WAL state and never replaces a working database. See [BACKUP-RESTORE.md](BACKUP-RESTORE.md) for verification, retention and signer nonce recovery limits. Keep `.env` and signing credentials separate and private.
 
 On restart, the account, active approvals, positions and event IDs are loaded from the database. Repeated fills for one proposal return the existing position. An interrupted model review is rejected instead of spending on an automatic repeat.
 
