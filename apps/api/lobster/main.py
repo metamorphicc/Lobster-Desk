@@ -12,7 +12,7 @@ import time
 from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import Field
 
 import httpx
@@ -29,6 +29,7 @@ from .users.contracts import Address, UserTestnetSettings
 from .users.service import UserTestnetService
 from .users.fees import ConsentInput, FeeQuoteInput, consent_plan, fee_quote
 from .http_boundary import LocalBoundary, LOCAL_ORIGINS
+from .ops.readiness import readiness
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +42,9 @@ class Runtime:
         self.market_error: str | None = None
         self.worker_error: str | None = None
         self.limits: dict[str, deque] = defaultdict(deque)
+        self.tasks: dict[str, asyncio.Task] = {}
+        self.last_market_tick = None
+        self.last_decision_tick = None
 
     async def market_loop(self, feed):
         while True:
@@ -58,6 +62,8 @@ class Runtime:
                 self.market_error = "Market update or protection failed. New entries wait for a healthy fresh snapshot."
                 # Invalidates entry authority even if the previous snapshot is still young.
                 self.market = None
+            finally:
+                self.last_market_tick = utcnow()
             await asyncio.sleep(self.settings.market_poll_seconds)
 
     async def decision_loop(self, reviewer):
@@ -69,6 +75,8 @@ class Runtime:
             except Exception as error:
                 logger.warning("Decision worker failed (%s)", type(error).__name__)
                 self.worker_error = "Decision worker could not advance. Existing position protection remains independent."
+            finally:
+                self.last_decision_tick = utcnow()
             await asyncio.sleep(max(self.settings.review_interval_seconds, 0.05))
 
     def snapshot(self):
@@ -113,7 +121,9 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
             reviewer = DemoReviewer() if config.agent_provider == "demo" else AnthropicReviewer(client, config)
             tasks = []
             if config.worker_enabled:
-                tasks = [asyncio.create_task(runtime.market_loop(feed)), asyncio.create_task(runtime.decision_loop(reviewer))]
+                runtime.tasks = {"market": asyncio.create_task(runtime.market_loop(feed)),
+                                 "decision": asyncio.create_task(runtime.decision_loop(reviewer))}
+                tasks = list(runtime.tasks.values())
             yield
             for task in tasks:
                 task.cancel()
@@ -133,7 +143,16 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
     @app.get("/api/health")
     def health(request: Request):
         runtime = request.app.state.runtime
-        return {"status": "degraded" if runtime.market_error or runtime.worker_error else "ok", "execution_mode": "paper"}
+        return {"status": "degraded" if runtime.market_error or runtime.worker_error else "ok", "execution_mode": "paper", "probe": "liveness"}
+
+    @app.get("/api/ready")
+    def ready(request: Request):
+        report = readiness(request.app.state.runtime, request.app.state.testnet)
+        return JSONResponse(report, status_code=200 if report["service_ready"] else 503)
+
+    @app.get("/api/v1/ops/status")
+    def operations(request: Request):
+        return readiness(request.app.state.runtime, request.app.state.testnet)
 
     @app.get("/api/v1/state")
     def state(request: Request):

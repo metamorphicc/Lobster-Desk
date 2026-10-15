@@ -39,5 +39,7 @@ Paper operator pause/close controls apply only to the simulated tank account. Th
 
 ## Public deployment gate
 
+Check `/api/ready` rather than relying on liveness alone when diagnosing a stopped worker or stale data. A healthy paper service can still have a paused/occupied entry gate. Read-only local counters and alert scopes are explained in [OPERATIONS.md](OPERATIONS.md).
+
 Before exposing this app publicly: add user identity, durable distributed rate limits, request body limits, proper database migrations, worker leadership, TLS, secret storage, backups, alerting and independent review. Test signer permissions, partial fills, exchange stops, fee approval and revocation on testnet before mainnet activation. These gates are tracked in stages 5–6.
 

@@ -9,7 +9,7 @@ from pathlib import Path
 from threading import RLock
 from uuid import uuid4
 
-from sqlalchemy import JSON, Integer, String, create_engine, select, text
+from sqlalchemy import JSON, Integer, String, create_engine, func, select, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 from sqlalchemy.pool import StaticPool
 
@@ -364,4 +364,21 @@ class Store:
                 "positions": sorted(positions, key=lambda p: p["opened_at"], reverse=True)[:100],
                 "events": [row.payload | {"id": row.id} for row in reversed(latest)],
                 "last_event_id": latest[0].id if latest else 0}
+
+    def operational_snapshot(self) -> dict:
+        """Read-only counters; these observations never authorize an entry."""
+        with self.lock, Session(self.engine) as session:
+            account = session.get(Account, 1).payload
+            statuses = dict(session.execute(select(Episode.payload["status"].as_string(), func.count())
+                                           .group_by(Episode.payload["status"].as_string())).all())
+            open_positions = session.scalar(select(func.count()).select_from(Position)
+                .where(Position.payload["status"].as_string() == "open"))
+            day = utcnow().date().isoformat()
+            calls = session.scalar(select(func.count()).select_from(Event).where(
+                Event.payload["kind"].as_string() == "review_started",
+                Event.payload["timestamp"].as_string().startswith(day)))
+            return {"paper_paused": bool(account["paused"]), "paper_halt_reason": account["halt_reason"],
+                "open_positions": open_positions, "reserved_entries": statuses.get("approved", 0),
+                "pending_reviews": sum(statuses.get(status, 0) for status in ("queued", "analyzing", "risk_check", "capital_check")),
+                "episodes_total": sum(statuses.values()), "review_calls_today": calls, "review_budget_day": day}
 
