@@ -28,23 +28,25 @@ class TestnetSigner:
     def __repr__(self):
         return f"TestnetSigner(address={self.address!r}, network='testnet')"
 
-    def _envelope(self, action: dict, nonce: int, now_ms: int) -> dict:
-        if not now_ms <= nonce <= now_ms + 1000:
+    def _envelope(self, action: dict, nonce: int, now_ms: int, deadline_ms: int | None = None) -> dict:
+        if not now_ms - 1000 <= nonce <= now_ms + 1000:
             raise ValueError("Nonce is outside the permitted signing window.")
-        expires = now_ms + 5000
+        expires = min(now_ms + 5000, deadline_ms) if deadline_ms is not None else now_ms + 5000
+        if expires <= now_ms:
+            raise ValueError("Approval expired before signing.")
         signature = sign_l1_action(self.__wallet, action, None, nonce, expires, False)
         return {"action": action, "nonce": nonce, "signature": signature, "vaultAddress": None, "expiresAfter": expires}
 
-    def order(self, order: OrderSpec, nonce: int, now_ms: int) -> dict:
+    def order(self, order: OrderSpec, nonce: int, now_ms: int, deadline_ms: int | None = None) -> dict:
         if order.asset_id != self.rules.asset_id or order.quantity % self.rules.quantity_step:
             raise ValueError("Order does not match BTC market precision.")
         if self.rules.price(order.price) != order.price:
             raise ValueError("Order price has invalid exchange precision.")
         if order.trigger_price is not None and self.rules.price(order.trigger_price) != order.trigger_price:
             raise ValueError("Trigger price has invalid exchange precision.")
-        if order.kind == "entry" and order.price * order.quantity > self.max_entry_notional:
-            raise ValueError("Entry notional exceeds the signer cap.")
-        return self._envelope({"type": "order", "orders": [order.to_wire()], "grouping": "na"}, nonce, now_ms)
+        if order.kind == "entry" and not Decimal("10") <= order.price * order.quantity <= self.max_entry_notional:
+            raise ValueError("Entry notional falls outside the signer cap.")
+        return self._envelope({"type": "order", "orders": [order.to_wire()], "grouping": "na"}, nonce, now_ms, deadline_ms)
 
     def leverage(self, value: int, nonce: int, now_ms: int) -> dict:
         if not 1 <= value <= min(2, self.rules.max_leverage):

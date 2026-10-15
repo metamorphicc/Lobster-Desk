@@ -125,6 +125,14 @@ def test_main_wallet_key_is_refused(rules):
         TestnetSigner(KEY, Account.from_key(KEY.get_secret_value()).address, rules)
 
 
+def test_signed_entry_cannot_outlive_review_approval(setup, rules):
+    signer = TestnetSigner(KEY, ADDRESS, rules)
+    order = size_entry(**context(setup, rules))
+    assert signer.order(order, 1700000000000, 1700000000002, 1700000000500)["expiresAfter"] == 1700000000500
+    with pytest.raises(ValueError, match="expired"):
+        signer.order(order, 1700000000000, 1700000000002, 1700000000001)
+
+
 def test_protection_is_reduce_only(rules):
     signer = TestnetSigner(KEY, ADDRESS, rules)
     order = OrderSpec(asset_id=0, side="sell", quantity="0.0005", price="59000", trigger_price="59400",
@@ -158,7 +166,7 @@ def test_signer_refuses_wrong_asset_and_precision(rules):
         signer.order(order, 1700000000000, 1700000000000)
 
 
-@pytest.mark.parametrize("nonce", [1699999999999, 1700000001001])
+@pytest.mark.parametrize("nonce", [1699999998999, 1700000001001])
 def test_signer_refuses_old_or_far_future_nonce(rules, nonce):
     with pytest.raises(ValueError, match="Nonce"):
         TestnetSigner(KEY, ADDRESS, rules).leverage(1, nonce, 1700000000000)
