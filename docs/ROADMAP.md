@@ -20,7 +20,7 @@ Each checked substage has its own local commit. No pushes or deployments. A stag
 
 ## Stage 3 — Local service
 
-- [ ] **3.1 API and worker.** Validated pitches, idempotency, shared state, SSE, automatic position protection, protected operator controls and API tests.
+- [x] **3.1 API and worker.** Validated pitches, idempotency, shared state, SSE, independent position protection and protected operator controls. Verified: 51 API/core tests. Loopback-only service; no mainnet order route.
 
 ## Stage 4 — Usable product
 

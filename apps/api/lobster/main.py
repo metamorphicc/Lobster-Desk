@@ -1,0 +1,174 @@
+"""Loopback development API. No exchange signing or mainnet order endpoints."""
+
+import asyncio
+from collections import defaultdict, deque
+from contextlib import asynccontextmanager, suppress
+import hmac
+import json
+import logging
+import re
+import time
+
+from fastapi import FastAPI, Header, HTTPException, Query, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
+
+import httpx
+
+from .agents import AnthropicReviewer, DemoReviewer
+from .config import Settings
+from .domain import OperatorAction, PitchInput, Snapshot, utcnow
+from .market import DemoFeed, HyperliquidFeed
+from .pipeline import Pipeline
+from .store import Store
+
+logger = logging.getLogger(__name__)
+
+
+class Runtime:
+    def __init__(self, settings: Settings, store: Store):
+        self.settings = settings
+        self.store = store
+        self.market: Snapshot | None = None
+        self.market_error: str | None = None
+        self.worker_error: str | None = None
+        self.limits: dict[str, deque] = defaultdict(deque)
+
+    async def market_loop(self, feed):
+        while True:
+            try:
+                self.market = await feed.fetch()
+                self.market_error = None
+                # Protection runs independently from model latency.
+                self.store.mark(self.market)
+                for ep in self.store.state(self.market)["episodes"]:
+                    if ep["status"] == "approved":
+                        self.store.try_fill(ep["id"], self.market)
+                self.store.mark(self.market)
+            except Exception as error:
+                logger.warning("Market/protection tick failed (%s)", type(error).__name__)
+                self.market_error = "Market update or protection failed. New entries wait for a healthy fresh snapshot."
+                # Invalidates entry authority even if the previous snapshot is still young.
+                self.market = None
+            await asyncio.sleep(self.settings.market_poll_seconds)
+
+    async def decision_loop(self, reviewer):
+        pipeline = Pipeline(self.store, reviewer)
+        while True:
+            try:
+                await pipeline.step(self.market)
+                self.worker_error = None
+            except Exception as error:
+                logger.warning("Decision worker failed (%s)", type(error).__name__)
+                self.worker_error = "Decision worker could not advance. Existing position protection remains independent."
+            await asyncio.sleep(max(self.settings.review_interval_seconds, 0.05))
+
+    def snapshot(self):
+        stale = self.market is None or not -2 <= (utcnow() - self.market.timestamp).total_seconds() <= self.store.policy.max_data_age_seconds
+        return self.store.state(self.market) | {
+            "market": self.market.model_dump(mode="json") if self.market else None,
+            "policy": self.store.policy.model_dump(mode="json"),
+            "service": {"execution_mode": "paper", "market_source": self.settings.market_source,
+                "agent_provider": self.settings.agent_provider,
+                "model": self.settings.anthropic_model if self.settings.agent_provider == "anthropic" else "scripted-review-v1",
+                "data_stale": stale, "market_error": self.market_error, "worker_error": self.worker_error,
+                "operator_enabled": bool(self.settings.operator_token), "user_trading_enabled": False,
+                "fee_collection_enabled": False, "worker_enabled": self.settings.worker_enabled}}
+
+
+def create_app(settings: Settings | None = None) -> FastAPI:
+    config = settings or Settings()
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        runtime = Runtime(config, Store(config.database_url, config.initial_capital))
+        app.state.runtime = runtime
+        async with httpx.AsyncClient(timeout=10) as client:
+            feed = DemoFeed() if config.market_source == "demo" else HyperliquidFeed(client)
+            reviewer = DemoReviewer() if config.agent_provider == "demo" else AnthropicReviewer(client, config)
+            tasks = []
+            if config.worker_enabled:
+                tasks = [asyncio.create_task(runtime.market_loop(feed)), asyncio.create_task(runtime.decision_loop(reviewer))]
+            yield
+            for task in tasks:
+                task.cancel()
+            for task in tasks:
+                with suppress(asyncio.CancelledError):
+                    await task
+        runtime.store.engine.dispose()
+
+    app = FastAPI(title="Lobster Desk", version="0.1.0", lifespan=lifespan)
+    app.add_middleware(CORSMiddleware, allow_origins=["http://127.0.0.1:3000", "http://localhost:3000"],
+                       allow_methods=["GET", "POST"], allow_headers=["Content-Type", "Idempotency-Key", "Authorization"])
+
+    @app.get("/api/health")
+    def health(request: Request):
+        runtime = request.app.state.runtime
+        return {"status": "degraded" if runtime.market_error or runtime.worker_error else "ok", "execution_mode": "paper"}
+
+    @app.get("/api/v1/state")
+    def state(request: Request):
+        return request.app.state.runtime.snapshot()
+
+    @app.post("/api/v1/pitches", status_code=201)
+    def submit(pitch: PitchInput, request: Request, idempotency_key: str = Header(alias="Idempotency-Key")):
+        if not re.fullmatch(r"[a-zA-Z0-9_-]{8,64}", idempotency_key):
+            raise HTTPException(422, "Use an 8-64 character alphanumeric Idempotency-Key.")
+        runtime = request.app.state.runtime
+        client = request.client.host if request.client else "local"
+        queue = runtime.limits[client]
+        now = time.monotonic()
+        while queue and queue[0] < now - 60:
+            queue.popleft()
+        if len(queue) >= 10:
+            raise HTTPException(429, "Limit: 10 pitch requests per minute. Wait before trying again.", headers={"Retry-After": "60"})
+        queue.append(now)
+        try:
+            return runtime.store.submit(pitch, idempotency_key)
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from None
+
+    @app.get("/api/v1/episodes/{episode_id}")
+    def episode(episode_id: str, request: Request):
+        result = request.app.state.runtime.store.get_episode(episode_id)
+        if not result:
+            raise HTTPException(404, "Episode not found.")
+        return result
+
+    @app.get("/api/v1/events")
+    async def events(request: Request, after: int = Query(default=0, ge=0),
+                     last_event_id: str | None = Header(default=None, alias="Last-Event-ID")):
+        cursor = max(after, int(last_event_id)) if last_event_id and last_event_id.isdigit() else after
+        async def stream():
+            nonlocal cursor
+            while not await request.is_disconnected():
+                items = request.app.state.runtime.store.events(cursor)
+                for item in items:
+                    cursor = item["id"]
+                    yield f"id: {cursor}\nevent: decision\ndata: {json.dumps(item)}\n\n"
+                if not items:
+                    yield ": heartbeat\n\n"
+                await asyncio.sleep(1)
+        return StreamingResponse(stream(), media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+    @app.get("/api/v1/journal")
+    def journal(request: Request, after: int = Query(default=0, ge=0), limit: int = Query(default=100, ge=1, le=1000)):
+        return {"events": request.app.state.runtime.store.events(after, limit)}
+
+    @app.post("/api/v1/operator")
+    def operate(action: OperatorAction, request: Request, authorization: str | None = Header(default=None)):
+        if not config.operator_token:
+            raise HTTPException(503, "Operator controls are disabled. Configure OPERATOR_TOKEN locally.")
+        expected = "Bearer " + config.operator_token.get_secret_value()
+        if not authorization or not hmac.compare_digest(authorization, expected):
+            raise HTTPException(401, "Invalid operator credentials.")
+        runtime = request.app.state.runtime
+        try:
+            runtime.store.operate(action.action, runtime.market)
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from None
+        return {"ok": True}
+
+    return app
+
