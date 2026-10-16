@@ -4,6 +4,8 @@
 
 Each checked substage has its own local commit. No pushes or deployments. A stage is complete only after its acceptance checks pass. Local paper trading is the first usable release; external funding and execution are separate gates.
 
+Current handoff: local preparation has proceeded through Stage 7.2a. Main Stages 5–7 remain partial because funded acceptance, live/public integrations, hosting/jurisdiction decisions, owner capital and token role/rights are outstanding. See `HANDOFF.md`; a checked preparation substage does not complete its parent production gate.
+
 ## Stage 0 — Foundation
 
 - [x] **0.1 Repository and specification.** Local branch, GitHub remote, architecture, delivery rules, initial scope.
