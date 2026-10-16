@@ -1,0 +1,10 @@
+{
+  "schema_version": "lobster-pilot-plan-v1",
+  "market": "BTC",
+  "max_leverage": 2,
+  "max_entry_notional": "50",
+  "owner_capital_budget": null,
+  "absolute_loss_budget": null,
+  "reserve_floor": null,
+  "execution_enabled": false
+}

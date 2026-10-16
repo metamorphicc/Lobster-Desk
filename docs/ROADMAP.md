@@ -63,6 +63,7 @@ Each checked substage has its own local commit. No pushes or deployments. A stag
     - [x] **6.1c.5 Locked dependency advisory check.** All 56 Python lock entries audited without skips, installed-version/consistency checks and npm production audit. Zero reported advisories on 2026-10-16; this is not an independent supply-chain review. See `DEPENDENCY-AUDIT.md`.
     - [x] **6.1c.6 Local release preparation.** Clean committed-source packaging, lock/archive hashes, local-only configuration, monitor JSON interface and explicit independent-review/off-machine recovery handoff. Public hosting, distributed controls and actual external integrations remain unimplemented/unverified; see `RELEASE.md`.
 - [ ] **6.2 Small mainnet pilot.** Owner-authorized capital and activation; monitor actual fills, fees, funding, drawdown, retention and organic volume. Never infer readiness from paper profits alone.
+  - [x] **6.2a Disabled pilot rehearsal.** Exact-decimal, hash-bound budget plan and cash-flow-neutral loss/recovery checks with no mainnet transport. Owner capital/loss/reserve choices remain blank; missing observations produce null metrics. See `PILOT.md`.
 
 ## Stage 7 — Token economics (after validation)
 
