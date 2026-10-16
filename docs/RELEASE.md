@@ -12,7 +12,7 @@ After tests/build and a local substage commit:
 node scripts/python.mjs scripts/release-bundle.py --output artifacts/releases/local-candidate
 ```
 
-The packager requires a clean `codex/` branch, rejects tracked environment/runtime/key paths, writes a **new** directory and hashes the committed source ZIP and dependency locks. It excludes ignored runtime files because it archives Git's committed tree. It does not certify source contents, dependency provenance or review quality. Do not force-add secrets to Git; filename checks are an additional boundary only. Nothing is pushed or deployed. The ZIP requires installation and building in the target environment; it is not an executable container image.
+The packager requires a clean attached local branch (currently `lobster-desk`), rejects tracked environment/runtime/key paths, writes a **new** directory and hashes the committed source ZIP and dependency locks. It excludes ignored runtime files because it archives Git's committed tree. It does not certify source contents, dependency provenance or review quality. Do not force-add secrets to Git; filename checks are an additional boundary only. Nothing is pushed or deployed. The ZIP requires installation and building in the target environment; it is not an executable container image.
 
 Reproduce locally using the exact source revision, `npm ci`, the Python lock and editable API install with `--no-deps`, then run API/web tests, typecheck and web production build as described in `README.md`. Run one loopback API process and one loopback frontend process. Keep credentials outside the package and avoid concurrent workers over a restored database.
 

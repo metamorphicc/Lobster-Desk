@@ -43,7 +43,7 @@ def bundle(root: Path, destination: Path, config: ReleaseConfig):
     if git(root, "status", "--porcelain", "--untracked-files=normal").strip():
         raise ValueError("Commit the completed substage before packaging; the worktree must be clean.")
     branch = git(root, "branch", "--show-current").decode().strip()
-    if not branch.startswith("codex/"): raise ValueError("Package a local codex/ branch.")
+    if not branch: raise ValueError("Package an attached local branch, not a detached checkout.")
     revision = git(root, "rev-parse", "HEAD").decode().strip()
     names = git(root, "ls-tree", "-rz", "--name-only", revision).decode().strip("\0").split("\0")
     if not names or not all(safe_source(name) for name in names):

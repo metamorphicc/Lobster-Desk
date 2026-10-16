@@ -22,7 +22,7 @@ def test_committed_archive_is_exact_and_dirty_or_forbidden_source_is_refused(tmp
     root = tmp_path / "source"
     root.mkdir()
     def git(*args): return subprocess.run(["git", "-C", str(root), *args], check=True, capture_output=True)
-    git("init", "-b", "codex/fixture")
+    git("init", "-b", "lobster-desk")
     git("config", "user.email", "fixture@example.invalid")
     git("config", "user.name", "Offline Fixture")
     (root / "apps/api").mkdir(parents=True)
@@ -31,6 +31,7 @@ def test_committed_archive_is_exact_and_dirty_or_forbidden_source_is_refused(tmp
     git("add", ".")
     git("commit", "-m", "fixture")
     report = bundle(root, tmp_path / "bundle", ReleaseConfig())
+    assert report["branch"] == "lobster-desk"
     assert not report["production_verified"]
     with zipfile.ZipFile(tmp_path / "bundle/source.zip") as archive:
         assert archive.read("package-lock.json") == b"{}"

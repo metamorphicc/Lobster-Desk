@@ -1,6 +1,6 @@
 # Delivery handoff — 2026-10-16
 
-All completed local substages are committed on `codex/mvp-foundation`. The remote is `https://github.com/metamorphicc/Lobster-Desk.git`. No push, deployment, real order, transfer or token launch was performed. See `ROADMAP.md` for separate software and external acceptance checkboxes.
+All completed local substages are committed on `lobster-desk` (renamed from `codex/mvp-foundation` at the owner's request). The remote is `https://github.com/metamorphicc/Lobster-Desk.git`. No push, deployment, real order, transfer or token launch was performed. See `ROADMAP.md` for separate software and external acceptance checkboxes.
 
 ## Usable now
 
@@ -43,8 +43,18 @@ The monitor reads only the local API; stopped services produce an unavailable re
 
 ## Verification
 
-The final local checks are recorded in `VERIFICATION.md`: **357 Python tests**, **27 Node wallet tests**, TypeScript and the web production build pass. Relevant tests cover exact money, signature domains/replay/clock/expiry, concurrent claims/receipts, strict role/account isolation, guard failure after leverage, actual fixture partial fills and stop recovery, revenue/loss/reserve arithmetic, duplicate purchase/disposal prevention and isolated restore. One upstream Starlette/httpx test-client deprecation warning remains; tests do not require changing the locked runtime to silence it.
+The latest local checks are recorded in `VERIFICATION.md`: **359 Python tests**, **46 Node wallet/consent tests**, TypeScript and the web production build pass. Relevant tests cover exact money, signature domains/replay/clock/expiry, concurrent claims/receipts, strict role/account isolation, guard failure after leverage, actual fixture partial fills and stop recovery, revenue/loss/reserve arithmetic, duplicate purchase/disposal prevention and isolated restore. One upstream Starlette/httpx test-client deprecation warning remains; tests do not require changing the locked runtime to silence it.
 
 A real local paper-plus-empty-treasury snapshot was created and restored into an isolated directory. Default acceptance/pilot/economic reports were generated with unverified/disabled flags. No fabricated production trades or revenue were inserted. Temporary services from earlier browser checks were stopped; no new daemon/automation was installed.
 
 The independent review, deployment, funded testnet/mainnet and token gates are **not** completed by tests, manifests, document checkboxes or owner-supplied receipt hashes. The detailed continuation references are `USER-EXECUTION.md`, `USER-ACCEPTANCE.md`, `RELEASE.md`, `PILOT.md`, `ECONOMICS.md` and `BUYBACK-REPORTING.md`.
+
+## Autonomous continuation
+
+Substages 5.2d.5d–e add a fully offline five-scenario user runner and the unsigned consent workbench. The private preview now exposes profile/fee/agent details, exact local/SDK payloads, unsigned downloads and recent intent history; raw proof signatures are redacted from HTTP reads. Neither preparation nor sign-in activates financial wallet RPC or exchange submission. Actual extension acceptance remains open.
+
+```powershell
+node scripts/python.mjs scripts/user-rehearsal.py --output artifacts/rehearsals/new-run
+```
+
+This command needs no API key, wallet, test funds or network. It uses public unfunded vectors, isolated new databases and an in-memory writer; all outputs are synthetic/unverified. The generated report binds five lifecycle/recovery cases and never certifies real trading. See `USER-EXECUTION.md` for the boundary and test coverage.

@@ -15,4 +15,4 @@ if __name__ == "__main__":
         print("Committed source packaged locally at " + str(args.output.resolve()))
         print("Revision: " + result["revision"] + "; production/exchange/token activation: disabled.")
     except Exception:
-        parser.exit(1, "Packaging refused. Check clean codex/ branch, tracked paths, local-only config and a new output directory.\n")
+        parser.exit(1, "Packaging refused. Check clean attached local branch, tracked paths, local-only config and a new output directory.\n")

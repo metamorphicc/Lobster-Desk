@@ -94,3 +94,13 @@ During repeated full-suite runs, Windows once refused a fresh asyncio socketpair
 
 Final checks: **357 Python tests passed**, **27 Node wallet tests passed**, TypeScript passed and the web production build passed. Git whitespace checks passed. These counts supersede earlier historical checkpoint counts in this document. No dependency lock changed after the recorded advisory audit.
 
+## Autonomous runner and unsigned workbench — 2026-10-16
+
+Latest checks: **359 Python tests passed**, **46 Node wallet/consent tests passed**, TypeScript and production build passed. The new standalone offline runner completed all five scenarios, with httpx sends and signer-credential construction forbidden in its test. It preserves actual fixture partial-fill protection, restart attribution, unknown-command handling, stop-failure recovery and post-leverage revocation without entry replay. No real wallet, exchange or funded account was used.
+
+The private execution-context API limits recent intents to ten, isolates owners and redacts raw proof signatures/nonce counters. A Python-generated fixture from the actual SDK/intent code drives client checks for changed owner/plan/agent/builder/fee/type/domain/nonce/expiry and widened signing flags. The view exposes unsigned review/download actions only and imports no wallet provider.
+
+The actual React consent view was server-rendered into an explicitly synthetic nine-state preview. Browser checks at 320/375/414/768/1280 px found no horizontal overflow or wrapped button/summary text, including expanded JSON. Mobile/tablet states were visually checked; the browser reported no warning/error logs. This is layout/contract evidence, not actual authenticated extension interaction. The temporary preview tab/helper were closed after verification.
+
+The source packager's prefix restriction was removed after the owner's branch rename; its test packages `lobster-desk`, preserving clean-tree, path exclusions and disabled activation. The 16 release tests pass. No dependency lock changed, and no service was exposed publicly, notification sent, financial proof accepted or exchange transaction submitted.
+

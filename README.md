@@ -55,6 +55,7 @@ To configure the optional modes, copy `.env.example` to `.env` at the repository
 6. **Export journal** downloads the complete append-only application event history as JSON.
 7. **Testnet → Your testnet account** connects an injected wallet for public data or watches an address. Inspect balances, orders, builder approval, cost illustrations and unsigned consent plans. A separate optional sign-in message establishes a local EOA preview session; public watching grants none. Neither grants trading authority; see [USER-ACCOUNTS.md](docs/USER-ACCOUNTS.md).
 8. A verified local session can request a private **user order preview** for an approved, unexpired testnet setup. It sizes against the user's own fresh account with a $50 cap, saves an immutable record and shows the outstanding execution blockers. It sends no exchange order and installs no stop.
+9. Under that preview, **Review execution permissions** shows the operator-configured public profile, prepares exact unsigned local/SDK payloads and lists recent private intents. Exports contain no session token. Financial wallet signing and exchange submission stay disabled.
 
 Scripted demo reviewers are deterministic checks, not real AI. Synthetic price, funding and OI figures are labelled. The optional model adapter supplies real reviews but cannot override coded controls. Paper protection runs while this local service is running and has fresh data; it is not an exchange-native stop.
 
@@ -69,6 +70,8 @@ node scripts/python.mjs scripts/check-market.py
 ```
 
 The last command is an optional public-network smoke check, separate from deterministic tests. It reads Hyperliquid prices and candles without signing or trading. See `docs/VERIFICATION.md` for the tested scope and limitations.
+
+For a fully offline user lifecycle rehearsal, run `node scripts/python.mjs scripts/user-rehearsal.py --output artifacts/rehearsals/new-run` with a new directory. Five synthetic execution/recovery scenarios run without credentials, wallet, funds or exchange access. The output is labelled fixture evidence, never funded acceptance.
 
 With services running, `node scripts/python.mjs scripts/check-health.py` checks local paper readiness; add `--web` to include the frontend proxy. It does not activate execution or establish production readiness. See [OPERATIONS.md](docs/OPERATIONS.md) for exit codes and alert scope.
 
@@ -86,5 +89,5 @@ Stages 0–4 implement the local paper MVP. Stage 5 adds a testnet-only signer, 
 
 Later local substages add private user capital/consent records, locked user orchestration, acceptance inventories, source packaging/monitor interfaces, pilot-budget rehearsals and receipt-based treasury/buyback reports. These preserve disabled financial/production/token gates. Jurisdiction, hosting and token rights remain unspecified. See [the delivery handoff](docs/HANDOFF.md) for the exact implemented scope and unfinished integrations.
 
-Every completed substage is a separate local commit on `codex/mvp-foundation`. The `origin` remote points to `https://github.com/metamorphicc/Lobster-Desk.git`; nothing is pushed automatically.
+Every completed substage is a separate local commit on `lobster-desk` (renamed at the owner's request). The `origin` remote points to `https://github.com/metamorphicc/Lobster-Desk.git`; nothing is pushed automatically.
 
