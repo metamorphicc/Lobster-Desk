@@ -224,15 +224,24 @@ class ExecutionLedger:
                 if fill.get("coin") != "BTC" or int(fill["oid"]) not in owned_oids:
                     continue
                 key = f"{fill['oid']}:{fill['tid']}"
-                if session.get(Fill, key):
-                    continue
                 # Decimal parsing also rejects malformed/non-finite observations.
                 for field in ("sz", "px", "fee", "closedPnl"):
-                    if not D(str(fill[field])).is_finite():
+                    if isinstance(fill[field], (float, bool)) or not D(str(fill[field])).is_finite():
                         raise ValueError("Non-finite exchange fill.")
                 if D(fill["sz"]) <= 0 or D(fill["px"]) <= 0 or fill.get("feeToken") != "USDC":
                     raise ValueError("Unsupported fill denomination or size.")
                 data = {key: fill[key] for key in ("coin", "oid", "tid", "px", "sz", "fee", "feeToken", "closedPnl", "time", "side")}
+                # Hyperliquid documents builderFee as INCLUDED in fee. Never add it twice.
+                builder_fee = fill.get("builderFee")
+                if builder_fee is not None:
+                    if isinstance(builder_fee, (float, bool)) or not D(str(builder_fee)).is_finite() or not D("0") <= D(str(builder_fee)) <= D(str(fill["fee"])):
+                        raise ValueError("Invalid builder fee observation.")
+                    data["builderFee"] = str(builder_fee)
+                existing = session.get(Fill, key)
+                if existing:
+                    if existing.trade_id != trade_id or existing.payload != data:
+                        raise ValueError("Conflicting receipt for an already observed fill.")
+                    continue
                 session.add(Fill(id=key, trade_id=trade_id, payload=data))
                 session.flush()  # Deduplicate repeated fills within this same response as well.
                 self.event(session, "fill", "An actual testnet fill was observed.", trade_id, data)
@@ -245,6 +254,8 @@ class ExecutionLedger:
             return {"network": "testnet", "control": control,
                 "trades": [row.payload for row in session.scalars(select(Trade))], "fills": fills,
                 "observed_fill_fees": str(sum((D(f["fee"]) for f in fills), D("0"))),
+                "observed_builder_fee_component": str(sum((D(f.get("builderFee", "0")) for f in fills), D("0"))),
+                "builder_fee_coverage_complete": all("builderFee" in f for f in fills) and bool(fills),
                 "observed_closed_pnl": str(sum((D(f["closedPnl"]) for f in fills), D("0"))),
                 "events": [row.payload | {"id": row.id} for row in reversed(events)]}
 

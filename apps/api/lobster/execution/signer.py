@@ -12,7 +12,14 @@ from .contracts import BtcRules, OrderSpec
 class TestnetSigner:
     __test__ = False
     def __init__(self, key: SecretStr, account_address: str, rules: BtcRules,
-                 max_entry_notional: Decimal = Decimal("50")):
+                 max_entry_notional: Decimal = Decimal("50"), *, builder: str | None = None, builder_fee_tenths_bps: int = 0):
+        import re
+        if (type(builder_fee_tenths_bps) is not int or not 0 <= builder_fee_tenths_bps <= 100
+                or (builder is None and builder_fee_tenths_bps != 0)):
+            raise ValueError("Builder fee must be a configured integer from 0 to 100 tenths of a basis point.")
+        if builder is not None and (not re.fullmatch(r"0x[0-9a-fA-F]{40}", builder) or int(builder, 16) == 0
+                                    or builder.lower() == account_address.lower()):
+            raise ValueError("A separate nonzero builder address is required.")
         try:
             self.__wallet = Account.from_key(key.get_secret_value())
         except Exception:
@@ -24,6 +31,8 @@ class TestnetSigner:
         self.address = self.__wallet.address
         self.rules = rules
         self.max_entry_notional = max_entry_notional
+        self.builder = builder.lower() if builder else None
+        self.builder_fee_tenths_bps = builder_fee_tenths_bps
 
     def __repr__(self):
         return f"TestnetSigner(address={self.address!r}, network='testnet')"
@@ -46,7 +55,10 @@ class TestnetSigner:
             raise ValueError("Trigger price has invalid exchange precision.")
         if order.kind == "entry" and not Decimal("10") <= order.price * order.quantity <= self.max_entry_notional:
             raise ValueError("Entry notional falls outside the signer cap.")
-        return self._envelope({"type": "order", "orders": [order.to_wire()], "grouping": "na"}, nonce, now_ms, deadline_ms)
+        action = {"type": "order", "orders": [order.to_wire()], "grouping": "na"}
+        if self.builder is not None:
+            action["builder"] = {"b": self.builder, "f": self.builder_fee_tenths_bps}
+        return self._envelope(action, nonce, now_ms, deadline_ms)
 
     def leverage(self, value: int, nonce: int, now_ms: int) -> dict:
         if not 1 <= value <= min(2, self.rules.max_leverage):

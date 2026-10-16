@@ -29,6 +29,7 @@ from .users.fees import ConsentInput, FeeQuoteInput, consent_plan, fee_quote
 from .users.auth import AuthError, ChallengeInput, VerifyInput, UserAuth
 from .users.orders import PreviewInput, UserPlans, illustrate
 from .users.capital import UserCapital
+from .users.intents import UserIntents, IntentInput, ProfileInput
 from .execution.gateway import HyperliquidTestnet
 from .execution.contracts import ReviewedSetup
 from .http_boundary import LocalBoundary, LOCAL_ORIGINS
@@ -124,6 +125,7 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
             app.state.user_auth = UserAuth(runtime.store)
             app.state.user_plans = UserPlans(runtime.store)
             app.state.user_capital = UserCapital(runtime.store)
+            app.state.user_intents = UserIntents(runtime.store)
             async with httpx.AsyncClient(timeout=10) as client:
                 app.state.testnet = TestnetWorkbench(testnet_config, client, config.database_url)
                 if app.state.testnet.ledger:
@@ -357,6 +359,45 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
         result = request.app.state.user_plans.get(identity["address"], plan_id)
         if not result:
             raise HTTPException(404, "User preview not found.")
+        return result
+
+    @app.post("/api/v1/operator/user-testnet-profile")
+    def user_profile(body: ProfileInput, request: Request, authorization: str | None = Header(default=None)):
+        require_operator(authorization)
+        if body.builder != user_config.builder_address or body.fee_tenths_bps != user_config.builder_fee_tenths_bps:
+            raise HTTPException(409, "The profile must match the configured testnet builder and fee.")
+        try:
+            return request.app.state.user_intents.configure(body)
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from None
+
+    @app.post("/api/v1/users/testnet/permission-plans")
+    def user_permission_plans(request: Request, authorization: str | None = Header(default=None)):
+        identity = auth_call(request, request.app.state.user_auth.require, authorization)
+        auth_call(request, request.app.state.user_auth.admit, "intent:" + (request.client.host if request.client else "local"))
+        try:
+            return request.app.state.user_intents.approval_plans(identity["address"])
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from None
+
+    @app.post("/api/v1/users/testnet/intents", status_code=201)
+    def user_intent(body: IntentInput, request: Request, authorization: str | None = Header(default=None)):
+        identity = auth_call(request, request.app.state.user_auth.require, authorization)
+        auth_call(request, request.app.state.user_auth.admit, "intent:" + (request.client.host if request.client else "local"))
+        plan = request.app.state.user_plans.get(identity["address"], body.plan_id)
+        if not plan:
+            raise HTTPException(404, "User preview not found.")
+        try:
+            return request.app.state.user_intents.prepare(identity["address"], plan)
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from None
+
+    @app.get("/api/v1/users/testnet/intents/{intent_id}")
+    def user_intent_get(intent_id: str, request: Request, authorization: str | None = Header(default=None)):
+        identity = auth_call(request, request.app.state.user_auth.require, authorization)
+        result = request.app.state.user_intents.get(identity["address"], intent_id)
+        if not result:
+            raise HTTPException(404, "User intent not found.")
         return result
 
     @app.get("/api/v1/testnet/inspect")

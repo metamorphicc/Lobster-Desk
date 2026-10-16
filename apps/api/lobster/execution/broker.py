@@ -51,21 +51,29 @@ class TestnetBroker:
     __test__ = False
 
     def __init__(self, ledger: ExecutionLedger, gateway: HyperliquidTestnet, signer: TestnetSigner,
-                 *, armed: bool = False, policy: RiskPolicy | None = None):
+                 *, armed: bool = False, policy: RiskPolicy | None = None, entry_guard=None):
         self.ledger, self.gateway, self.signer = ledger, gateway, signer
         self.armed = armed
         self.policy = policy or RiskPolicy()
+        self.entry_guard = entry_guard
         self.lock = asyncio.Lock()
         identity = ledger.snapshot()["control"]
         if identity["account"] != gateway.account_address.lower() or identity["signer"] != signer.address.lower():
             raise ValueError("Signer, gateway and ledger identities do not match.")
+
+    async def _entry_capital(self, account):
+        # Refresh user cash-flow references/permissions before EACH entry check.
+        # Deliberately absent from reconciliation: outages must not disable exits.
+        if self.entry_guard is not None:
+            await self.entry_guard(account)
+        return self.ledger.observe_capital(account, self.policy)
 
     async def stage(self, setup: ReviewedSetup) -> dict:
         rules, market = await self.gateway.market()
         account = await self.gateway.account()
         if rules != self.signer.rules:
             raise ValueError("BTC metadata changed; recreate the signer with current rules.")
-        capital = self.ledger.observe_capital(account, self.policy)
+        capital = await self._entry_capital(account)
         order = size_entry(setup, market, account, capital, rules, self.policy, utcnow(), self.signer.max_entry_notional)
         return self.ledger.stage(setup, order.model_dump(mode="json"), rules.model_dump(mode="json"))
 
@@ -115,7 +123,7 @@ class TestnetBroker:
         account = await self.gateway.account()
         if rules.model_dump(mode="json") != trade["rules"]:
             raise ValueError("BTC exchange metadata changed after staging.")
-        capital = self.ledger.observe_capital(account, self.policy)
+        capital = await self._entry_capital(account)
         order = size_entry(setup, market, account, capital, rules, self.policy, utcnow(), self.signer.max_entry_notional)
         # A refreshed quote may only reduce the originally approved quantity.
         order = order.model_copy(update={"quantity": min(order.quantity, D(trade["entry"]["quantity"]))})
@@ -138,7 +146,7 @@ class TestnetBroker:
         if not -2 <= (utcnow() - account.observed_at).total_seconds() <= self.policy.max_data_age_seconds:
             self.ledger.update_trade(trade_id, "needs_reconciliation", "Account observation is stale; no reconciliation writes authorized.")
             return self.ledger.trade(trade_id)
-        capital = self.ledger.observe_capital(account, self.policy)
+        capital = await self._entry_capital(account)
         final = size_entry(setup, market, account, capital, rules, self.policy, utcnow(), self.signer.max_entry_notional)
         final = final.model_copy(update={"quantity": min(final.quantity, order.quantity)})
         if final.quantity * final.price < self.policy.min_notional:
