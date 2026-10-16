@@ -12,6 +12,7 @@ export type Episode = {
   risk: { quantity: string; notional: string; margin: string; planned_loss: string; reward_risk: string; approved: boolean; reasons: string[] } | null;
   approval_hash: string | null; position_id: string | null;
   snapshot?: { source: string } | null;
+  research?: { campaign_id: string; strategy_hash: string; signal_bar: number; max_holding_seconds: number };
 };
 export type Position = {
   id: string; episode_id: string; direction: "long" | "short"; status: "open" | "closed";
@@ -37,7 +38,8 @@ export type State = {
   policy: { risk_fraction: string; max_leverage: number; max_notional_fraction: string; version: string };
   service: { execution_mode: "paper"; market_source: string; agent_provider: string; model: string;
     data_stale: boolean; market_error: string | null; worker_error: string | null;
-    operator_enabled: boolean; worker_enabled: boolean; user_trading_enabled: boolean; fee_collection_enabled: boolean };
+    operator_enabled: boolean; worker_enabled: boolean; user_trading_enabled: boolean; fee_collection_enabled: boolean;
+    research_enabled: boolean; research_error: string | null };
 };
 
 export const money = (value: string | number | null | undefined, digits = 2) => value == null ? "—" :

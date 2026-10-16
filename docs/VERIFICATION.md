@@ -104,3 +104,16 @@ The actual React consent view was server-rendered into an explicitly synthetic n
 
 The source packager's prefix restriction was removed after the owner's branch rename; its test packages `lobster-desk`, preserving clean-tree, path exclusions and disabled activation. The 16 release tests pass. No dependency lock changed, and no service was exposed publicly, notification sent, financial proof accepted or exchange transaction submitted.
 
+# Autonomous research and agreed distribution — 2026-10-17
+
+Latest checks: **388 Python tests**, **46 Node wallet/consent tests**, TypeScript and the web production build pass. The remaining warning is the existing Starlette/httpx deprecation. No dependency versions/locks changed.
+
+New financial tests cover exact 40/20/40 fee conservation, prior losses/expenses, cumulative 50% entitlement minus prior spending, protected team/charity earmarks, unknown reserves, clock/data checks, next-bar prefix invariance, stop-first ambiguous bars, adverse gap fills, signed funding, latched loss halts and no runner-up fallback after a failed holdout. Research recovery tests cover no replay of an interrupted/failed paid call, durable budgets, critic veto, corrupt reports, concurrent single signal admission and atomic signal/pitch rollback. An actual fixture signal passed the existing reviewer/banker path, filled only on paper and closed through the independent strategy time limit.
+
+Public read-only Hyperliquid smoke check validated 1,440 hourly BTC candles and 1,440 historical funding records. The initial check identified millisecond funding timestamps; corrected inclusive pagination is covered by a dedicated test. No exchange key, order or financial write was used. The isolated synthetic research command completed and generated an auditable paper-candidate report; its results are not production performance.
+
+The loopback demo runs synthetic/scripted autonomous research against the preserved tryout database. Browser checks verified the Research/Treasury tabs, all candidates/critic/gate results, a legitimately skipped price-gap signal, the 0.05% illustration and a successful full evidence download. Live Research and actual React research/economics state fixtures passed geometry checks at 320/375/414/768px with no overflow or clipped button text; mobile/tablet screenshots and loading/error/disabled/success layouts were inspected. Console warning/error collection was empty. Temporary preview services/tabs are closed after checking; the demo remains available.
+
+A fresh SQLite snapshot and isolated restore included `research_campaigns`, `research_control` and `research_signals` alongside the paper journal and empty treasury. The originals were not replaced. `.env.agents` was created with an empty key and verified ignored by Git; the launcher refuses an empty key, and local config validation succeeds with an explicitly fake offline value without HTTP. Real provider billing/access and response acceptance remain untested without the owner's key.
+
+Stage 8 implements autonomous research and forward paper observation, plus the chosen accounting policy. It does not complete funded exchange acceptance, live/user/mainnet transport, actual fee ingestion, donations, on-chain purchases/burns or public launch. See `AGENT-SETUP.md`, `RESEARCH.md` and `DISTRIBUTION.md`.

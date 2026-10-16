@@ -4,7 +4,7 @@
 
 Each checked substage has its own local commit. No pushes or deployments. A stage is complete only after its acceptance checks pass. Local paper trading is the first usable release; external funding and execution are separate gates.
 
-Current handoff: local preparation has proceeded through Stage 7.2a. Main Stages 5–7 remain partial because funded acceptance, live/public integrations, hosting/jurisdiction decisions, owner capital and token role/rights are outstanding. See `HANDOFF.md`; a checked preparation substage does not complete its parent production gate.
+Current handoff: local preparation includes Stage 8 autonomous paper research and agreed economics. Main Stages 5–7 remain partial because funded acceptance, live/public integrations, public hosting/identity controls, owner capital, token network/contract, recipients and financial activation are outstanding. See `HANDOFF.md`; a checked preparation substage does not complete its parent production gate.
 
 ## Stage 0 — Foundation
 
@@ -76,7 +76,7 @@ Current handoff: local preparation has proceeded through Stage 7.2a. Main Stages
 ## Stage 7 — Token economics (after validation)
 
 - [ ] **7.1 Economic and legal specification.** Jurisdiction, token rights, expense/reserve waterfall, loss recovery and buyback budget.
-  - [x] **7.1a Local treasury accounting and policy rehearsal.** Independent append-only receipt book, exact USDC, atomic idempotency/hash chain, capital/revenue separation, loss carry-forward and reserve-bounded provisional allocation. All token rights and owner policy choices remain unset; no transfer authority. See `ECONOMICS.md`.
+  - [x] **7.1a Local treasury accounting and policy rehearsal.** Independent append-only receipt book, exact USDC, atomic idempotency/hash chain, capital/revenue separation, loss carry-forward and reserve-bounded provisional allocation. Historical generic policy rehearsal; Stage 8.1 now specifies the agreed fee/profit/burn split. Token network/contract and reserve amounts remain unset; no transfer authority. See `ECONOMICS.md`.
 - [ ] **7.2 Buyback reporting.** Owner-approved transactions with public receipts; no autonomous treasury transfers in the trading agent.
   - [x] **7.2a Local receipt-linked reporting.** Exact spend/purchase/disposal linkage, no duplicate spend or excess disposal, separate sink transfers/supply-reduction claims, private hashed reports and treasury snapshot recovery. No real transactions, chain authentication, publication or token contract; see `BUYBACK-REPORTING.md`.
 
@@ -85,9 +85,9 @@ Current handoff: local preparation has proceeded through Stage 7.2a. Main Stages
 - [x] **8.1 Fee/profit/burn accounting.** New default entry builder fee 0.05%, exact 40/20/40 received-fee earmarks and cumulative net-profit 50% buyback entitlement, with prior spending, loss recovery, charity/team protection and unknown-reserve blockers. No transfers or burns; see `DISTRIBUTION.md`.
 - [x] **8.2 Historical data and deterministic strategy laboratory.** Validated closed hourly candles/funding, bounded three-family grammar, next-bar Decimal simulation, chronological 60/20/20 selection and stressed costs. Verified: 14 focused tests plus real read-only 1,440-candle/funding smoke check. Hourly path/funding approximations and rolling-history reuse are explicit; see `RESEARCH.md`.
 - [x] **8.3 Autonomous paper research cycle.** Bounded development-only hypotheses and independent veto role, durable call/schedule limits, interrupted-call recovery, atomic signal/pitch provenance and strategy time exits through the existing paper controls. Read-only audit/economics APIs and isolated runner; real model requests remain mocked without owner keys. See `RESEARCH.md`.
-- [ ] **8.4 Research interface and key-only paper setup.** Strategy history/results, economics policy display, preset and tested launch instructions. Real execution, donations and burns stay separately gated.
+- [x] **8.4 Research interface and key-only paper setup.** Research history/results/critic/signal links and full evidence export, independent distribution display, ignored key preset and checked launcher. Verified: 388 Python tests, 46 Node tests, TypeScript/build, responsive live/labelled state views and isolated research DB restore. Real paid-provider acceptance, execution, donations and burns remain unverified/disabled; see `AGENT-SETUP.md`.
 
-## Initial financial policy (continued)
+## Initial financial policy
 
 - BTC only; one open position, including outstanding reservations.
 - Up to 2x leverage; isolated account assumptions for the future exchange adapter.

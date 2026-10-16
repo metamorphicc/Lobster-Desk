@@ -1,4 +1,4 @@
-# Delivery handoff — 2026-10-16
+# Delivery handoff — 2026-10-17
 
 All completed local substages are committed on `lobster-desk` (renamed from `codex/mvp-foundation` at the owner's request). The remote is `https://github.com/metamorphicc/Lobster-Desk.git`. No push, deployment, real order, transfer or token launch was performed. See `ROADMAP.md` for separate software and external acceptance checkboxes.
 
@@ -18,10 +18,10 @@ The local user execution core binds exact consent, unique API-wallet roles, priv
 | 5.2d.6a | Private acceptance case template and contained evidence-file inventory. | Actual extension prompts, orders, stops, revocation, fee/funding receipts and owner review. |
 | 6.1c.6–7 | Clean committed-source ZIP/manifests, local-only configuration, structured healthy/blocked/unavailable monitor output and external-integration/review handoff. | Public identity/security/hosting implementation, selected domain/topology, external monitoring delivery, off-machine recovery and independent security review. |
 | 6.2a | Disabled pilot plan and exact budget/loss/recovery rehearsal. | Owner capital/loss/reserve choices, reviewed mainnet implementation, production gates and actual pilot mandate/observations. |
-| 7.1a | Independent receipt book, loss carry-forward, capital/revenue separation and provisional reserve/allocation policy. | Jurisdiction, entity, token role/rights/network, reserves, expenses/tax policy and legal/product review. |
+| 7.1a | Independent receipt book, loss carry-forward, capital/revenue separation and provisional reserve/allocation policy. | Jurisdiction, entity, token network/contract, reserve amounts, expenses/tax policy and legal/product review. |
 | 7.2a | Private spend/purchase/disposal links, exact quantities, duplicate/excess checks and treasury restore coverage. | Real approved transactions, chain-specific receipt authentication/finality, token implementation and reviewed public reporting. |
 
-The owner postponed funded testnet acceptance and left jurisdiction, domain, hosting and token role undecided. These remain blank; no profit-sharing/staking entitlement or US-access eligibility is invented. Main stages 5–7 remain unchecked where external work or a deliberately closed integration is still required.
+The owner postponed funded testnet acceptance and left jurisdiction, domain and hosting blank. Fee allocation is now 40/20/40 agent/team/charity at 0.05% entry builder fee; 50% of eligible net trading profit is budgeted for buyback followed by burning. Token network/contract, recipient identities and reserve amounts remain unset; no holder payout/staking entitlement is granted. Main stages 5–7 remain unchecked where external work or a deliberately closed integration is still required.
 
 ## Local operator commands
 
@@ -43,7 +43,7 @@ The monitor reads only the local API; stopped services produce an unavailable re
 
 ## Verification
 
-The latest local checks are recorded in `VERIFICATION.md`: **359 Python tests**, **46 Node wallet/consent tests**, TypeScript and the web production build pass. Relevant tests cover exact money, signature domains/replay/clock/expiry, concurrent claims/receipts, strict role/account isolation, guard failure after leverage, actual fixture partial fills and stop recovery, revenue/loss/reserve arithmetic, duplicate purchase/disposal prevention and isolated restore. One upstream Starlette/httpx test-client deprecation warning remains; tests do not require changing the locked runtime to silence it.
+The latest local checks are recorded in `VERIFICATION.md`: **388 Python tests**, **46 Node wallet/consent tests**, TypeScript and the web production build pass. Relevant tests cover exact money, signature domains/replay/clock/expiry, concurrent claims/receipts, strict role/account isolation, guard failure after leverage, actual fixture partial fills and stop recovery, revenue/loss/reserve arithmetic, duplicate purchase/disposal prevention, research recovery and isolated restore. One upstream Starlette/httpx test-client deprecation warning remains; tests do not require changing the locked runtime to silence it.
 
 A real local paper-plus-empty-treasury snapshot was created and restored into an isolated directory. Default acceptance/pilot/economic reports were generated with unverified/disabled flags. No fabricated production trades or revenue were inserted. Temporary services from earlier browser checks were stopped; no new daemon/automation was installed.
 
@@ -58,3 +58,13 @@ node scripts/python.mjs scripts/user-rehearsal.py --output artifacts/rehearsals/
 ```
 
 This command needs no API key, wallet, test funds or network. It uses public unfunded vectors, isolated new databases and an in-memory writer; all outputs are synthetic/unverified. The generated report binds five lifecycle/recovery cases and never certifies real trading. See `USER-EXECUTION.md` for the boundary and test coverage.
+
+## Autonomous research and distribution — Stage 8
+
+The Research tab and independent receipt policy are implemented. Closed hourly BTC history/funding, three bounded rule families, development-only model hypotheses, chronological testing with stressed costs, a critic veto, durable call/schedule limits, audit exports and atomic paper signals are connected. Time exits remain in the independent protection worker. Models have no wallet or code-execution tools. Historical tests include funding; forward paper fills still exclude it. Results establish local behavior, not a profitable edge.
+
+For the prepared key-only **paper** preset, see `AGENT-SETUP.md`: `npm run setup:agents`, fill `ANTHROPIC_API_KEY` in ignored `.env.agents`, then `npm run agents:check` and `npm run agents`. The template includes a model ID and public data configuration. Access/billing still needs an actual successful provider request. Failed/interrupted calls are not blindly replayed; the daily limits are call ceilings, not a dollar cap.
+
+The fee split and cumulative profit/burn accounting are implemented in `DISTRIBUTION.md`; unknown reserves suppress a spendable budget. No simulated trade is ingested as real treasury income. Actual fee collection/reconciliation, donations, token purchases/burns, live trading and public launch remain open, with no financial execution authorized by the key preset.
+
+The local demo was restarted with synthetic/scripted autonomous research using the preserved `data/tryout.db`, and the built frontend at port 3000. It is available for inspection; no model key or real financial account is used. Separate agent mode defaults to `data/agents-paper.db`.

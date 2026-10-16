@@ -13,7 +13,7 @@ def test_local_release_has_no_implicit_activation_switch(changes):
     with pytest.raises(ValueError): ReleaseConfig(**changes)
 
 
-@pytest.mark.parametrize("name", [".env", ".env.testnet-signer", "data/x.db", "keys/key.pem", "artifacts/a.json", "../key.txt", ".git/config"])
+@pytest.mark.parametrize("name", [".env", ".env.agents", ".env.testnet-signer", "data/x.db", "keys/key.pem", "artifacts/a.json", "../key.txt", ".git/config"])
 def test_runtime_and_key_paths_never_enter_source_bundle(name):
     assert not safe_source(name)
 

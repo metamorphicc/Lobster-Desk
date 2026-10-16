@@ -481,3 +481,52 @@ input[aria-invalid=true] + .field-helper, textarea[aria-invalid=true] + .field-h
 .user-consent .button { white-space: nowrap; }
 .user-consent summary { cursor: pointer; min-height: 44px; padding-block: var(--space-sm); white-space: nowrap; color: var(--color-ink); }
 .user-consent summary:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+
+/* Hallmark · research/economics additions · Midnight · P4 H4 E4 S5 R5 V4 */
+.research-workbench, .research-candidates, .economics-body { display: grid; gap: var(--space-lg); min-width: 0; }
+.research-body { gap: var(--space-lg); }
+.research-statistics { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); }
+.research-statistics dt, .economics-split dt { color: var(--color-faint); font-size: 11px; }
+.research-statistics dd { margin: var(--space-xs) 0 0; color: var(--color-ink); overflow-wrap: anywhere; }
+.research-workbench .panel-heading, .economics-policy .panel-heading { flex-direction: column; align-items: flex-start; gap: var(--space-xs); }
+.research-workbench .panel-heading h2 { min-width: 0; }
+.research-workbench .button { white-space: nowrap; }
+.research-workbench details { min-width: 0; }
+.research-workbench summary { min-height: 44px; cursor: pointer; color: var(--color-ink); white-space: nowrap; padding-block: var(--space-sm); }
+.research-candidate { display: grid; gap: var(--space-md); padding-block: var(--space-lg); border-top: 1px solid var(--color-rule); min-width: 0; }
+.research-candidate-title { display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: baseline; }
+.research-results { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg) var(--space-sm); }
+.research-results > div { display: grid; align-content: start; gap: var(--space-xs); min-width: 0; }
+.research-results span { color: var(--color-faint); font-size: 10px; text-transform: capitalize; }
+.research-results strong { font-family: var(--font-mono); font-size: 17px; font-weight: 400; color: var(--color-ink); overflow-wrap: anywhere; }
+.research-results strong.negative { color: var(--color-negative); }
+.research-results small { color: var(--color-muted); font-size: 10px; }
+.research-verdict { padding: var(--space-md); display: grid; gap: var(--space-xs); border-left: 2px solid var(--color-accent); background: var(--color-field); }
+.research-verdict strong { color: var(--color-ink); font-size: 12px; font-weight: 500; }
+.research-verdict ul, .economics-blockers { padding-left: var(--space-lg); margin: 0; }
+.research-success { color: var(--color-positive); font-size: 13px; }
+.research-signal { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-sm); border-top: 1px solid var(--color-rule); padding-top: var(--space-md); }
+.research-signal strong { font-weight: 500; color: var(--color-ink); }
+.research-signal p { font-size: 11px; }
+.economics-policy { grid-column: 1 / -1; }
+.economics-body { padding: 0 var(--space-lg) var(--space-lg); color: var(--color-muted); font-size: 13px; }
+.economics-body > p { max-width: 95ch; }
+.economics-body > p > strong { color: var(--color-ink); font-weight: 500; }
+.economics-body .levels { padding: 0; }
+.economics-body .levels > div { gap: var(--space-md); flex-wrap: wrap; }
+.economics-body .levels dd { overflow-wrap: anywhere; }
+.economics-body .notice { display: block; }
+.economics-split { margin: 0; display: grid; gap: var(--space-md); grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.economics-split dd { margin: var(--space-xs) 0 0; color: var(--color-ink); font-family: var(--font-mono); font-size: 24px; }
+.economics-split small { display: block; color: var(--color-faint); font-family: var(--font-body); font-size: 11px; margin-top: var(--space-xs); }
+@media (hover: hover) and (pointer: fine) {
+  .research-workbench summary:hover { color: var(--color-accent); }
+}
+@media (max-width: 25rem) {
+  .sidebar nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2xs); }
+  .sidebar .nav-item { justify-content: flex-start; padding-inline: var(--space-xs); }
+}
+@media (min-width: 40rem) {
+  .research-workbench .panel-heading, .economics-policy .panel-heading { flex-direction: row; align-items: center; gap: var(--space-md); }
+  .research-statistics, .research-results { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}

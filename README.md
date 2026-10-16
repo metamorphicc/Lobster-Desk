@@ -91,3 +91,9 @@ Later local substages add private user capital/consent records, locked user orch
 
 Every completed substage is a separate local commit on `lobster-desk` (renamed at the owner's request). The `origin` remote points to `https://github.com/metamorphicc/Lobster-Desk.git`; nothing is pushed automatically.
 
+## Autonomous agents update
+
+For self-generated, historically tested BTC strategies and forward **paper** observation, see [agent setup](docs/AGENT-SETUP.md). Run `npm run setup:agents`, fill `ANTHROPIC_API_KEY` in the ignored `.env.agents`, then `npm run agents:check` and `npm run agents`. The preset contains the model/data configuration; actual provider access remains unverified without a key.
+
+Research results and the agreed fee/charity/buyback/burn policy appear in the Research and Treasury tabs. Real financial execution, received fee ingestion, donations and token purchase/burn transactions remain disabled/unimplemented; one model API key does not complete those external integrations. See [research mechanics](docs/RESEARCH.md) and [distribution policy](docs/DISTRIBUTION.md).
+
