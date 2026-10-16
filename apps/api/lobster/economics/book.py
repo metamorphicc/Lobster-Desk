@@ -12,7 +12,7 @@ from ..domain import Contract, utcnow
 from ..execution.contracts import fingerprint
 from ..ops.pilot import Money
 
-KINDS = ("capital_in", "capital_out", "builder_receipt", "trading_profit", "trading_loss", "expense", "buyback_spend", "refund")
+KINDS = ("capital_in", "capital_out", "builder_receipt", "trading_profit", "trading_loss", "expense", "buyback_spend", "refund", "charity_payout", "team_payout")
 CREDITS = {"capital_in", "builder_receipt", "trading_profit"}
 
 
@@ -41,7 +41,7 @@ class TreasuryEntry(Contract):
     id: str = Field(pattern=r"^[a-zA-Z0-9_-]{8,64}$")
     receipt_ref: str = Field(min_length=8, max_length=200)
     evidence_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
-    kind: Literal["capital_in", "capital_out", "builder_receipt", "trading_profit", "trading_loss", "expense", "buyback_spend", "refund"]
+    kind: Literal["capital_in", "capital_out", "builder_receipt", "trading_profit", "trading_loss", "expense", "buyback_spend", "refund", "charity_payout", "team_payout"]
     amount: Money
     currency: Literal["USDC"] = "USDC"
     occurred_at: datetime

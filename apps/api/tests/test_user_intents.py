@@ -25,7 +25,7 @@ AGENT = Account.from_key(OTHER_KEY).address.lower()
 def journal(inputs, tmp_path):
     ep, state, market, rules, policy = inputs
     intents = UserIntents(Store(f"sqlite:///{tmp_path / 'intents.db'}"))
-    intents.configure(ProfileInput(address=ADDRESS, agent=AGENT, builder=BUILDER))
+    intents.configure(ProfileInput(address=ADDRESS, agent=AGENT, builder=BUILDER, fee_tenths_bps=20))
     return intents, illustrate(ep, ADDRESS, state, market, rules, policy)
 
 
@@ -108,9 +108,9 @@ def test_permission_nonces_are_serialized_and_sdk_signatures_bind_testnet(journa
 def test_http_profiles_require_operator_and_intents_cannot_sign_or_submit(journal, tmp_path):
     _, plan = journal
     app = create_app(Settings(_env_file=None, worker_enabled=False, operator_token="local-test-operator-123456",
-        database_url=f"sqlite:///{tmp_path / 'http.db'}"), user_settings=UserTestnetSettings(_env_file=None, builder_address=BUILDER))
+        database_url=f"sqlite:///{tmp_path / 'http.db'}"), user_settings=UserTestnetSettings(_env_file=None, builder_address=BUILDER, builder_fee_tenths_bps=20))
     with TestClient(app, base_url="http://127.0.0.1") as client:
-        body = {"address": ADDRESS, "agent": AGENT, "builder": BUILDER}
+        body = {"address": ADDRESS, "agent": AGENT, "builder": BUILDER, "fee_tenths_bps": 20}
         url = "/api/v1/operator/user-testnet-profile"
         assert client.post(url, json=body).status_code == 401
         headers = signin(client, KEY)
@@ -135,7 +135,7 @@ def test_private_context_is_bounded_and_never_returns_local_signature_proofs(jou
         headers = signin(client, KEY)
         empty = client.get(url, headers=headers).json()
         assert empty["profile"] is None and empty["intents"] == []
-        app.state.user_intents.configure(ProfileInput(address=ADDRESS, agent=AGENT, builder=BUILDER))
+        app.state.user_intents.configure(ProfileInput(address=ADDRESS, agent=AGENT, builder=BUILDER, fee_tenths_bps=20))
         for _ in range(12): item = app.state.user_intents.prepare(ADDRESS, plan)
         proof = sign(item["typed_data"])
         app.state.user_intents.verify_local(ADDRESS, item["id"], proof)

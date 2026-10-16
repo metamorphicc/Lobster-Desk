@@ -16,7 +16,7 @@ OTHER = "0x" + "b" * 40
 BUILDER = "0x" + "c" * 40
 
 
-def transport(calls, approval=20, bad_rate=False):
+def transport(calls, approval=50, bad_rate=False):
     def respond(request):
         body = json.loads(request.content)
         calls.append(body)
@@ -37,7 +37,7 @@ def transport(calls, approval=20, bad_rate=False):
     return httpx.MockTransport(respond)
 
 
-@pytest.mark.parametrize("approval,status", [(0, "not_approved"), (10, "below_requested"), (20, "approved"), (100, "approved")])
+@pytest.mark.parametrize("approval,status", [(0, "not_approved"), (20, "below_requested"), (50, "approved"), (100, "approved")])
 def test_user_account_is_public_read_only_and_fees_keep_units(approval, status):
     calls = []
     async def run():
@@ -46,7 +46,7 @@ def test_user_account_is_public_read_only_and_fees_keep_units(approval, status):
             report = await service.inspect(OWNER)
             assert report["equity"] == "123.456789"
             assert report["positions"][0]["unrealized_pnl"] == "0.123456789"
-            assert report["builder_fee_percent"] == "0.02%"
+            assert report["builder_fee_percent"] == "0.05%"
             assert report["approved_builder_fee_tenths_bps"] == approval
             assert report["builder_approval_status"] == status
             assert report["open_orders"][0]["reduce_only"]
@@ -101,7 +101,7 @@ def test_account_api_validates_addresses_and_does_not_enable_execution(tmp_path)
                 assert client.get(base + "/accounts/" + OWNER).json()["address"] == OWNER
                 assert client.post(base + "/orders", json={"address": OWNER}).status_code == 404
                 quote = client.post(base + "/fee-quote", json={"address": OWNER, "notional": "50"})
-                assert quote.status_code == 200 and quote.json()["estimated_total_if_applied"] == "0.03250"
+                assert quote.status_code == 200 and quote.json()["estimated_total_if_applied"] == "0.04750"
                 for intent in ("approve", "revoke"):
                     plan = client.post(base + "/consent-preview", json={"address": OWNER, "intent": intent})
                     assert plan.status_code == 200 and not plan.json()["signed"] and not plan.json()["submitted"]

@@ -80,7 +80,14 @@ Current handoff: local preparation has proceeded through Stage 7.2a. Main Stages
 - [ ] **7.2 Buyback reporting.** Owner-approved transactions with public receipts; no autonomous treasury transfers in the trading agent.
   - [x] **7.2a Local receipt-linked reporting.** Exact spend/purchase/disposal linkage, no duplicate spend or excess disposal, separate sink transfers/supply-reduction claims, private hashed reports and treasury snapshot recovery. No real transactions, chain authentication, publication or token contract; see `BUYBACK-REPORTING.md`.
 
-## Initial financial policy
+## Stage 8 — Autonomous strategy research and agreed economics
+
+- [x] **8.1 Fee/profit/burn accounting.** New default entry builder fee 0.05%, exact 40/20/40 received-fee earmarks and cumulative net-profit 50% buyback entitlement, with prior spending, loss recovery, charity/team protection and unknown-reserve blockers. No transfers or burns; see `DISTRIBUTION.md`.
+- [ ] **8.2 Historical data and deterministic strategy laboratory.** Validated closed candles/funding, bounded strategy grammar, chronological testing and reproducible audit reports.
+- [ ] **8.3 Autonomous paper research cycle.** Bounded model hypotheses/challenges, persistent budgets/restart state, candidate selection and audited signal-to-pitch execution through existing risk controls.
+- [ ] **8.4 Research interface and key-only paper setup.** Strategy history/results, economics policy display, preset and tested launch instructions. Real execution, donations and burns stay separately gated.
+
+## Initial financial policy (continued)
 
 - BTC only; one open position, including outstanding reservations.
 - Up to 2x leverage; isolated account assumptions for the future exchange adapter.

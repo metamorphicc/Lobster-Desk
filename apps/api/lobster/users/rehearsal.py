@@ -72,7 +72,7 @@ async def scenario(name: str, directory: Path):
         capital, plans, intents = UserCapital(store), UserPlans(store), UserIntents(store)
         capital.observe(OWNER, account, account["exchange_time_ms"], [], complete=True)
         plan = plans.save(OWNER, "offline-plan", illustrate(reviewed, OWNER, account, market, rules, store.policy))
-        intents.configure(ProfileInput(address=OWNER, agent=AGENT, builder=BUILDER))
+        intents.configure(ProfileInput(address=OWNER, agent=AGENT, builder=BUILDER, fee_tenths_bps=20))
         intent = intents.prepare(OWNER, plan)
         signature = "0x" + Account.sign_message(encode_typed_data(full_message=intent["typed_data"]), OWNER_KEY).signature.hex()
         intents.verify_local(OWNER, intent["id"], signature)

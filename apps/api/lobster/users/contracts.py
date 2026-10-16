@@ -21,4 +21,4 @@ def fee_percent(tenths_bps: int) -> str:
 class UserTestnetSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_prefix="USER_TESTNET_", extra="ignore", hide_input_in_errors=True)
     builder_address: Address | None = None
-    builder_fee_tenths_bps: int = Field(default=20, ge=0, le=100)
+    builder_fee_tenths_bps: int = Field(default=50, ge=0, le=100)

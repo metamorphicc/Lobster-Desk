@@ -22,7 +22,7 @@ class ProfileInput(Contract):
     address: Address
     agent: Address
     builder: Address
-    fee_tenths_bps: int = Field(default=20, ge=0, le=100, strict=True)
+    fee_tenths_bps: int = Field(default=50, ge=0, le=100, strict=True)
 
     @model_validator(mode="after")
     def separate(self):

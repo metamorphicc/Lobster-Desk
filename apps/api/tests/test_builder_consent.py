@@ -42,7 +42,7 @@ def test_bad_cost_input_is_refused(notional):
         FeeQuoteInput(address=OWNER, notional=notional)
 
 
-@pytest.mark.parametrize("intent,rate", [("approve", "0.02%"), ("revoke", "0%")])
+@pytest.mark.parametrize("intent,rate", [("approve", "0.05%"), ("revoke", "0%")])
 def test_unsigned_consent_matches_official_sdk_offline(intent, rate):
     plan = consent_plan(ConsentInput(address=OWNER, intent=intent), UserTestnetSettings(_env_file=None, builder_address=BUILDER), observation())
     assert not plan["signed"] and not plan["submitted"]

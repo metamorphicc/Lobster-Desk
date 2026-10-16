@@ -28,13 +28,13 @@ def context(execution_rig, tmp_path):
     plans = UserPlans(store)
     plan = plans.save(ADDRESS, "private-12345", illustrate(episode, ADDRESS, state, market, rules, store.policy))
     intents = UserIntents(store)
-    intents.configure(ProfileInput(address=ADDRESS, agent=AGENT, builder=BUILDER))
+    intents.configure(ProfileInput(address=ADDRESS, agent=AGENT, builder=BUILDER, fee_tenths_bps=20))
     intent = intents.prepare(ADDRESS, plan)
     intents.verify_local(ADDRESS, intent["id"], sign(intent["typed_data"]))
     capital = UserCapital(store)
     capital.observe(ADDRESS, state, state["exchange_time_ms"], [], complete=True)
     class Service:
-        settings = UserTestnetSettings(_env_file=None, builder_address=BUILDER)
+        settings = UserTestnetSettings(_env_file=None, builder_address=BUILDER, builder_fee_tenths_bps=20)
         async def inspect(self, owner):
             return state | {"observed_at": utcnow().isoformat(), "exchange_time_ms": int(utcnow().timestamp()*1000)}
         async def capital_history(self, owner, start, end): return []
