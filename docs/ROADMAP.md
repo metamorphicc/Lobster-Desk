@@ -42,7 +42,7 @@ Each checked substage has its own local commit. No pushes or deployments. A stag
   - [x] **5.2c Builder consent plans.** Exact fee previews and SDK-compatible unsigned approval/revocation payloads, account binding and downloadable plans. Verified: 155 Python tests, 11 wallet tests, build and browser cost/download/revocation checks. No automatic signing or collection.
   - [ ] **5.2d User execution acceptance.** Explicit user signing, actual testnet orders/protection, builder eligibility, approval/revocation and fee receipts. Requires owner-reviewed exchange evidence before activation.
     - [x] **5.2d.1 Local wallet authentication.** One-time server challenges, EOA signature recovery, hashed scoped sessions, replay/expiry/restart/clock checks. Verified offline: 230 Python tests. No trading authority or real wallet signature used.
-    - [ ] **5.2d.2 Explicit sign-in interface.** Separate public watch and verified session states, reviewed sign-in message, account/network invalidation and memory-only tokens.
+    - [x] **5.2d.2 Explicit sign-in interface.** Separate public watch and verified session states, reviewed sign-in message, account/network invalidation and memory-only tokens. Verified: 27 Node wallet tests, build and responsive public-watch separation. Real extension prompts remain unverified.
     - [ ] **5.2d.3 Private order preview.** Session-bound deterministic risk/fee checks and unsigned user plans. Exchange signing/submission and funded acceptance remain separate.
 
 ## Stage 6 — Controlled production release

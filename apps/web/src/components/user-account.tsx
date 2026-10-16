@@ -5,6 +5,7 @@ import { Check, Eye, LoaderCircle, RefreshCw, Wallet as WalletIcon } from "lucid
 import { money, number } from "@/lib/types";
 import { discoverWallets, normalizeAddress, WalletSession, type Wallet, type WalletState } from "@/lib/wallet";
 import { BuilderConsent } from "./builder-consent";
+import { WalletAuth } from "./wallet-auth";
 
 type UserConfig = { builder_address: string | null; builder_fee_percent: string; builder_fee_tenths_bps: number };
 type Account = UserConfig & {
@@ -72,7 +73,7 @@ export function UserAccount() {
   return <section className="testnet-panel user-account" aria-labelledby="user-account-title">
     <div className="panel-heading"><h2 id="user-account-title"><WalletIcon size={17} /> Your testnet account</h2><span className="tag">READ ONLY</span></div>
     <div className="testnet-body">
-      <p>Connect a wallet or watch a public address. Your account stays separate from the tank&apos;s capital. This view never requests signatures, transfers or orders.</p>
+      <p>Connect a wallet or watch a public address. Your account stays separate from the tank&apos;s capital. Public viewing requests no signature. Optional sign-in below requires a separate, explicit message signature.</p>
       <div className="user-account-layout"><div className="user-account-controls">
         {wallet.status === "connected" ? <><p className="positive user-connected"><Check size={16} />Wallet connected for public data</p><p className="small-note">Wallet chain {wallet.chainId}. Account observations below always use Hyperliquid testnet.</p>
           <button className="button button--secondary" onClick={() => { session.current?.disconnect(); setWatched(null); }}>Disconnect view</button><p className="small-note">This clears the page view. Site permissions in your wallet are managed separately.</p></> : <>
@@ -94,7 +95,7 @@ export function UserAccount() {
           {stale && <div className="notice">This observation is over 15 seconds old. Refresh before making any decision.</div>}
           <dl className="testnet-observations"><div><dt>Account equity</dt><dd>{money(data?.equity)}</dd></div><div><dt>Withdrawable</dt><dd>{money(data?.withdrawable)}</dd></div><div><dt>Open orders</dt><dd>{data ? data.open_orders.length : "—"}</dd></div></dl>
           {data && <>
-            <p className="small-note">Observed {new Date(data.observed_at).toLocaleTimeString("en-GB", { hour12: false })}. Public account data; ownership is not authenticated.</p>
+            <p className="small-note">Observed {new Date(data.observed_at).toLocaleTimeString("en-GB", { hour12: false })}. This public lookup does not authenticate ownership.</p>
             <ul className="user-position-list">{data.positions.length ? data.positions.map(position => <li key={position.symbol}><strong>{position.symbol}</strong><span>{number(position.quantity, 6)} · Open PnL {money(position.unrealized_pnl)}</span></li>) : <li>No open perpetual positions observed.</li>}</ul>
             <ul className="user-position-list">{data.open_orders.slice(0, 20).map(order => <li key={order.oid}><strong>{order.symbol} · {order.side === "B" ? "buy" : "sell"}</strong><span>{number(order.quantity, 6)} @ {money(order.limit_price)}{order.reduce_only ? " · reduce only" : ""}{order.is_trigger ? " · trigger" : ""}</span></li>)}</ul>
             {data.open_orders.length > 20 && <p className="small-note">Showing the first 20 observed open orders.</p>}
@@ -105,6 +106,8 @@ export function UserAccount() {
         <dl className="testnet-addresses"><div><dt>Builder recipient</dt><dd>{availableConfig?.builder_address || "Not configured"}</dd></div></dl>
         {data && <p>Approval: <strong>{data.builder_approval_status.replaceAll("_", " ")}</strong>{data.approved_builder_fee_tenths_bps != null ? ` · Maximum ${(data.approved_builder_fee_tenths_bps / 1000).toLocaleString("en-US", { maximumFractionDigits: 3 })}%` : ""}. Reported account taker rate {(Number(data.reported_taker_rate) * 100).toLocaleString("en-US", { maximumFractionDigits: 5 })}%.</p>}
       </div>
+      {wallet.address && wallet.chainId && session.current && <WalletAuth key={`${wallet.address}:${wallet.revision}`} address={wallet.address} chainId={wallet.chainId} session={session.current} now={now} />}
+      {!wallet.address && <p className="small-note">Private previews require a connected wallet and a separate sign-in message. Watching an address grants no private session.</p>}
       {address && <BuilderConsent key={key} address={address} configured={!!availableConfig?.builder_address} now={now} />}
     </div>
   </section>;

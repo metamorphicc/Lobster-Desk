@@ -47,7 +47,7 @@ export function BuilderConsent({ address, configured, now }: { address: string; 
 
   return <section className="builder-consent" aria-labelledby="builder-consent-title">
     <h3 id="builder-consent-title">Review the cost and consent</h3>
-    <p className="small-note">Previews only. Signing and exchange submission are not enabled.</p>
+    <p className="small-note">Builder permission previews only. Exchange approval signing and submission are disabled.</p>
     <label>Executed notional · USDC<input inputMode="decimal" value={notional} onChange={event => { setNotional(event.target.value); setQuote(null); }} disabled={!!busy} autoComplete="off" /></label>
     <button className="button button--secondary" disabled={!!busy || !notional.trim()} onClick={() => { void preview("quote"); }}>{busy === "quote" ? <LoaderCircle size={16} className="spinner" /> : <FileCheck2 size={16} />}Preview costs</button>
     {error && <p className="form-error" role="alert">{error}</p>}

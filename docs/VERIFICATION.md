@@ -64,6 +64,10 @@ A real default local API returned ready while a second Uvicorn process on anothe
 
 230 Python tests pass. Public unfunded EOA vectors verify exact domain/chain/nonce/statement binding, canonical signature recovery, single-use challenges, concurrent replay, hashed bearer storage, logout, restart, expiry and backward-clock refusal. Authentication makes no exchange call and exposes no order submission route. Tests confirm static failure responses and that tokens/signatures never appear in public paper state. Actual wallet-extension signing and financial permissions remain unverified.
 
+## Explicit wallet sign-in interface
+
+27 Node wallet tests pass; TypeScript and production build pass. The client checks the complete sign-in message before any personal_sign call, verifies provider account/network before and after the prompt, discards changed sessions and validates returned session scope. Browser verification at 320/375/414/768/1280px confirmed public watching never exposes a sign-in action or private session, with no horizontal overflow or console errors. No injected wallet is available in this browser; actual wallet prompts and signed-in UI remain unverified outside the mocked-provider contract.
+
 ## Financial interpretation
 
 These checks establish local software behavior, not a trading edge or sustainable business economics. Paper fills assume full execution, modeled adverse slippage and taker fees; they do not model funding, order-book queue priority, partial fills or exchange outages faithfully. Performance figures must retain the paper label.

@@ -1,6 +1,8 @@
-/** Read-only EIP-1193 session. No signing, chain switching or transaction RPC. */
+/** Explicit wallet connection and tightly scoped authentication. No exchange signing. */
+import { messageHex, validateAuthChallenge } from "./wallet-auth.ts";
+
 export type Provider = {
-  request(args: { method: string }): Promise<unknown>;
+  request(args: { method: string; params?: unknown[] }): Promise<unknown>;
   on(event: string, listener: (value: unknown) => void): void;
   removeListener(event: string, listener: (value: unknown) => void): void;
 };
@@ -47,6 +49,7 @@ export class WalletSession {
   private state: WalletState = { status: "idle", address: null, chainId: null, error: null, revision: 0 };
   private generation = 0;
   private release: (() => void) | null = null;
+  private provider: Provider | null = null;
   private listeners = new Set<(state: WalletState) => void>();
   snapshot(): WalletState { return { ...this.state }; }
   subscribe(listener: (state: WalletState) => void): () => void {
@@ -59,6 +62,7 @@ export class WalletSession {
   }
   disconnect() {
     this.generation++; this.release?.(); this.release = null;
+    this.provider = null;
     this.update({ status: "idle", address: null, chainId: null, error: null });
   }
   async connect(provider: Provider) {
@@ -84,6 +88,7 @@ export class WalletSession {
       const chainId = chain(await provider.request({ method: "eth_chainId" }));
       if (generation !== this.generation) return;
       if (!chainId) throw new Error("Invalid chain.");
+      this.provider = provider;
       this.update({ status: "connected", address, chainId, error: null });
     } catch (error) {
       if (generation !== this.generation) return;
@@ -92,5 +97,28 @@ export class WalletSession {
       this.update({ status: "error", address: null, chainId: null, error: code === 4001 ? "Connection declined. No signature or transaction was requested." :
         code === -32002 ? "A wallet request is already pending. Open your wallet to resolve it." : "The wallet could not connect. Unlock it and retry, or watch a public address." });
     }
+  }
+
+  async signAuthentication(value: unknown, origin: string): Promise<string> {
+    const provider = this.provider, generation = this.generation, state = this.snapshot();
+    if (!provider || state.status !== "connected" || !state.address || !state.chainId) throw new Error("Connect the wallet before signing in.");
+    const challenge = validateAuthChallenge(value, state.address, origin, state.chainId);
+    const current = () => {
+      if (generation !== this.generation || provider !== this.provider || state.revision !== this.state.revision) throw new Error("Wallet changed. Reconnect and prepare a fresh sign-in message.");
+      validateAuthChallenge(challenge, state.address!, origin, state.chainId!);
+    };
+    const checkProvider = async () => {
+      const accounts = await provider.request({ method: "eth_accounts" }); current();
+      const chainId = await provider.request({ method: "eth_chainId" }); current();
+      if (account(accounts) !== state.address || chain(chainId) !== state.chainId) {
+        this.disconnect(); throw new Error("Wallet account or network changed. Reconnect before signing in.");
+      }
+    };
+    await checkProvider(); current();
+    const signature = await provider.request({ method: "personal_sign", params: [messageHex(challenge.message), state.address] });
+    current();
+    if (typeof signature !== "string" || !/^0x[0-9a-fA-F]{130}$/.test(signature)) throw new Error("The wallet returned an invalid authentication signature.");
+    await checkProvider(); current();
+    return signature;
   }
 }

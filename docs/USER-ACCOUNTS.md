@@ -48,4 +48,14 @@ Offline tests use public unfunded key vectors and cover exact-message binding, c
 
 Protocol references: [ERC-4361](https://eips.ethereum.org/EIPS/eip-4361), [MetaMask message signing](https://docs.metamask.io/wallet/how-to/sign-data/).
 
+## Explicit sign-in interface
+
+Only a connected wallet sees **Verify this wallet for private previews**. Watch mode cannot initiate authentication. On the canonical `http://127.0.0.1:3000` origin, select wallet chain 421614 (Arbitrum Sepolia) manually and reconnect. **Prepare sign-in message** obtains and validates a server challenge without requesting a signature. Read its full text, then choose **Sign this message** to request `personal_sign` for exactly those UTF-8 bytes. No automatic chain switch or financial-signing RPC exists.
+
+The client validates account, origin, chain, exact statement/fields, scope and deadline before signing. It rereads the provider's selected account/chain before and after the prompt. Wallet changes, rejected or late responses and HTTP verification after a session revision change cannot become an authenticated view. Public connection still makes only the original account/chain requests.
+
+Bearer tokens exist only in component memory, never browser storage, URLs, exports or the public account view. Sign out clears local credentials immediately and requests server revocation. Unmount/account/network changes also attempt revocation; a network failure cannot guarantee server revocation, so the server's expiry/restart checks remain authoritative. Cancelling a pending prompt discards its result locally; dismiss the wallet prompt separately.
+
+27 Node tests cover connection, malicious challenge fields, exact signing parameters, prompt-time changes, silent provider changes and session-response scope validation. Browser checks covered missing-wallet/public-watch separation and responsive public mode; this browser has no injected wallet. Real extension prompts and the signed-in screen remain unverified outside mocked provider tests.
+
 Sources: [builder codes](https://hyperliquid.gitbook.io/hyperliquid-docs/trading/builder-codes), [approval queries](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint#check-builder-fee-approval), [official builder example](https://github.com/hyperliquid-dex/hyperliquid-python-sdk/blob/master/examples/basic_builder_fee.py).
