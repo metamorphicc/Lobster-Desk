@@ -124,3 +124,28 @@ def test_http_profiles_require_operator_and_intents_cannot_sign_or_submit(journa
         assert client.post(path + "/sign", json={"signature": sign(response.json()["typed_data"])}, headers=headers).status_code == 404
         assert client.post(path + "/submit", headers=headers).status_code == 404
         assert not app.state.runtime.store.state(None)["positions"]
+
+
+def test_private_context_is_bounded_and_never_returns_local_signature_proofs(journal, tmp_path):
+    _, plan = journal
+    app = create_app(Settings(_env_file=None, worker_enabled=False, database_url=f"sqlite:///{tmp_path / 'context.db'}"))
+    with TestClient(app, base_url="http://127.0.0.1") as client:
+        url = "/api/v1/users/testnet/execution-context"
+        assert client.get(url).status_code == 401
+        headers = signin(client, KEY)
+        empty = client.get(url, headers=headers).json()
+        assert empty["profile"] is None and empty["intents"] == []
+        app.state.user_intents.configure(ProfileInput(address=ADDRESS, agent=AGENT, builder=BUILDER))
+        for _ in range(12): item = app.state.user_intents.prepare(ADDRESS, plan)
+        proof = sign(item["typed_data"])
+        app.state.user_intents.verify_local(ADDRESS, item["id"], proof)
+        result = client.get(url, headers=headers)
+        assert result.status_code == 200 and len(result.json()["intents"]) == 10
+        assert result.json()["intents"][0]["id"] == item["id"]
+        assert not result.json()["signatures_accepted"] and not result.json()["wallet_signing_enabled"]
+        assert "last_nonce" not in result.text and proof not in result.text
+        item_view = client.get("/api/v1/users/testnet/intents/" + item["id"], headers=headers).json()
+        assert item_view["proof"] is None and item_view["status"] == "verified_local"
+        assert proof not in str(item_view)
+        other = client.get(url, headers=signin(client, OTHER_KEY)).json()
+        assert other["profile"] is None and other["intents"] == []

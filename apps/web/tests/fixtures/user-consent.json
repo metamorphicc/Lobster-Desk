@@ -1,0 +1,256 @@
+{
+  "fixture": "Synthetic data and public unfunded key-vector addresses; no real user, approval or execution.",
+  "plan": {
+    "id": "a963ae08b5654c0bb71aa5ee9568027d",
+    "plan_hash": "72c8aa1f0cd0e475fc6f4a4486c7890b923632fb781a4e001a2c30c6b9d90ce8",
+    "episode_id": "3288506b-c127-44d3-b73b-fe1f87bf3364",
+    "expires_at": "2026-10-16T13:28:34.640575+00:00"
+  },
+  "intent": {
+    "id": "981142d4dfa841ff4c422aa6006e8476",
+    "address": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+    "plan_id": "a963ae08b5654c0bb71aa5ee9568027d",
+    "plan_hash": "72c8aa1f0cd0e475fc6f4a4486c7890b923632fb781a4e001a2c30c6b9d90ce8",
+    "episode_id": "3288506b-c127-44d3-b73b-fe1f87bf3364",
+    "nonce": 1792157284651,
+    "expires_ms": 1792157314640,
+    "profile_hash": "65595f583acdb9ecec902a69b3a03bdeb1841bb74510fc070028eaf3b2e2ffa6",
+    "typed_data": {
+      "domain": {
+        "name": "Lobster Desk Local Intent",
+        "version": "1",
+        "chainId": 421614,
+        "verifyingContract": "0x0000000000000000000000000000000000000000"
+      },
+      "primaryType": "TestnetTradeIntent",
+      "types": {
+        "EIP712Domain": [
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "type": "string"
+          },
+          {
+            "name": "chainId",
+            "type": "uint256"
+          },
+          {
+            "name": "verifyingContract",
+            "type": "address"
+          }
+        ],
+        "TestnetTradeIntent": [
+          {
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "name": "planHash",
+            "type": "bytes32"
+          },
+          {
+            "name": "agent",
+            "type": "address"
+          },
+          {
+            "name": "builder",
+            "type": "address"
+          },
+          {
+            "name": "builderFeeTenthsBps",
+            "type": "uint256"
+          },
+          {
+            "name": "nonce",
+            "type": "uint64"
+          },
+          {
+            "name": "validUntil",
+            "type": "uint64"
+          }
+        ]
+      },
+      "message": {
+        "owner": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+        "planHash": "0x72c8aa1f0cd0e475fc6f4a4486c7890b923632fb781a4e001a2c30c6b9d90ce8",
+        "agent": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+        "builder": "0x4444444444444444444444444444444444444444",
+        "builderFeeTenthsBps": 20,
+        "nonce": 1792157284651,
+        "validUntil": 1792157314640
+      }
+    },
+    "status": "unsigned",
+    "proof": null,
+    "wallet_signing_enabled": false,
+    "exchange_submission_enabled": false,
+    "scope": "local-testnet-trade-intent",
+    "note": "Not an exchange authorization. Actual delegation, builder approval and funded execution acceptance remain separate.",
+    "expired": false
+  },
+  "permissions": {
+    "address": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+    "network": "testnet",
+    "wallet_signing_enabled": false,
+    "submitted": false,
+    "agent": {
+      "action": {
+        "type": "approveAgent",
+        "hyperliquidChain": "Testnet",
+        "signatureChainId": "0x66eee",
+        "agentAddress": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+        "agentName": "Lobster Desk testnet",
+        "nonce": 1792157284655
+      },
+      "typed_data": {
+        "domain": {
+          "name": "HyperliquidSignTransaction",
+          "version": "1",
+          "chainId": 421614,
+          "verifyingContract": "0x0000000000000000000000000000000000000000"
+        },
+        "types": {
+          "HyperliquidTransaction:ApproveAgent": [
+            {
+              "name": "hyperliquidChain",
+              "type": "string"
+            },
+            {
+              "name": "agentAddress",
+              "type": "address"
+            },
+            {
+              "name": "agentName",
+              "type": "string"
+            },
+            {
+              "name": "nonce",
+              "type": "uint64"
+            }
+          ],
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ]
+        },
+        "primaryType": "HyperliquidTransaction:ApproveAgent",
+        "message": {
+          "type": "approveAgent",
+          "hyperliquidChain": "Testnet",
+          "signatureChainId": "0x66eee",
+          "agentAddress": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+          "agentName": "Lobster Desk testnet",
+          "nonce": 1792157284655
+        }
+      }
+    },
+    "builder": {
+      "action": {
+        "type": "approveBuilderFee",
+        "hyperliquidChain": "Testnet",
+        "signatureChainId": "0x66eee",
+        "maxFeeRate": "0.02%",
+        "builder": "0x4444444444444444444444444444444444444444",
+        "nonce": 1792157284656
+      },
+      "typed_data": {
+        "domain": {
+          "name": "HyperliquidSignTransaction",
+          "version": "1",
+          "chainId": 421614,
+          "verifyingContract": "0x0000000000000000000000000000000000000000"
+        },
+        "types": {
+          "HyperliquidTransaction:ApproveBuilderFee": [
+            {
+              "name": "hyperliquidChain",
+              "type": "string"
+            },
+            {
+              "name": "maxFeeRate",
+              "type": "string"
+            },
+            {
+              "name": "builder",
+              "type": "address"
+            },
+            {
+              "name": "nonce",
+              "type": "uint64"
+            }
+          ],
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ]
+        },
+        "primaryType": "HyperliquidTransaction:ApproveBuilderFee",
+        "message": {
+          "type": "approveBuilderFee",
+          "hyperliquidChain": "Testnet",
+          "signatureChainId": "0x66eee",
+          "maxFeeRate": "0.02%",
+          "builder": "0x4444444444444444444444444444444444444444",
+          "nonce": 1792157284656
+        }
+      }
+    }
+  },
+  "context": {
+    "schema": "lobster-user-execution-context-v1",
+    "address": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+    "network": "testnet",
+    "profile": {
+      "address": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+      "agent": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+      "builder": "0x4444444444444444444444444444444444444444",
+      "fee_tenths_bps": 20,
+      "network": "testnet"
+    },
+    "intents": [
+      {
+        "id": "981142d4dfa841ff4c422aa6006e8476",
+        "plan_id": "a963ae08b5654c0bb71aa5ee9568027d",
+        "plan_hash": "72c8aa1f0cd0e475fc6f4a4486c7890b923632fb781a4e001a2c30c6b9d90ce8",
+        "status": "unsigned",
+        "expires_ms": 1792157314640,
+        "expired": false
+      }
+    ],
+    "wallet_signing_enabled": false,
+    "exchange_submission_enabled": false,
+    "signatures_accepted": false,
+    "note": "Private local consent journal. No trading permissions or signatures are accepted. API-wallet profiles require separate operator configuration."
+  }
+}

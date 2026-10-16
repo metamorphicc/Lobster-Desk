@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Download, FileCheck2, LoaderCircle } from "lucide-react";
 import { money, number, type Episode } from "@/lib/types";
+import { UserConsent } from "./user-consent";
 
 type Preview = {
   id: string; schema: string; address: string; episode_id: string; expires_at: string; expired: boolean; plan_hash: string;
@@ -58,7 +59,8 @@ export function UserOrderPreview({ address, token, episodes, now, onSessionInval
     {!eligible.length && <p className="notice">No unexpired setup reviewed against testnet data is available. The tank must review one first; demo or mainnet-market reviews cannot be used here.</p>}
     <button className="button button--secondary" disabled={busy || !eligible.some(ep => ep.id === selected)} onClick={() => { void preview(); }}>{busy ? <LoaderCircle size={16} className="spinner" /> : <FileCheck2 size={16} />}{busy ? "Checking…" : "Preview user order"}</button>
     {error && <p className="form-error" role="alert">{error}</p>}
-    {plan && <UserOrderReport plan={plan} expired={!!expired} busy={busy} download={download} />}
+    {plan && <><UserOrderReport plan={plan} expired={!!expired} busy={busy} download={download} />
+      <UserConsent key={plan.id} address={address} token={token} plan={plan} now={now} onSessionInvalid={onSessionInvalid} /></>}
   </section>;
 }
 

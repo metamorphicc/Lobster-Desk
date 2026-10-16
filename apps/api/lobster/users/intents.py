@@ -135,6 +135,23 @@ class UserIntents:
             row = session.get(Intent, intent_id)
             return row.payload if row and row.address == owner else None
 
+    @staticmethod
+    def view(data):
+        now = int(utcnow().timestamp()*1000)
+        return data | {"proof": None, "expired": now >= data["expires_ms"] or now < data["nonce"] - 1000}
+
+    def context(self, owner):
+        with self.store.transaction() as session:
+            row = session.get(Profile, owner)
+            recent = list(session.scalars(select(Intent).where(Intent.address == owner)
+                .order_by(Intent.payload["nonce"].as_integer().desc()).limit(10)))
+            profile = {key: value for key, value in row.payload.items() if key != "last_nonce"} if row else None
+            views = [self.view(item.payload) for item in recent]
+            return {"schema": "lobster-user-execution-context-v1", "address": owner, "network": "testnet", "profile": profile,
+                "intents": [{key: item[key] for key in ("id", "plan_id", "plan_hash", "status", "expires_ms", "expired")} for item in views],
+                "wallet_signing_enabled": False, "exchange_submission_enabled": False, "signatures_accepted": False,
+                "note": "Private local consent journal. No trading permissions or signatures are accepted. API-wallet profiles require separate operator configuration."}
+
     def verify_local(self, owner, intent_id, signature):
         """Core/offline verification only; no public financial-signature endpoint is enabled."""
         with self.store.transaction() as session:

@@ -380,6 +380,11 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
         except ValueError as error:
             raise HTTPException(409, str(error)) from None
 
+    @app.get("/api/v1/users/testnet/execution-context")
+    def user_execution_context(request: Request, authorization: str | None = Header(default=None)):
+        identity = auth_call(request, request.app.state.user_auth.require, authorization)
+        return auth_call(request, request.app.state.user_intents.context, identity["address"])
+
     @app.post("/api/v1/users/testnet/intents", status_code=201)
     def user_intent(body: IntentInput, request: Request, authorization: str | None = Header(default=None)):
         identity = auth_call(request, request.app.state.user_auth.require, authorization)
@@ -388,7 +393,7 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
         if not plan:
             raise HTTPException(404, "User preview not found.")
         try:
-            return request.app.state.user_intents.prepare(identity["address"], plan)
+            return request.app.state.user_intents.view(request.app.state.user_intents.prepare(identity["address"], plan))
         except ValueError as error:
             raise HTTPException(409, str(error)) from None
 
@@ -398,7 +403,7 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
         result = request.app.state.user_intents.get(identity["address"], intent_id)
         if not result:
             raise HTTPException(404, "User intent not found.")
-        return result
+        return request.app.state.user_intents.view(result)
 
     @app.get("/api/v1/testnet/inspect")
     async def testnet_inspect(request: Request):
