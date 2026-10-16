@@ -15,3 +15,7 @@ Owner clarification: tentative audience is the United States, but jurisdiction, 
 7. **7.2** — receipt-based buyback/burn reporting and deterministic verification; no autonomous treasury transfers. Prepare token code/tests only to the extent consistent with the agreed specification; launch remains external.
 
 Completed software and externally verified behavior are separate checkboxes. A document, boolean attestation or mocked exchange is not sufficient evidence to close a real-money, legal or independent-review gate. At the final handoff, enumerate exactly which external decisions and tests remain rather than marking all production stages complete.
+
+## Delivery outcome
+
+Local preparation through 7.2a is implemented and committed, including locked user orchestration and receipt-based accounting. `HANDOFF.md` now contains the operational entry points and exact external/unimplemented activation gates. Owner-deferred acceptance and unspecified product/legal/hosting choices remain open; no gate has been silently converted into an approval.

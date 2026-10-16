@@ -13,6 +13,8 @@ A public trading tank: pitch a BTC setup, watch three crustacean agents challeng
 - `docs/BACKUP-RESTORE.md`: verified SQLite snapshots and isolated recovery drills.
 - `docs/OPERATIONS.md`: local readiness panel, scoped alerts and loopback probe command.
 - `docs/RELEASE.md`: local source packages and explicit public-release prerequisites.
+- `docs/HANDOFF.md`: current delivery, local operator commands and remaining external/integration gates.
+- `docs/ECONOMICS.md` and `docs/BUYBACK-REPORTING.md`: private receipt accounting and disabled token-operation reporting.
 
 ## Run locally
 
@@ -81,6 +83,8 @@ node scripts/python.mjs -m uvicorn lobster.main:create_app --factory --app-dir a
 ## Delivery status
 
 Stages 0–4 implement the local paper MVP. Stage 5 adds a testnet-only signer, persistent execution lifecycle and local workbench, verified with offline exchange fixtures. Funded exchange acceptance is still outstanding. User wallet trading, actual builder-fee collection and token operations remain separate roadmap stages. This release has no mainnet order endpoint and should not be deployed as a public financial service.
+
+Later local substages add private user capital/consent records, locked user orchestration, acceptance inventories, source packaging/monitor interfaces, pilot-budget rehearsals and receipt-based treasury/buyback reports. These preserve disabled financial/production/token gates. Jurisdiction, hosting and token rights remain unspecified. See [the delivery handoff](docs/HANDOFF.md) for the exact implemented scope and unfinished integrations.
 
 Every completed substage is a separate local commit on `codex/mvp-foundation`. The `origin` remote points to `https://github.com/metamorphicc/Lobster-Desk.git`; nothing is pushed automatically.
 
