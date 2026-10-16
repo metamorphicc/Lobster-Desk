@@ -1,0 +1,14 @@
+{
+  "schema_version": "lobster-economic-policy-v1",
+  "currency": "USDC",
+  "operating_reserve_target": null,
+  "liability_reserve": null,
+  "tax_reserve_fraction": null,
+  "buyback_fraction": null,
+  "jurisdiction": null,
+  "token_role": null,
+  "token_contract": null,
+  "transfers_enabled": false,
+  "token_issuance_enabled": false,
+  "holder_payouts_enabled": false
+}
