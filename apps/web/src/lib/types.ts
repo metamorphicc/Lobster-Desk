@@ -11,6 +11,7 @@ export type Episode = {
   reason: string; reviews: Partial<Record<"analyst" | "risk", Review>>;
   risk: { quantity: string; notional: string; margin: string; planned_loss: string; reward_risk: string; approved: boolean; reasons: string[] } | null;
   approval_hash: string | null; position_id: string | null;
+  snapshot?: { source: string } | null;
 };
 export type Position = {
   id: string; episode_id: string; direction: "long" | "short"; status: "open" | "closed";

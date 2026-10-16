@@ -4,7 +4,7 @@ Date: 2026-10-16 (Asia/Novosibirsk).
 
 ## Automated
 
-- 230 passing Python tests: schema validation, finite monetary input, direction/stop/target checks, leverage, expiry/freshness, sizing, loss thresholds, concurrent reservation, fill idempotency, transaction rollback, gap losses, fee accounting, provider failure, review budgets, feed isolation, HTTP endpoints and restart recovery. Testnet additions cover official SDK signatures/domain/expiry, atomic nonce/command claims, partial fills, uncertain requests without replay, protection failure, fixed-host HTTP, public-only readiness/preflight and operator-controlled local staging/cancellation.
+- 249 passing Python tests: schema validation, finite monetary input, direction/stop/target checks, leverage, expiry/freshness, sizing, loss thresholds, concurrent reservation, fill idempotency, transaction rollback, gap losses, fee accounting, provider failure, review budgets, feed isolation, HTTP endpoints and restart recovery. Testnet additions cover official SDK signatures/domain/expiry, atomic nonce/command claims, partial fills, uncertain requests without replay, protection failure, fixed-host HTTP, public-only readiness/preflight and operator-controlled local staging/cancellation.
 - End-to-end API scenario: pitch -> reviews -> capital reservation -> paper fill -> stop -> restart -> identical cash and journal.
 - TypeScript check passes.
 - Next.js production build passes.
@@ -67,6 +67,12 @@ A real default local API returned ready while a second Uvicorn process on anothe
 ## Explicit wallet sign-in interface
 
 27 Node wallet tests pass; TypeScript and production build pass. The client checks the complete sign-in message before any personal_sign call, verifies provider account/network before and after the prompt, discards changed sessions and validates returned session scope. Browser verification at 320/375/414/768/1280px confirmed public watching never exposes a sign-in action or private session, with no horizontal overflow or console errors. No injected wallet is available in this browser; actual wallet prompts and signed-in UI remain unverified outside the mocked-provider contract.
+
+## Private user order illustrations
+
+249 Python tests and 27 Node tests pass; production build/typecheck pass. Private-preview coverage includes owner/session isolation, concurrent idempotency across stores, original-hash retention after expired replay, session revocation during an upstream read, tampered reviews, stale/wrong-network data, occupied accounts, trigger gaps, finite exact money and independent user capital. Long/short calculations enforce risk, notional, cash and fee bounds, including a 27-combination short-account/fee sweep. No actual order, reservation, nonce or native stop is created.
+
+An actual local Next proxy/API smoke check with a public unfunded signing vector confirmed challenge -> scoped session -> replay refusal -> logout, no-store headers and denial of unauthenticated private-preview access. It made no exchange call and used no injected wallet. Actual SignInMessage and UserOrderReport React components were server-rendered into an explicitly labelled offline fixture; normal/expired reports and message layouts passed 320/375/414/768/1280px overflow/button checks and visual inspection. This is layout evidence, not live wallet/exchange acceptance. Temporary services were stopped after verification.
 
 ## Financial interpretation
 

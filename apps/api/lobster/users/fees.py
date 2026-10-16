@@ -31,7 +31,7 @@ class ConsentInput(Contract):
 
 def require_fresh(account: dict, address: str):
     observed = datetime.fromisoformat(account["observed_at"])
-    if (account["address"] != address or account["network"] != "testnet" or account["stale"] or observed.tzinfo is None
+    if (account["address"] != address or account["network"] != "testnet" or account["stale"] is not False or observed.tzinfo is None
             or not -2 <= (utcnow() - observed).total_seconds() <= 15):
         raise ValueError("A fresh observation of the requested testnet account is required.")
 

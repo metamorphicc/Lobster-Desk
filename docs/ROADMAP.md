@@ -43,7 +43,10 @@ Each checked substage has its own local commit. No pushes or deployments. A stag
   - [ ] **5.2d User execution acceptance.** Explicit user signing, actual testnet orders/protection, builder eligibility, approval/revocation and fee receipts. Requires owner-reviewed exchange evidence before activation.
     - [x] **5.2d.1 Local wallet authentication.** One-time server challenges, EOA signature recovery, hashed scoped sessions, replay/expiry/restart/clock checks. Verified offline: 230 Python tests. No trading authority or real wallet signature used.
     - [x] **5.2d.2 Explicit sign-in interface.** Separate public watch and verified session states, reviewed sign-in message, account/network invalidation and memory-only tokens. Verified: 27 Node wallet tests, build and responsive public-watch separation. Real extension prompts remain unverified.
-    - [ ] **5.2d.3 Private order preview.** Session-bound deterministic risk/fee checks and unsigned user plans. Exchange signing/submission and funded acceptance remain separate.
+    - [x] **5.2d.3 Private order preview.** Session-bound per-trade sizing/fees, immutable private records, idempotency and explicit execution blockers. Verified: 249 Python tests, 27 Node tests, build and actual React message/report layouts using labelled offline fixtures. User daily-loss references, exchange signing/submission and funded acceptance remain open.
+    - [ ] **5.2d.4 User capital references.** Separate durable daily-loss/drawdown references per user, external cash-flow/funding accounting and conservative handling of unknown history.
+    - [ ] **5.2d.5 Explicit exchange consent and order path.** Fresh reviewed user signatures, serialized nonces, owner-bound execution journal, confirmed-fill protection and observed builder approval/revocation/fees. Keep activation gated while acceptance is postponed.
+    - [ ] **5.2d.6 User exchange acceptance.** Real extension behavior and owner-reviewed testnet evidence. Local proofs and unsigned previews do not complete this gate.
 
 ## Stage 6 — Controlled production release
 

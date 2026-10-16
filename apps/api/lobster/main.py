@@ -27,6 +27,9 @@ from .users.contracts import Address, UserTestnetSettings
 from .users.service import UserTestnetService
 from .users.fees import ConsentInput, FeeQuoteInput, consent_plan, fee_quote
 from .users.auth import AuthError, ChallengeInput, VerifyInput, UserAuth
+from .users.orders import PreviewInput, UserPlans, illustrate
+from .execution.gateway import HyperliquidTestnet
+from .execution.contracts import ReviewedSetup
 from .http_boundary import LocalBoundary, LOCAL_ORIGINS
 from .ops.readiness import readiness
 from .ops.worker import worker_lease
@@ -118,6 +121,7 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
             runtime.store.bind_market_source(config.market_source)
             app.state.runtime = runtime
             app.state.user_auth = UserAuth(runtime.store)
+            app.state.user_plans = UserPlans(runtime.store)
             async with httpx.AsyncClient(timeout=10) as client:
                 app.state.testnet = TestnetWorkbench(testnet_config, client, config.database_url)
                 if app.state.testnet.ledger:
@@ -276,6 +280,48 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
             return consent_plan(body, user_config, account)
         except ValueError as error:
             raise HTTPException(409, str(error)) from None
+
+    @app.post("/api/v1/users/testnet/order-preview", status_code=201)
+    async def user_order_preview(body: PreviewInput, request: Request,
+            idempotency_key: str = Header(alias="Idempotency-Key"), authorization: str | None = Header(default=None)):
+        identity = auth_call(request, request.app.state.user_auth.require, authorization)
+        if not re.fullmatch(r"[a-zA-Z0-9_-]{8,64}", idempotency_key):
+            raise HTTPException(422, "Use an 8-64 character alphanumeric Idempotency-Key.")
+        plans = request.app.state.user_plans
+        try:
+            existing = plans.by_request(identity["address"], idempotency_key, body.episode_id)
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from None
+        if existing:
+            return existing
+        peer = request.client.host if request.client else "local"
+        auth_call(request, request.app.state.user_auth.admit, "order-preview:" + peer)
+        episode = request.app.state.runtime.store.get_episode(body.episode_id)
+        if not episode:
+            raise HTTPException(404, "Reviewed setup not found.")
+        try:
+            ReviewedSetup.from_episode(episode, request.app.state.runtime.store.policy)
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from None
+        account = await fresh_user_account(request, identity["address"])
+        try:
+            rules, market = await HyperliquidTestnet(request.app.state.users.client, identity["address"]).market()
+        except Exception:
+            raise HTTPException(502, "A fresh testnet BTC observation is unavailable. No order was submitted.") from None
+        try:
+            plan = illustrate(episode, identity["address"], account, market, rules, request.app.state.runtime.store.policy)
+            auth_call(request, request.app.state.user_auth.require, authorization)
+            return plans.save(identity["address"], idempotency_key, plan)
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from None
+
+    @app.get("/api/v1/users/testnet/order-previews/{plan_id}")
+    def user_order_preview_get(plan_id: str, request: Request, authorization: str | None = Header(default=None)):
+        identity = auth_call(request, request.app.state.user_auth.require, authorization)
+        result = request.app.state.user_plans.get(identity["address"], plan_id)
+        if not result:
+            raise HTTPException(404, "User preview not found.")
+        return result
 
     @app.get("/api/v1/testnet/inspect")
     async def testnet_inspect(request: Request):

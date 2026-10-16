@@ -35,6 +35,8 @@ Classification reference: [OWASP A02:2025](https://top10.owasp.org/2025/A02_2025
 
 ## Fix order and remaining gates
 
+Subsequent local user work adds EOA sign-in with exact server-generated origin/chain/nonce/message binding, single-use proof consumption, canonical signature recovery, hashed scoped tokens, expiry/revocation and restart invalidation. Private order illustrations derive their address from that session, enforce per-trade controls and retain disabled execution flags. Tokens/signatures/private plans are excluded from public state and event exports. Authentication/ownership tests pass, including concurrent replay and revocation during account lookup. This is not an independent review of the new authentication flow; real wallet-extension behavior and exchange execution remain acceptance gaps.
+
 1. Completed locally: host/origin/body boundaries, error redaction, API headers, existing-authorization regression checks and recovery tooling.
 2. Before financial activation: owner-reviewed funded testnet evidence, actual wallet authorization/signing, native protection, approval/revocation and fee/funding receipts. An unsigned preview or mocked exchange is insufficient.
 3. Before public hosting: authenticated service/tenant mutations, durable distributed abuse limits, trusted reverse-proxy/TLS configuration, production frontend security policy, worker/signer leadership, migration/backup retention, off-machine recovery, alerting, independent security review and owner decisions on operating scope/jurisdictions.

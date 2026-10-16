@@ -51,6 +51,7 @@ To configure the optional modes, copy `.env.example` to `.env` at the repository
 5. Inspect **Treasury** for simulated capital, modeled fees and a clearly hypothetical builder-fee calculator.
 6. **Export journal** downloads the complete append-only application event history as JSON.
 7. **Testnet → Your testnet account** connects an injected wallet for public data or watches an address. Inspect balances, orders, builder approval, cost illustrations and unsigned consent plans. A separate optional sign-in message establishes a local EOA preview session; public watching grants none. Neither grants trading authority; see [USER-ACCOUNTS.md](docs/USER-ACCOUNTS.md).
+8. A verified local session can request a private **user order preview** for an approved, unexpired testnet setup. It sizes against the user's own fresh account with a $50 cap, saves an immutable record and shows the outstanding execution blockers. It sends no exchange order and installs no stop.
 
 Scripted demo reviewers are deterministic checks, not real AI. Synthetic price, funding and OI figures are labelled. The optional model adapter supplies real reviews but cannot override coded controls. Paper protection runs while this local service is running and has fresh data; it is not an exchange-native stop.
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Check, Eye, LoaderCircle, RefreshCw, Wallet as WalletIcon } from "lucide-react";
-import { money, number } from "@/lib/types";
+import { money, number, type Episode } from "@/lib/types";
 import { discoverWallets, normalizeAddress, WalletSession, type Wallet, type WalletState } from "@/lib/wallet";
 import { BuilderConsent } from "./builder-consent";
 import { WalletAuth } from "./wallet-auth";
@@ -16,7 +16,7 @@ type Account = UserConfig & {
 };
 const initial: WalletState = { status: "idle", address: null, chainId: null, error: null, revision: 0 };
 
-export function UserAccount() {
+export function UserAccount({ episodes = [] }: { episodes?: Episode[] }) {
   const session = useRef<WalletSession | null>(null);
   const [wallet, setWallet] = useState(initial);
   const [wallets, setWallets] = useState<Wallet[]>([]);
@@ -106,7 +106,7 @@ export function UserAccount() {
         <dl className="testnet-addresses"><div><dt>Builder recipient</dt><dd>{availableConfig?.builder_address || "Not configured"}</dd></div></dl>
         {data && <p>Approval: <strong>{data.builder_approval_status.replaceAll("_", " ")}</strong>{data.approved_builder_fee_tenths_bps != null ? ` · Maximum ${(data.approved_builder_fee_tenths_bps / 1000).toLocaleString("en-US", { maximumFractionDigits: 3 })}%` : ""}. Reported account taker rate {(Number(data.reported_taker_rate) * 100).toLocaleString("en-US", { maximumFractionDigits: 5 })}%.</p>}
       </div>
-      {wallet.address && wallet.chainId && session.current && <WalletAuth key={`${wallet.address}:${wallet.revision}`} address={wallet.address} chainId={wallet.chainId} session={session.current} now={now} />}
+      {wallet.address && wallet.chainId && session.current && <WalletAuth key={`${wallet.address}:${wallet.revision}`} address={wallet.address} chainId={wallet.chainId} session={session.current} now={now} episodes={episodes} />}
       {!wallet.address && <p className="small-note">Private previews require a connected wallet and a separate sign-in message. Watching an address grants no private session.</p>}
       {address && <BuilderConsent key={key} address={address} configured={!!availableConfig?.builder_address} now={now} />}
     </div>
