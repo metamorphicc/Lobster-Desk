@@ -48,6 +48,7 @@ Each checked substage has its own local commit. No pushes or deployments. A stag
     - [ ] **5.2d.5 Explicit exchange consent and order path.** Fresh reviewed user signatures, serialized nonces, owner-bound execution journal, confirmed-fill protection and observed builder approval/revocation/fees. Keep activation gated while acceptance is postponed.
       - [x] **5.2d.5a Local consent contracts and execution hooks.** Immutable unique-API-wallet profiles, private SDK-compatible unsigned permissions, exact-plan EIP-712 local intents, atomic offline proof handoff, entry-only broker guards and observed builder-fee components. No financial proof/dispatch HTTP route. Live multi-user orchestration remains unimplemented; see `USER-EXECUTION.md`.
     - [ ] **5.2d.6 User exchange acceptance.** Real extension behavior and owner-reviewed testnet evidence. Local proofs and unsigned previews do not complete this gate.
+      - [x] **5.2d.6a Acceptance inventory.** Private bounded evidence templates, contained file hashes and wallet/fee/recovery case matrix. Inventory never certifies acceptance or enables exchange transport.
 
 ## Stage 6 — Controlled production release
 
