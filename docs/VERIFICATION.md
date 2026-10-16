@@ -4,7 +4,7 @@ Date: 2026-10-16 (Asia/Novosibirsk).
 
 ## Automated
 
-- 215 passing Python tests: schema validation, finite monetary input, direction/stop/target checks, leverage, expiry/freshness, sizing, loss thresholds, concurrent reservation, fill idempotency, transaction rollback, gap losses, fee accounting, provider failure, review budgets, feed isolation, HTTP endpoints and restart recovery. Testnet additions cover official SDK signatures/domain/expiry, atomic nonce/command claims, partial fills, uncertain requests without replay, protection failure, fixed-host HTTP, public-only readiness/preflight and operator-controlled local staging/cancellation.
+- 230 passing Python tests: schema validation, finite monetary input, direction/stop/target checks, leverage, expiry/freshness, sizing, loss thresholds, concurrent reservation, fill idempotency, transaction rollback, gap losses, fee accounting, provider failure, review budgets, feed isolation, HTTP endpoints and restart recovery. Testnet additions cover official SDK signatures/domain/expiry, atomic nonce/command claims, partial fills, uncertain requests without replay, protection failure, fixed-host HTTP, public-only readiness/preflight and operator-controlled local staging/cancellation.
 - End-to-end API scenario: pitch -> reviews -> capital reservation -> paper fill -> stop -> restart -> identical cash and journal.
 - TypeScript check passes.
 - Next.js production build passes.
@@ -59,6 +59,10 @@ Actual local checks returned exit 0 for the healthy service through both API and
 215 Python tests pass. An independent child process acquired the worker lock, a competing process was refused, and terminating the actual owning interpreter released the OS lock without deleting its file. The test targets the reported interpreter PID because a Windows virtual-environment launcher can be a separate process. Tests also cover canonical path aliases, separate databases, observer APIs, clean task cancellation, startup/lifespan exceptions and refusal of unimplemented database leadership modes.
 
 A real default local API returned ready while a second Uvicorn process on another port refused startup for the same paper database. Stopping the original API released ownership; the lock could be acquired again. No signer or exchange execution was activated. This establishes same-machine Windows behavior; POSIX locking uses flock but was not exercised on this host.
+
+## Local wallet authentication
+
+230 Python tests pass. Public unfunded EOA vectors verify exact domain/chain/nonce/statement binding, canonical signature recovery, single-use challenges, concurrent replay, hashed bearer storage, logout, restart, expiry and backward-clock refusal. Authentication makes no exchange call and exposes no order submission route. Tests confirm static failure responses and that tokens/signatures never appear in public paper state. Actual wallet-extension signing and financial permissions remain unverified.
 
 ## Financial interpretation
 

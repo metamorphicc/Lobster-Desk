@@ -27,6 +27,8 @@ Do not point a running signer at a restored historical nonce ledger. An older ba
 
 Hashes detect corruption or accidental changes; they are not authentication against someone who can rewrite both the database and manifest. Encryption, off-machine retention, PostgreSQL recovery and production recovery leadership remain operational gates.
 
+The paper snapshot also includes local wallet-authentication tables when present, including public addresses, challenge state and hashed session tokens. Keep this data private. Tokens and pending challenges from a previous API boot are invalid after restart/restore; restoring rows does not restore login authority. No raw wallet signatures, bearer tokens or signing keys are persisted by authentication.
+
 ## Verification
 
 Tests include committed WAL content, exact paper state after restore, testnet unknown-command/nonce persistence without entry replay, corruption, traversal, missing sources and overwrite refusal. A real local paper snapshot was also restored into an isolated directory and compared with the stopped source: account, episodes, positions and journal rows matched exactly. No exchange action or live database replacement occurred.

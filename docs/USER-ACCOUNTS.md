@@ -32,4 +32,20 @@ Approval uses the configured fee cap; revocation previews `approveBuilderFee` wi
 
 The API must not infer ownership from `expected_signer`; this is application metadata outside the protocol's signed fields. Approval requires the user's main wallet, and collection additionally requires builder eligibility and per-order fee disclosure. Those external checks and actual user-order execution remain open under stage 5.2d.
 
+## Local wallet authentication
+
+The separate `/api/v1/users/testnet/auth` API establishes a **testnet:preview** session. Public address watching remains unauthenticated. This session proves control of an EOA key for local previews; it grants no exchange signing, transfer, fee approval, operator or account-delegation permission. Smart-contract-wallet verification (ERC-1271) is not implemented.
+
+1. `POST /challenge` accepts only an address and generates a two-minute, single-use server message with a random nonce. Its explicit origin/URI is `http://127.0.0.1:3000`, version 1 and chain ID 421614. The EIP-4361-formatted statement explicitly excludes financial authority. Client-supplied messages, domains, chains and scopes are not accepted.
+2. `POST /verify` accepts only the challenge ID and a canonical 65-byte EIP-191 signature. The server reconstructs the exact stored message, recovers the EOA address and atomically consumes the challenge. Changed fields, another signer, expiry, high-s signatures and replay are refused. Signature recovery makes no exchange/network request.
+3. `GET /session` requires the returned bearer token. Tokens are random, scoped, expire in 15 minutes and are stored on the server only as SHA-256 hashes. `POST /logout` revokes the supplied session. No session becomes a trading credential.
+
+Authentication tables share the local paper database for transactional serialization, but their payloads never appear in public paper state or journal. They are separate from capital and exchange nonces. Challenge/verify requests have an independent persisted 10-attempt/60-second peer budget, including failed proofs. Active challenge/session capacity is bounded at 256 each. Challenge creation prunes expired rows. Backward clock changes block authentication rather than extending session authority.
+
+Every API process has a fresh authentication boot ID: restart or restoring a snapshot invalidates previous challenges and sessions, even if their rows survive. Multiple API processes cannot share sessions or provide load-balanced authentication. Plain HTTP is allowed only within the current loopback application; public hosting requires separately reviewed origin/TLS/session policy. This is not production identity infrastructure.
+
+Offline tests use public unfunded key vectors and cover exact-message binding, concurrent replay, token storage, logout, clock rollback, restart, expiry, bounded requests and static database-failure responses. No actual wallet permission or exchange signature was requested during implementation. The funded exchange gate remains postponed by the owner.
+
+Protocol references: [ERC-4361](https://eips.ethereum.org/EIPS/eip-4361), [MetaMask message signing](https://docs.metamask.io/wallet/how-to/sign-data/).
+
 Sources: [builder codes](https://hyperliquid.gitbook.io/hyperliquid-docs/trading/builder-codes), [approval queries](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint#check-builder-fee-approval), [official builder example](https://github.com/hyperliquid-dex/hyperliquid-python-sdk/blob/master/examples/basic_builder_fee.py).

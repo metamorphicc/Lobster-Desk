@@ -34,12 +34,16 @@ Each checked substage has its own local commit. No pushes or deployments. A stag
   - [x] **5.1b Durable order lifecycle.** Separate persistent ledger, atomic command claims/nonces, no blind replay after timeout, deduplicated fills and exchange-confirmed protection of actual filled size. Verified offline: 108 tests including partial fills, restart, rejected stops and fixed-host transport.
   - [x] **5.1c Local testnet workbench.** Read-only readiness/preflight, operator-only staging/cancellation, separate journal and owner-run signer CLI. Verified: 124 tests, typecheck/build, anonymous public testnet inspection and responsive browser checks. No automatic activation or exchange orders during development.
   - [ ] **5.1d Funded testnet acceptance.** Verify API wallet permissions, actual partial fills/stops and restart with a funded testnet account. Not complete until observed on the exchange.
+    - Owner postponed this gate; continuing local user-trading implementation without enabling exchange execution.
     - [x] **5.1d.1 Acceptance tooling.** Unsigned evidence capture, fresh order identity queries and an owner review matrix; reports never certify acceptance automatically.
 - [ ] **5.2 User-owned trading.** Wallet connection, builder-fee approval, explicit user signatures, fee disclosure, order status and account isolation. Verify approval and revocation before enabling collection.
   - [x] **5.2a Public account boundary.** Independent read-only testnet user accounts, validated public addresses, exact fee units and current builder approval inspection. No authentication, server-held user keys or order route.
   - [x] **5.2b Wallet interface.** EIP-6963 discovery, explicit EIP-1193 connection, account/network-change isolation and public-address watch mode in the Testnet tab. Verified: 11 wallet-session tests, production build and responsive browser lookup; real extension signing remains outside this read-only substage.
   - [x] **5.2c Builder consent plans.** Exact fee previews and SDK-compatible unsigned approval/revocation payloads, account binding and downloadable plans. Verified: 155 Python tests, 11 wallet tests, build and browser cost/download/revocation checks. No automatic signing or collection.
   - [ ] **5.2d User execution acceptance.** Explicit user signing, actual testnet orders/protection, builder eligibility, approval/revocation and fee receipts. Requires owner-reviewed exchange evidence before activation.
+    - [x] **5.2d.1 Local wallet authentication.** One-time server challenges, EOA signature recovery, hashed scoped sessions, replay/expiry/restart/clock checks. Verified offline: 230 Python tests. No trading authority or real wallet signature used.
+    - [ ] **5.2d.2 Explicit sign-in interface.** Separate public watch and verified session states, reviewed sign-in message, account/network invalidation and memory-only tokens.
+    - [ ] **5.2d.3 Private order preview.** Session-bound deterministic risk/fee checks and unsigned user plans. Exchange signing/submission and funded acceptance remain separate.
 
 ## Stage 6 — Controlled production release
 

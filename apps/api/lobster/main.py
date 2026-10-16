@@ -26,6 +26,7 @@ from .execution.workbench import TestnetWorkbench
 from .users.contracts import Address, UserTestnetSettings
 from .users.service import UserTestnetService
 from .users.fees import ConsentInput, FeeQuoteInput, consent_plan, fee_quote
+from .users.auth import AuthError, ChallengeInput, VerifyInput, UserAuth
 from .http_boundary import LocalBoundary, LOCAL_ORIGINS
 from .ops.readiness import readiness
 from .ops.worker import worker_lease
@@ -116,6 +117,7 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
             resources.callback(runtime.store.engine.dispose)
             runtime.store.bind_market_source(config.market_source)
             app.state.runtime = runtime
+            app.state.user_auth = UserAuth(runtime.store)
             async with httpx.AsyncClient(timeout=10) as client:
                 app.state.testnet = TestnetWorkbench(testnet_config, client, config.database_url)
                 if app.state.testnet.ledger:
@@ -140,6 +142,37 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
                        allow_methods=["GET", "POST"], allow_headers=["Content-Type", "Idempotency-Key", "Authorization"])
     app.add_middleware(LocalBoundary)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "[::1]"], www_redirect=False)
+
+    @app.exception_handler(AuthError)
+    async def auth_error(request: Request, error: AuthError):
+        return JSONResponse({"detail": error.message}, status_code=error.status,
+            headers={"Retry-After": str(error.retry)} if error.retry else {})
+
+    def auth_call(request: Request, operation, *args):
+        try:
+            return operation(*args)
+        except AuthError:
+            raise
+        except Exception as error:
+            logger.warning("Wallet authentication unavailable (%s)", type(error).__name__)
+            raise AuthError(503, "Wallet authentication is unavailable. Check the local database.") from None
+
+    @app.post("/api/v1/users/testnet/auth/challenge")
+    def auth_challenge(body: ChallengeInput, request: Request):
+        return auth_call(request, request.app.state.user_auth.challenge, body.address, request.client.host if request.client else "local")
+
+    @app.post("/api/v1/users/testnet/auth/verify")
+    def auth_verify(body: VerifyInput, request: Request):
+        return auth_call(request, request.app.state.user_auth.verify, body, request.client.host if request.client else "local")
+
+    @app.get("/api/v1/users/testnet/auth/session")
+    def auth_session(request: Request, authorization: str | None = Header(default=None)):
+        return auth_call(request, request.app.state.user_auth.require, authorization)
+
+    @app.post("/api/v1/users/testnet/auth/logout")
+    def auth_logout(request: Request, authorization: str | None = Header(default=None)):
+        auth_call(request, request.app.state.user_auth.logout, authorization)
+        return {"authenticated": False, "revoked": True}
 
     @app.get("/api/health")
     def health(request: Request):
