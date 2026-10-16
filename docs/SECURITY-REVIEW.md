@@ -25,13 +25,13 @@ Classification reference: [OWASP A02:2025](https://top10.owasp.org/2025/A02_2025
 
 ## Verification and reviewed surfaces
 
-- 172 Python tests and 11 wallet tests pass. The nine local-boundary tests include chunked bodies, slow reads, duplicate headers, Unicode invalid bearer data, allowed CORS preflight and a valid local POST. Existing financial/recovery and operator authorization tests still pass.
+- 215 Python tests and 11 wallet tests pass. The nine local-boundary tests include chunked bodies, slow reads, duplicate headers, Unicode invalid bearer data, allowed CORS preflight and a valid local POST. Financial/recovery and operator authorization tests pass alongside durable admission and local worker ownership checks.
 - Live local checks: Next's proxy returned account state with 200/no-store/nosniff; direct API requests rejected foreign Host/Origin. The browser still loaded public-account data and a cost preview with no console errors. The production build passes.
 - Operator mutations require the configured bearer token. Non-ASCII malformed bearer data returns 401 rather than causing a string-comparison exception. Consent previews accept no signature and expose no submission route.
 - Account address, network, approval binding, money precision, client request ID and expiry validation are covered. User balances never become shared execution capital. Public watch mode is not reported as authenticated ownership.
 - React renders user/external strings as text. No application match was found for `dangerouslySetInnerHTML`, `eval`, pickle deserialization, shell-enabled process execution or public-prefixed secret variables. Wallet-provided image/SVG URLs are not rendered.
 - The signer excludes generic transfer/withdraw actions and mainnet writes. Commands are claimed durably and not blindly replayed. Recovery refuses existing destinations and checks snapshot integrity. Tests use explicitly public, unfunded key vectors; no real wallet permission or signed exchange request was used.
-- Dependencies are locked. `npm audit --omit=dev --json` reported zero known production advisories on this run. That is a registry result, not proof of package safety; a complete Python/transitive supply-chain audit was not performed.
+- Dependencies are locked. Strict pip-audit 2.10.1 checked all 56 exact Python lock entries without skips; installed versions matched and pip check passed. The Python and npm production advisory checks both reported zero known vulnerabilities. See [DEPENDENCY-AUDIT.md](DEPENDENCY-AUDIT.md) for input hashes, commands and limits. Full source/provenance review and hashed Python installation artifacts remain outside this check.
 
 ## Fix order and remaining gates
 

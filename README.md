@@ -68,6 +68,8 @@ The last command is an optional public-network smoke check, separate from determ
 
 With services running, `node scripts/python.mjs scripts/check-health.py` checks local paper readiness; add `--web` to include the frontend proxy. It does not activate execution or establish production readiness. See [OPERATIONS.md](docs/OPERATIONS.md) for exit codes and alert scope.
 
+Known-advisory checks are recorded with input hashes and repeatable commands in [DEPENDENCY-AUDIT.md](docs/DEPENDENCY-AUDIT.md). They require network access and do not replace application or independent security review.
+
 For a production-mode local frontend after building, run `npm run start --workspace @lobster/web` and start the API separately:
 
 ```powershell

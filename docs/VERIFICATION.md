@@ -42,7 +42,7 @@ The Anthropic adapter's request/output contract is tested with mocked responses.
 
 ## Local API security
 
-172 Python tests and 11 Node wallet tests pass. Nine new boundary tests cover Host/Origin, declared and chunked bodies, slow reads, duplicate/oversized Content-Length, malformed bearer bytes, credential-error redaction and valid CORS/POST behavior. Live Next proxy and browser cost-preview checks passed after the middleware changes. The production build passes. The npm production audit reported no known advisories; Python dependency advisory coverage and independent review remain incomplete. See [SECURITY-REVIEW.md](SECURITY-REVIEW.md) for reproduced findings, fixes and remaining launch gates.
+At the boundary-review substage, 172 Python tests and 11 Node wallet tests passed. Nine boundary tests cover Host/Origin, declared and chunked bodies, slow reads, duplicate/oversized Content-Length, malformed bearer bytes, credential-error redaction and valid CORS/POST behavior. Live Next proxy and browser cost-preview checks passed after the middleware changes. The production build passes. Subsequent strict advisory checks covered all 56 Python lock entries without skips and the npm production tree, reporting zero known vulnerabilities; installed Python versions matched and pip check passed. Independent review remains incomplete. See [SECURITY-REVIEW.md](SECURITY-REVIEW.md) and [DEPENDENCY-AUDIT.md](DEPENDENCY-AUDIT.md) for findings, input hashes and remaining launch gates.
 
 ## Local operations
 
