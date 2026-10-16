@@ -36,6 +36,7 @@ To configure the optional modes, copy `.env.example` to `.env` at the repository
 - `MARKET_SOURCE=hyperliquid` uses read-only public BTC data. Execution stays paper.
 - `AGENT_PROVIDER=anthropic` requires your own `ANTHROPIC_API_KEY` and an explicit `ANTHROPIC_MODEL` supporting structured outputs. Model calls incur provider charges. No paid calls were made during development.
 - `MAX_REVIEW_CALLS_PER_DAY=100` caps review attempts across restarts, using a UTC day. A normal pitch uses at most two calls. Interrupted calls are not automatically retried.
+- Validated pitch requests are limited persistently to 10 per transport peer per 60 seconds; the global review queue holds at most 20 pending setups. See [operational limits](docs/OPERATIONS.md#pitch-admission), including shared proxy budgets and clock behavior.
 - `OPERATOR_TOKEN` enables pause/resume/close controls; use at least 24 characters. It is never exposed in the public state response.
 - `MARKET_SOURCE=hyperliquid-testnet` evaluates setups on public testnet data. Use a new paper `DATABASE_URL`. The **Testnet** tab can inspect readiness and stage an intent locally; exchange submission requires a separate owner-run signer. See [the testnet guide](docs/TESTNET.md).
 - Use a separate `DATABASE_URL` when switching between demo and live-market experiments. Switching feeds with an open position or pending reviewed setup is blocked.

@@ -33,6 +33,16 @@ node scripts/python.mjs scripts/check-health.py --web
 
 The first command probes the fixed loopback API; `--web` also exercises Next's loopback proxy. Exit codes are **0** for a ready paper service without critical alerts, **1** for a blocked service or any critical alert, and **2** for timeout, unavailable service or malformed/inconsistent diagnostics. Redirects and environment HTTP proxies are disabled. Neither command loads signer settings or changes execution state. These are single checks, not scheduled monitors or external notifications.
 
+## Pitch admission
+
+Validated pitch requests have a persisted sliding limit of **10 attempts per transport peer per 60 seconds**, including idempotent retries and conflicting/full-queue submissions. HTTP 429 includes the remaining `Retry-After` seconds. Invalid schemas/keys are rejected before admission. The limiter commits before submission, so failed submissions do not refund attempts. A database/admission-state failure returns a static HTTP 503 and admits no pitch.
+
+One bounded row in `pitch_admission` stores hashed peer keys, active timestamps and a clock floor. It retains at most 128 active peers; additional peers wait until a slot expires. Expired timestamps/peers are pruned on requests. Backward wall-clock changes cannot reset windows, including across restarts; a forward jump followed by rollback can make waiting longer. Peer hashes are guessable fingerprints, not anonymization or authentication. Forwarded client headers are ignored. Through the local Next proxy, users share its transport-peer budget.
+
+Transactions serialize admission across instances sharing this local SQLite file. The existing global queue limit remains **20** pending reviews and counts them in SQL inside the submission transaction; idempotent replay still returns the original episode when the queue is full. Approved reservations and open positions remain governed by the financial controls. The durable UTC model-call budget also uses an atomic SQL count. Snapshot/restore preserves admission state captured in the snapshot; restoring older data cannot recover attempts made after capture.
+
+This adds no public identity, tenant isolation, distributed rate service or worker election. Separate databases have separate limits. Production controls remain a separate gate.
+
 ## Operational limits
 
 These are current local observations, not durable alert delivery or a hosted monitoring system. They do not elect a worker, supervise a signer, configure external notification services, replace off-machine backups or complete funded acceptance. Production identity, distributed controls, external alerts and an independent security review remain under stage 6.1c.

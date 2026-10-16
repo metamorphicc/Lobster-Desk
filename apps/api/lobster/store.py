@@ -15,6 +15,7 @@ from sqlalchemy.pool import StaticPool
 
 from .domain import Capital, PitchInput, RiskPolicy, Snapshot, utcnow
 from .risk import assess
+from .admission import consume
 
 
 class Base(DeclarativeBase):
@@ -44,6 +45,12 @@ class Position(Base):
 class Event(Base):
     __tablename__ = "events"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    payload: Mapped[dict] = mapped_column(JSON)
+
+
+class PitchAdmission(Base):
+    __tablename__ = "pitch_admission"
+    id: Mapped[int] = mapped_column(primary_key=True)
     payload: Mapped[dict] = mapped_column(JSON)
 
 
@@ -146,8 +153,9 @@ class Store:
             ep = row.payload
             attempts = ep.get("review_attempts", {})
             day = utcnow().date().isoformat()
-            count = sum(1 for event in session.scalars(select(Event))
-                        if event.payload["kind"] == "review_started" and event.payload["timestamp"].startswith(day))
+            count = session.scalar(select(func.count()).select_from(Event).where(
+                Event.payload["kind"].as_string() == "review_started",
+                Event.payload["timestamp"].as_string().startswith(day)))
             reason = ("A previous reviewer call was interrupted. No automatic retry was made." if attempts.get(role)
                       else "The daily review-call budget is exhausted. Submit a new pitch after the UTC day resets." if count >= daily_limit else None)
             if reason:
@@ -158,6 +166,17 @@ class Store:
             self.event(session, role, "review_started", f"Starting the {role} review.", episode_id)
             return True
 
+    def consume_pitch_request(self, peer: str, now: datetime | None = None) -> int:
+        """Persist a validated HTTP attempt before submission; retries also count."""
+        with self.transaction() as session:
+            row = session.get(PitchAdmission, 1)
+            state, retry = consume(row.payload if row else {"last_seen_us": 0, "peers": {}}, peer, now or utcnow())
+            if row:
+                row.payload = state
+            else:
+                session.add(PitchAdmission(id=1, payload=state))
+        return retry
+
     def submit(self, pitch: PitchInput, request_id: str) -> dict:
         with self.transaction() as session:
             existing = session.scalar(select(Episode).where(Episode.request_id == request_id))
@@ -165,8 +184,9 @@ class Store:
                 if existing.payload["pitch"] != pitch.model_dump(mode="json"):
                     raise ValueError("This request ID belongs to a different pitch.")
                 return existing.payload
-            rows = list(session.scalars(select(Episode)))
-            if sum(e.payload["status"] in {"queued", "analyzing", "risk_check", "capital_check"} for e in rows) >= 20:
+            pending = session.scalar(select(func.count()).select_from(Episode).where(
+                Episode.payload["status"].as_string().in_(("queued", "analyzing", "risk_check", "capital_check"))))
+            if pending >= 20:
                 raise ValueError("The pitch queue is full. Wait for the current reviews to finish.")
             now = utcnow()
             ep = {"id": str(uuid4()), "pitch": pitch.model_dump(mode="json"), "status": "queued",

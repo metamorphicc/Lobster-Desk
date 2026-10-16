@@ -4,7 +4,7 @@ Date: 2026-10-16 (Asia/Novosibirsk).
 
 ## Automated
 
-- 195 passing Python tests: schema validation, finite monetary input, direction/stop/target checks, leverage, expiry/freshness, sizing, loss thresholds, concurrent reservation, fill idempotency, transaction rollback, gap losses, fee accounting, provider failure, review budgets, feed isolation, HTTP endpoints and restart recovery. Testnet additions cover official SDK signatures/domain/expiry, atomic nonce/command claims, partial fills, uncertain requests without replay, protection failure, fixed-host HTTP, public-only readiness/preflight and operator-controlled local staging/cancellation.
+- 207 passing Python tests: schema validation, finite monetary input, direction/stop/target checks, leverage, expiry/freshness, sizing, loss thresholds, concurrent reservation, fill idempotency, transaction rollback, gap losses, fee accounting, provider failure, review budgets, feed isolation, HTTP endpoints and restart recovery. Testnet additions cover official SDK signatures/domain/expiry, atomic nonce/command claims, partial fills, uncertain requests without replay, protection failure, fixed-host HTTP, public-only readiness/preflight and operator-controlled local staging/cancellation.
 - End-to-end API scenario: pitch -> reviews -> capital reservation -> paper fill -> stop -> restart -> identical cash and journal.
 - TypeScript check passes.
 - Next.js production build passes.
@@ -49,6 +49,10 @@ The Anthropic adapter's request/output contract is tested with mocked responses.
 195 Python tests and 11 wallet tests pass. Readiness tests cover actual local worker ticks, failed tasks, stale/future/wrong-source data, database failure, review budgets, non-mutating diagnostics and unresolved testnet state. The CLI rejects malformed/inconsistent reports; a critical testnet alert returns exit 1 even when the independent paper runtime is ready.
 
 Actual local checks returned exit 0 for the healthy service through both API and Next proxy, exit 1 with WORKER_ENABLED=false, and exit 2 with services stopped. The browser showed READY and all seven checks passing with workers enabled; disabling them showed NEEDS ATTENTION and the critical stale-protection alert for the existing paper position. The panel passed 320/375/414/768/1280px layout checks without horizontal overflow or console errors. No external alerts were sent or scheduled.
+
+## Durable pitch admission
+
+207 Python tests pass. Concurrent requests through four independent Store instances admitted exactly ten attempts for one peer; concurrent submissions admitted twenty pending episodes without duplicate submission events. Tests cover persisted limits after API restart, accurate sliding expiry/Retry-After, backward-clock behavior, bounded peer state, ignored forwarded headers, static 503 on database failure, corrupt-state refusal and snapshot restoration of active windows. A concurrent UTC review-budget test permits exactly one call across four stores when the daily budget is one. PostgreSQL and distributed service identity remain unverified.
 
 ## Financial interpretation
 

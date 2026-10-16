@@ -1,13 +1,11 @@
 """Loopback development API. No exchange signing or mainnet order endpoints."""
 
 import asyncio
-from collections import defaultdict, deque
 from contextlib import asynccontextmanager, suppress
 import hmac
 import json
 import logging
 import re
-import time
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -41,7 +39,6 @@ class Runtime:
         self.market: Snapshot | None = None
         self.market_error: str | None = None
         self.worker_error: str | None = None
-        self.limits: dict[str, deque] = defaultdict(deque)
         self.tasks: dict[str, asyncio.Task] = {}
         self.last_market_tick = None
         self.last_decision_tick = None
@@ -164,13 +161,13 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
             raise HTTPException(422, "Use an 8-64 character alphanumeric Idempotency-Key.")
         runtime = request.app.state.runtime
         client = request.client.host if request.client else "local"
-        queue = runtime.limits[client]
-        now = time.monotonic()
-        while queue and queue[0] < now - 60:
-            queue.popleft()
-        if len(queue) >= 10:
-            raise HTTPException(429, "Limit: 10 pitch requests per minute. Wait before trying again.", headers={"Retry-After": "60"})
-        queue.append(now)
+        try:
+            retry = runtime.store.consume_pitch_request(client)
+        except Exception as error:
+            logger.warning("Pitch admission unavailable (%s)", type(error).__name__)
+            raise HTTPException(503, "Pitch admission is unavailable. Check the local database before retrying.") from None
+        if retry:
+            raise HTTPException(429, "Pitch request limit reached. Wait before trying again.", headers={"Retry-After": str(retry)})
         try:
             return runtime.store.submit(pitch, idempotency_key)
         except ValueError as error:
