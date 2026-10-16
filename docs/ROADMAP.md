@@ -83,7 +83,7 @@ Current handoff: local preparation has proceeded through Stage 7.2a. Main Stages
 ## Stage 8 — Autonomous strategy research and agreed economics
 
 - [x] **8.1 Fee/profit/burn accounting.** New default entry builder fee 0.05%, exact 40/20/40 received-fee earmarks and cumulative net-profit 50% buyback entitlement, with prior spending, loss recovery, charity/team protection and unknown-reserve blockers. No transfers or burns; see `DISTRIBUTION.md`.
-- [ ] **8.2 Historical data and deterministic strategy laboratory.** Validated closed candles/funding, bounded strategy grammar, chronological testing and reproducible audit reports.
+- [x] **8.2 Historical data and deterministic strategy laboratory.** Validated closed hourly candles/funding, bounded three-family grammar, next-bar Decimal simulation, chronological 60/20/20 selection and stressed costs. Verified: 14 focused tests plus real read-only 1,440-candle/funding smoke check. Hourly path/funding approximations and rolling-history reuse are explicit; see `RESEARCH.md`.
 - [ ] **8.3 Autonomous paper research cycle.** Bounded model hypotheses/challenges, persistent budgets/restart state, candidate selection and audited signal-to-pitch execution through existing risk controls.
 - [ ] **8.4 Research interface and key-only paper setup.** Strategy history/results, economics policy display, preset and tested launch instructions. Real execution, donations and burns stay separately gated.
 
