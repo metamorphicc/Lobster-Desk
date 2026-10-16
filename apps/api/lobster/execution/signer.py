@@ -46,7 +46,7 @@ class TestnetSigner:
         signature = sign_l1_action(self.__wallet, action, None, nonce, expires, False)
         return {"action": action, "nonce": nonce, "signature": signature, "vaultAddress": None, "expiresAfter": expires}
 
-    def order(self, order: OrderSpec, nonce: int, now_ms: int, deadline_ms: int | None = None) -> dict:
+    def order(self, order: OrderSpec, nonce: int, now_ms: int, deadline_ms: int | None = None, *, include_builder: bool = True) -> dict:
         if order.asset_id != self.rules.asset_id or order.quantity % self.rules.quantity_step:
             raise ValueError("Order does not match BTC market precision.")
         if self.rules.price(order.price) != order.price:
@@ -56,7 +56,7 @@ class TestnetSigner:
         if order.kind == "entry" and not Decimal("10") <= order.price * order.quantity <= self.max_entry_notional:
             raise ValueError("Entry notional falls outside the signer cap.")
         action = {"type": "order", "orders": [order.to_wire()], "grouping": "na"}
-        if self.builder is not None:
+        if self.builder is not None and include_builder:
             action["builder"] = {"b": self.builder, "f": self.builder_fee_tenths_bps}
         return self._envelope(action, nonce, now_ms, deadline_ms)
 

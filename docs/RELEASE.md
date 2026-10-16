@@ -30,7 +30,7 @@ Give the reviewer the exact revision/source-manifest hash, dependency locks/audi
 
 | External production gate | Current status / evidence required |
 | --- | --- |
-| User execution integration | Partial local contracts/hooks; no end-to-end user signer/runner or enabled financial endpoint. Complete integration and actual testnet acceptance first. |
+| User execution integration | Local orchestration rehearsal with a locked writer; no live user runner or financial endpoint. Complete reviewed activation integration and actual testnet acceptance first. |
 | Independent security review | Not performed; record reviewer identity, revision, findings, fixes and follow-up verification. |
 | Public identity boundary | Not implemented; design supported domain/TLS, wallet origin, user/operator roles, authenticated mutation access, abuse/cost limits and privacy policy before exposing anything. |
 | Leadership and persistence | Local OS lock only. Distributed worker/signer leadership, nonce isolation, database migrations and restore semantics need implementation/review if more than one host is selected. |

@@ -1,6 +1,6 @@
 # User wallet and exchange acceptance
 
-Status: **not performed**. The owner postponed funded testnet acceptance. No real exchange writes or real financial wallet signatures were used in implementation. First finish the user orchestration listed in `USER-EXECUTION.md`; do not run an unimplemented user flow by adapting the project runner ad hoc.
+Status: **not performed**. The owner postponed funded testnet acceptance. No real exchange writes or real financial wallet signatures were used in implementation. The orchestration in `USER-EXECUTION.md` is tested only with a locked writer/in-memory exchange. A reviewed activation/runner/wallet integration is still required; do not adapt the project runner ad hoc or remove the writer lock to call that acceptance.
 
 Create a private checklist (no network calls):
 

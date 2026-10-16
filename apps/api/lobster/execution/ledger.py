@@ -115,11 +115,13 @@ class ExecutionLedger:
                 day_start_equity=baseline, high_water_equity=high, paused=reason is not None,
                 occupied=bool(account.btc_size or account.other_positions or account.open_order_count))
 
-    def stage(self, setup: ReviewedSetup, order: dict, rules: dict) -> dict:
+    def stage(self, setup: ReviewedSetup, order: dict, rules: dict, *, audit_binding: dict | None = None) -> dict:
         binding = fingerprint(setup.model_dump(mode="json"))
         with self.transaction() as session:
             existing = session.get(Trade, setup.episode_id)
             if existing:
+                if existing.payload.get("audit_binding") != audit_binding:
+                    raise ValueError("The existing execution belongs to another user consent binding.")
                 if existing.payload["setup_hash"] != binding:
                     raise ValueError("This episode already has a different testnet execution intent.")
                 if existing.payload["status"] != "staged":
@@ -133,6 +135,8 @@ class ExecutionLedger:
                 "setup_hash": binding, "entry": order, "rules": rules, "status": "staged",
                 "reason": "Intent staged locally. No exchange action has been sent.",
                 "filled_quantity": "0", "protected_quantity": "0", "created_at": utcnow().isoformat()}
+            if audit_binding is not None:
+                data["audit_binding"] = audit_binding
             session.add(Trade(id=setup.episode_id, payload=data))
             self.event(session, "staged", data["reason"], setup.episode_id)
             return data
