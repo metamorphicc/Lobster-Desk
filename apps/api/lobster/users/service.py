@@ -53,6 +53,7 @@ class UserTestnetService:
         if not D("0") <= D(taker) <= D("0.01"):
             raise ValueError("Unsupported account fee rate.")
         return self.config() | {"address": address, "observed_at": observed.isoformat(),
+            "exchange_time_ms": state.get("time"),
             "stale": (utcnow() - observed).total_seconds() > 15,
             "equity": amount(state["marginSummary"]["accountValue"]), "withdrawable": amount(state["withdrawable"]),
             "positions": positions, "reported_taker_rate": taker,
@@ -64,3 +65,32 @@ class UserTestnetService:
             "builder_approval_status": ("not_configured" if approval is None else "not_approved" if approval == 0 else
                 "below_requested" if approval < self.settings.builder_fee_tenths_bps else "approved"),
             "limits": "Public data does not authenticate wallet ownership. Reported account fees may differ from final exchange fees. No orders or fee collection are enabled."}
+
+    async def capital_history(self, address: str, start: int, end: int) -> list[dict]:
+        from .capital import normalize_receipt
+        if not 0 <= start <= end or end - start > 7 * 86400000:
+            raise ValueError("The accounting window exceeds its seven-day recovery bound.")
+        gateway = HyperliquidTestnet(self.client, address)
+        normalized = []
+        for stream, kind in (("ledger", "userNonFundingLedgerUpdates"), ("funding", "userFunding")):
+            cursor, seen = start, set()
+            for _ in range(10):
+                page = await gateway.info(kind, user=address, startTime=cursor, endTime=end)
+                if not isinstance(page, list) or len(page) > 5000:
+                    raise ValueError("Malformed or oversized capital history page.")
+                next_cursor = cursor
+                added = 0
+                for item in page:
+                    receipt = normalize_receipt(address, stream, item, cursor, end)
+                    next_cursor = max(next_cursor, receipt["time"])
+                    pair = (receipt["id"], receipt["details_hash"])
+                    if pair not in seen:
+                        normalized.append(receipt); seen.add(pair); added += 1
+                if len(page) < 500:
+                    break
+                if next_cursor <= cursor or not added:
+                    raise ValueError("Capital pagination cannot establish complete timestamp coverage.")
+                cursor = next_cursor  # Inclusive overlap; never skip same-timestamp entries.
+            else:
+                raise ValueError("Capital pagination budget exhausted; history remains incomplete.")
+        return sorted(normalized, key=lambda item: (item["time"], item["id"]))

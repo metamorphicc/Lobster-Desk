@@ -6,6 +6,7 @@ import type { WalletSession } from "@/lib/wallet";
 import { AUTH_ORIGIN, validateAuthChallenge, validateAuthResult, type AuthChallenge, type AuthResult } from "@/lib/wallet-auth";
 import type { Episode } from "@/lib/types";
 import { UserOrderPreview } from "./user-order-preview";
+import { UserCapital } from "./user-capital";
 
 const prefix = "/api/v1/users/testnet/auth/";
 async function revoke(token: string): Promise<boolean> {
@@ -87,6 +88,7 @@ export function WalletAuth({ address, chainId, session, now, episodes }: { addre
     <p className="small-note">Optional sign-in proves control of this wallet. It grants no trading, transfers or builder-fee permission. The session stays in this page&apos;s memory and expires within 15 minutes.</p>
     {ready ? <><p className="positive user-connected"><Check size={16} />Verified for local previews</p><p className="small-note">Expires {new Date(result.expires_at).toLocaleTimeString("en-GB", { hour12: false })}. Scope: testnet previews only.</p>
       <button className="button button--secondary" onClick={() => { void logout(); }}><LogOut size={16} />Sign out</button>
+      <UserCapital address={address} token={result.access_token} now={now} onSessionInvalid={() => { credential.current = null; setResult(null); setError("The server session is no longer valid. Sign in again."); }} />
       <UserOrderPreview address={address} token={result.access_token} episodes={episodes} now={now} onSessionInvalid={() => { credential.current = null; setResult(null); setError("The server session is no longer valid. Sign in again."); }} /></> : <>
       {result && <p className="notice">The local session expired. Sign in again for private previews.</p>}
       {!chainOk && <p className="notice">Sign-in requires wallet chain 421614 (Arbitrum Sepolia). Select it manually, then reconnect. Public account viewing works without signing in.</p>}

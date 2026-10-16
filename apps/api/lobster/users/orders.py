@@ -31,10 +31,13 @@ class UserPlan(Base):
     payload: Mapped[dict] = mapped_column(JSON)
 
 
-def illustrate(episode: dict, address: str, account: dict, market: Snapshot, rules: BtcRules, policy: RiskPolicy) -> dict:
+def illustrate(episode: dict, address: str, account: dict, market: Snapshot, rules: BtcRules, policy: RiskPolicy,
+               capital_reference: dict | None = None) -> dict:
     now = utcnow()
     setup = ReviewedSetup.from_episode(episode, policy)
     require_fresh(account, address)
+    if capital_reference and (capital_reference["address"] != address or capital_reference["halt_reason"]):
+        raise ValueError("User capital observations have a latched halt or identity mismatch. Owner review is required.")
     if market.source != "hyperliquid-testnet" or not -2 <= (now - market.timestamp).total_seconds() <= 15:
         raise ValueError("A fresh testnet market observation is required.")
     if setup.expires_at <= now:
@@ -101,6 +104,9 @@ def illustrate(episode: dict, address: str, account: dict, market: Snapshot, rul
         "assumptions": "Per-trade illustration only. Both legs include the configured hypothetical builder rate and observed taker rate. Slippage is estimated; funding, gap losses and final exchange costs can differ."}
     if account["builder_address"] is None or account["builder_approval_status"] != "approved" or account["builder_address"] == address:
         plan["execution_blockers"].append("A separate eligible builder and sufficient actual fee approval are not established.")
+    if capital_reference:
+        plan["capital_reference"] = capital_reference
+        plan["execution_blockers"][0] = "Observed loss references exist; unknown prehistory and current receipt coverage still require execution acceptance."
     return plan | {"plan_hash": fingerprint(plan)}
 
 

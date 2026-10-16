@@ -28,6 +28,7 @@ from .users.service import UserTestnetService
 from .users.fees import ConsentInput, FeeQuoteInput, consent_plan, fee_quote
 from .users.auth import AuthError, ChallengeInput, VerifyInput, UserAuth
 from .users.orders import PreviewInput, UserPlans, illustrate
+from .users.capital import UserCapital
 from .execution.gateway import HyperliquidTestnet
 from .execution.contracts import ReviewedSetup
 from .http_boundary import LocalBoundary, LOCAL_ORIGINS
@@ -122,6 +123,7 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
             app.state.runtime = runtime
             app.state.user_auth = UserAuth(runtime.store)
             app.state.user_plans = UserPlans(runtime.store)
+            app.state.user_capital = UserCapital(runtime.store)
             async with httpx.AsyncClient(timeout=10) as client:
                 app.state.testnet = TestnetWorkbench(testnet_config, client, config.database_url)
                 if app.state.testnet.ledger:
@@ -172,6 +174,39 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
     @app.get("/api/v1/users/testnet/auth/session")
     def auth_session(request: Request, authorization: str | None = Header(default=None)):
         return auth_call(request, request.app.state.user_auth.require, authorization)
+
+    @app.get("/api/v1/users/testnet/capital")
+    def user_capital_get(request: Request, authorization: str | None = Header(default=None)):
+        identity = auth_call(request, request.app.state.user_auth.require, authorization)
+        return {"reference": request.app.state.user_capital.get(identity["address"]), "entry_permission": False}
+
+    @app.post("/api/v1/users/testnet/capital/refresh")
+    async def user_capital_refresh(request: Request, authorization: str | None = Header(default=None)):
+        identity = auth_call(request, request.app.state.user_auth.require, authorization)
+        auth_call(request, request.app.state.user_auth.admit, "capital:" + (request.client.host if request.client else "local"))
+        address, ledger = identity["address"], request.app.state.user_capital
+        previous = ledger.get(address)
+        account = await fresh_user_account(request, address)
+        end = account.get("exchange_time_ms")
+        if type(end) is not int:
+            raise HTTPException(502, "The exchange account lacks an exact accounting timestamp.")
+        if previous and end < previous["cursor_ms"]:
+            return {"reference": ledger.get(address), "entry_permission": False}
+        start = max(previous["baseline_ms"], previous["cursor_ms"] - 5000) if previous else end
+        try:
+            receipts = await request.app.state.users.capital_history(address, start, end) if previous else []
+            auth_call(request, request.app.state.user_auth.require, authorization)
+            result = ledger.observe(address, account, start, receipts, complete=True)
+        except ValueError:
+            ledger.halt(address, "Unsupported, incomplete or conflicting accounting history requires owner review.")
+            raise HTTPException(409, "Capital history could not be reconciled conservatively. No entry permission was granted.") from None
+        except HTTPException:
+            raise
+        except AuthError:
+            raise
+        except Exception:
+            raise HTTPException(502, "Capital observation is unavailable. No entry permission was granted.") from None
+        return {"reference": result, "entry_permission": False}
 
     @app.post("/api/v1/users/testnet/auth/logout")
     def auth_logout(request: Request, authorization: str | None = Header(default=None)):
@@ -309,7 +344,8 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
         except Exception:
             raise HTTPException(502, "A fresh testnet BTC observation is unavailable. No order was submitted.") from None
         try:
-            plan = illustrate(episode, identity["address"], account, market, rules, request.app.state.runtime.store.policy)
+            plan = illustrate(episode, identity["address"], account, market, rules, request.app.state.runtime.store.policy,
+                request.app.state.user_capital.get(identity["address"]))
             auth_call(request, request.app.state.user_auth.require, authorization)
             return plans.save(identity["address"], idempotency_key, plan)
         except ValueError as error:

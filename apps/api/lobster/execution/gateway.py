@@ -27,7 +27,7 @@ class HyperliquidTestnet:
         response = await self.client.post(TESTNET_URL + "/info", json={"type": kind, **fields},
                                           follow_redirects=False, timeout=10)
         response.raise_for_status()
-        return response.json()
+        return response.json(parse_float=D)
 
     async def market(self) -> tuple[BtcRules, Snapshot]:
         observed = utcnow()

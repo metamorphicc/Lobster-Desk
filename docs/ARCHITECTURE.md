@@ -2,7 +2,7 @@
 
 ## Scope
 
-Local-first monorepo: Next.js web application, FastAPI service, a single market/decision worker, SQLAlchemy persistence. SQLite is the zero-configuration local database; PostgreSQL is supported through `DATABASE_URL` and intended for hosted operation. Deploy only one worker until durable leader election is added.
+Local-first monorepo: Next.js web application, FastAPI service, a single market/decision worker, SQLAlchemy persistence. SQLite is the verified local database. PostgreSQL storage exists but recovery/hosted leadership are unverified; worker-enabled non-SQLite configurations fail closed until their ownership mechanism is implemented. A local OS lock permits one paper worker per canonical SQLite path.
 
 ## Decision flow
 
