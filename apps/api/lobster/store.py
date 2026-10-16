@@ -56,6 +56,8 @@ class PitchAdmission(Base):
 
 def digest(episode: dict) -> str:
     binding = {key: episode.get(key) for key in ("pitch", "snapshot", "risk", "policy", "expires_at", "reviews")}
+    if episode.get("research") is not None:
+        binding["research"] = episode["research"]
     return sha256(json.dumps(binding, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
@@ -179,24 +181,28 @@ class Store:
 
     def submit(self, pitch: PitchInput, request_id: str) -> dict:
         with self.transaction() as session:
-            existing = session.scalar(select(Episode).where(Episode.request_id == request_id))
-            if existing:
-                if existing.payload["pitch"] != pitch.model_dump(mode="json"):
-                    raise ValueError("This request ID belongs to a different pitch.")
-                return existing.payload
-            pending = session.scalar(select(func.count()).select_from(Episode).where(
-                Episode.payload["status"].as_string().in_(("queued", "analyzing", "risk_check", "capital_check"))))
-            if pending >= 20:
-                raise ValueError("The pitch queue is full. Wait for the current reviews to finish.")
-            now = utcnow()
-            ep = {"id": str(uuid4()), "pitch": pitch.model_dump(mode="json"), "status": "queued",
-                "created_at": now.isoformat(),
-                "expires_at": (now + timedelta(seconds=self.policy.proposal_ttl_seconds)).isoformat(),
-                "snapshot": None, "reviews": {}, "risk": None, "policy": self.policy.model_dump(mode="json"),
-                "approval_hash": None, "position_id": None, "reason": "Waiting for the analyst."}
-            session.add(Episode(id=ep["id"], request_id=request_id, payload=ep))
-            self.event(session, "user", "pitch_submitted", f"{pitch.author} pitched a BTC {pitch.direction} setup.", ep["id"])
-            return ep
+            return self.submit_in_transaction(session, pitch, request_id)
+
+    def submit_in_transaction(self, session: Session, pitch: PitchInput, request_id: str, research: dict | None = None) -> dict:
+        existing = session.scalar(select(Episode).where(Episode.request_id == request_id))
+        if existing:
+            if existing.payload["pitch"] != pitch.model_dump(mode="json"):
+                raise ValueError("This request ID belongs to a different pitch.")
+            return existing.payload
+        pending = session.scalar(select(func.count()).select_from(Episode).where(
+            Episode.payload["status"].as_string().in_(("queued", "analyzing", "risk_check", "capital_check"))))
+        if pending >= 20:
+            raise ValueError("The pitch queue is full. Wait for the current reviews to finish.")
+        now = utcnow()
+        ep = {"id": str(uuid4()), "pitch": pitch.model_dump(mode="json"), "status": "queued",
+            "created_at": now.isoformat(),
+            "expires_at": (now + timedelta(seconds=self.policy.proposal_ttl_seconds)).isoformat(),
+            "snapshot": None, "reviews": {}, "risk": None, "policy": self.policy.model_dump(mode="json"),
+            "approval_hash": None, "position_id": None, "reason": "Waiting for the analyst."}
+        if research is not None: ep["research"] = research
+        session.add(Episode(id=ep["id"], request_id=request_id, payload=ep))
+        self.event(session, "user", "pitch_submitted", f"{pitch.author} pitched a BTC {pitch.direction} setup.", ep["id"])
+        return ep
 
     def get_episode(self, episode_id: str) -> dict | None:
         with Session(self.engine) as session:
@@ -344,6 +350,9 @@ class Store:
                 target_hit = market.price >= D(pos["target"]) if long else market.price <= D(pos["target"])
                 if stop_hit or target_hit or reason:
                     self.close_in_transaction(session, row, market, "stop" if stop_hit else "target" if target_hit else "risk_halt")
+                elif (origin := session.get(Episode, pos["episode_id"]).payload.get("research")) and (
+                    market.timestamp - datetime.fromisoformat(pos["opened_at"])).total_seconds() >= origin["max_holding_seconds"]:
+                    self.close_in_transaction(session, row, market, "strategy_time_limit")
             if account.payload["day"] != market.timestamp.date().isoformat():
                 updated = self.capital(session, market)
                 account.payload = account.payload | {"day": market.timestamp.date().isoformat(), "day_start_equity": str(updated.equity)}

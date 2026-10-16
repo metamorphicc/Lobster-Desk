@@ -53,6 +53,14 @@ def readiness(runtime, testnet=None) -> dict:
             "An open paper position lacks a fresh protection observation." if counters and counters["open_positions"] else "New paper entries wait for a fresh market observation.")
     if not decision_ok:
         alert("decision_error", "critical", "service", "The decision loop reports a worker error. Check local service logs.")
+    if runtime.settings.research_enabled:
+        task, tick = runtime.tasks.get("research"), runtime.last_research_tick
+        age = (now - tick).total_seconds() if tick else None
+        ok = task is not None and not task.done() and age is not None and -2 <= age <= 180 and runtime.research_error is None
+        check("research_worker", "Autonomous paper research responding", ok)
+        workers["research"] = {"running": task is not None and not task.done(), "last_tick_at": tick.isoformat() if tick else None,
+            "age_seconds": round(age, 3) if age is not None else None, "deadline_seconds": 180}
+        if not ok: alert("research_unavailable", "warning", "research", "Research is unavailable; paper protection remains a separate worker.")
     budget = None
     if counters:
         if counters["paper_paused"]:

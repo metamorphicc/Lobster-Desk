@@ -18,6 +18,11 @@ class Settings(BaseSettings):
     market_poll_seconds: float = Field(default=5, ge=2, le=10)
     review_interval_seconds: float = Field(default=2, ge=0, le=60)
     max_review_calls_per_day: int = Field(default=100, ge=1, le=10000)
+    research_enabled: bool = False
+    research_interval_seconds: int = Field(default=86400, ge=3600, le=604800)
+    research_history_bars: int = Field(default=1440, ge=720, le=4000)
+    max_research_calls_per_day: int = Field(default=4, ge=1, le=20)
+    treasury_path: str = "data/treasury.sqlite3"
 
     @model_validator(mode="after")
     def configured_provider(self):

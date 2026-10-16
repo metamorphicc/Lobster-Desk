@@ -84,7 +84,7 @@ Current handoff: local preparation has proceeded through Stage 7.2a. Main Stages
 
 - [x] **8.1 Fee/profit/burn accounting.** New default entry builder fee 0.05%, exact 40/20/40 received-fee earmarks and cumulative net-profit 50% buyback entitlement, with prior spending, loss recovery, charity/team protection and unknown-reserve blockers. No transfers or burns; see `DISTRIBUTION.md`.
 - [x] **8.2 Historical data and deterministic strategy laboratory.** Validated closed hourly candles/funding, bounded three-family grammar, next-bar Decimal simulation, chronological 60/20/20 selection and stressed costs. Verified: 14 focused tests plus real read-only 1,440-candle/funding smoke check. Hourly path/funding approximations and rolling-history reuse are explicit; see `RESEARCH.md`.
-- [ ] **8.3 Autonomous paper research cycle.** Bounded model hypotheses/challenges, persistent budgets/restart state, candidate selection and audited signal-to-pitch execution through existing risk controls.
+- [x] **8.3 Autonomous paper research cycle.** Bounded development-only hypotheses and independent veto role, durable call/schedule limits, interrupted-call recovery, atomic signal/pitch provenance and strategy time exits through the existing paper controls. Read-only audit/economics APIs and isolated runner; real model requests remain mocked without owner keys. See `RESEARCH.md`.
 - [ ] **8.4 Research interface and key-only paper setup.** Strategy history/results, economics policy display, preset and tested launch instructions. Real execution, donations and burns stay separately gated.
 
 ## Initial financial policy (continued)

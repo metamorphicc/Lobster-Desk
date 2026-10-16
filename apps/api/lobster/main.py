@@ -35,6 +35,12 @@ from .execution.contracts import ReviewedSetup
 from .http_boundary import LocalBoundary, LOCAL_ORIGINS
 from .ops.readiness import readiness
 from .ops.worker import worker_lease
+from .research.data import HistoryFeed
+from .research.providers import AnthropicResearcher, DemoResearcher
+from .research.service import Research
+from .economics.distribution import DistributionPolicy, distribution
+from .economics.book import TreasuryBook
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +55,30 @@ class Runtime:
         self.tasks: dict[str, asyncio.Task] = {}
         self.last_market_tick = None
         self.last_decision_tick = None
+        self.last_research_tick = None
+        self.research_error = None
+        self.research = Research(store, settings)
+
+    async def research_loop(self, history, researcher):
+        dataset, next_fetch = None, 0
+        while True:
+            try:
+                now = utcnow().timestamp()
+                if self.market is not None and now >= next_fetch:
+                    dataset = None
+                    next_fetch = now + 300  # Bound retry traffic on data failures.
+                    dataset = await history.fetch()
+                    next_fetch = (int(now) // 3600 + 1) * 3600 + 30
+                if dataset is not None and self.market is not None:
+                    await self.research.run(dataset, researcher)
+                    await asyncio.to_thread(self.research.emit, dataset, self.market)
+                    self.research_error = None
+            except Exception as error:
+                logger.warning("Research tick unavailable (%s)", type(error).__name__)
+                self.research_error = "Research data or audit checks are unavailable. New research signals wait; paper position protection is independent."
+            finally:
+                self.last_research_tick = utcnow()
+            await asyncio.sleep(15)
 
     async def market_loop(self, feed):
         while True:
@@ -93,7 +123,8 @@ class Runtime:
                 "model": self.settings.anthropic_model if self.settings.agent_provider == "anthropic" else "scripted-review-v1",
                 "data_stale": stale, "market_error": self.market_error, "worker_error": self.worker_error,
                 "operator_enabled": bool(self.settings.operator_token), "user_trading_enabled": False,
-                "fee_collection_enabled": False, "worker_enabled": self.settings.worker_enabled}}
+                "fee_collection_enabled": False, "worker_enabled": self.settings.worker_enabled,
+                "research_enabled": self.settings.research_enabled, "research_error": self.research_error}}
 
 
 class StageTestnetInput(Contract):
@@ -121,6 +152,8 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
             runtime = Runtime(config, Store(config.database_url, config.initial_capital))
             resources.callback(runtime.store.engine.dispose)
             runtime.store.bind_market_source(config.market_source)
+            if config.worker_enabled and config.research_enabled:
+                runtime.research.recover()
             app.state.runtime = runtime
             app.state.user_auth = UserAuth(runtime.store)
             app.state.user_plans = UserPlans(runtime.store)
@@ -137,6 +170,10 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
                 if config.worker_enabled:
                     runtime.tasks = {"market": asyncio.create_task(runtime.market_loop(feed)),
                                      "decision": asyncio.create_task(runtime.decision_loop(reviewer))}
+                    if config.research_enabled:
+                        researcher = DemoResearcher() if config.agent_provider == "demo" else AnthropicResearcher(client, config)
+                        runtime.tasks["research"] = asyncio.create_task(runtime.research_loop(
+                            HistoryFeed(client, config.market_source, config.research_history_bars), researcher))
                     tasks = list(runtime.tasks.values())
                 try:
                     yield
@@ -232,6 +269,32 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
     @app.get("/api/v1/state")
     def state(request: Request):
         return request.app.state.runtime.snapshot()
+
+    @app.get("/api/v1/research")
+    def research_summary(request: Request):
+        runtime = request.app.state.runtime
+        try:
+            return runtime.research.summary() | {"error": runtime.research_error,
+                "last_tick_at": runtime.last_research_tick.isoformat() if runtime.last_research_tick else None}
+        except Exception:
+            raise HTTPException(503, "Research audit is unavailable. No research entry authority was granted.") from None
+
+    @app.get("/api/v1/research/{campaign_id}")
+    def research_details(campaign_id: str, request: Request):
+        if not re.fullmatch(r"[a-f0-9]{64}", campaign_id): raise HTTPException(422, "Invalid research identifier.")
+        try:
+            result = request.app.state.runtime.research.get(campaign_id)
+        except Exception:
+            raise HTTPException(503, "Research audit could not be validated.") from None
+        if not result: raise HTTPException(404, "Research cohort not found.")
+        return result
+
+    @app.get("/api/v1/economics")
+    def economics(request: Request):
+        try:
+            return distribution(TreasuryBook(Path(config.treasury_path)), DistributionPolicy())
+        except Exception:
+            raise HTTPException(503, "Treasury receipt arithmetic is unavailable. No transfers were authorized.") from None
 
     @app.post("/api/v1/pitches", status_code=201)
     def submit(pitch: PitchInput, request: Request, idempotency_key: str = Header(alias="Idempotency-Key")):

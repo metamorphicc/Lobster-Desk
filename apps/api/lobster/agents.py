@@ -54,12 +54,17 @@ the setup and may veto. Reject unsupported claims, invalid levels, unclear inval
 Return only the requested verdict, a public summary of 8-700 characters, and 1-5 short evidence statements."""
 
 
-def output_schema() -> dict:
-    schema = deepcopy(Review.model_json_schema())
+def output_schema(contract=Review) -> dict:
+    schema = deepcopy(contract.model_json_schema())
     def simplify(value):
         if isinstance(value, dict):
-            return {k: simplify(v) for k, v in value.items()
-                    if k not in {"minLength", "maxLength", "minItems", "maxItems", "title"}}
+            unsupported = {"minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum", "multipleOf",
+                           "minLength", "maxLength", "minItems", "maxItems"}
+            cleaned = {k: simplify(v) for k, v in value.items() if k not in unsupported | {"title"}}
+            constraints = {k: v for k, v in value.items() if k in unsupported}
+            if constraints:
+                cleaned["description"] = (str(cleaned.get("description", "")) + " Local validation constraints: " + json.dumps(constraints)).strip()
+            return cleaned
         return [simplify(v) for v in value] if isinstance(value, list) else value
     return simplify(schema)
 
