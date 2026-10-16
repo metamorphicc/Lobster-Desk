@@ -79,6 +79,15 @@ def test_profile_is_immutable_and_each_user_requires_a_unique_api_wallet(journal
         intents.configure(ProfileInput(address=ADDRESS, agent=AGENT, builder=BUILDER, fee_tenths_bps=30))
     with pytest.raises(ValueError, match="different"):
         intents.configure(ProfileInput(address="0x" + "5" * 40, agent=AGENT, builder=BUILDER))
+    allowed = intents.configure(ProfileInput(address="0x" + "5" * 40, agent="0x" + "6" * 40, builder=BUILDER))
+    assert allowed["builder"] == BUILDER
+
+
+@pytest.mark.parametrize("changes", [{"agent": ADDRESS}, {"agent": BUILDER}, {"address": AGENT}, {"address": BUILDER}, {"builder": ADDRESS}, {"builder": AGENT}])
+def test_api_wallets_cannot_reuse_another_registered_main_or_builder_key(journal, changes):
+    intents, _ = journal
+    profile = {"address": "0x" + "5"*40, "agent": "0x" + "6"*40, "builder": BUILDER} | changes
+    with pytest.raises(ValueError): intents.configure(ProfileInput(**profile))
 
 
 def test_permission_nonces_are_serialized_and_sdk_signatures_bind_testnet(journal):

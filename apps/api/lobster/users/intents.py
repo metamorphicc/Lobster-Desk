@@ -88,8 +88,12 @@ class UserIntents:
                 if {key: existing.payload[key] for key in type(body).model_fields} != body.model_dump():
                     raise ValueError("Execution profiles are immutable. Cancel/reconcile old intents and migrate explicitly before replacing a profile.")
                 return existing.payload
-            if session.scalar(select(Profile).where(Profile.agent == body.agent)):
-                raise ValueError("Each user requires a different API wallet and nonce ledger.")
+            for other in session.scalars(select(Profile)):
+                registered = other.payload
+                if (body.agent in {registered["address"], registered["agent"], registered["builder"]}
+                        or body.address in {registered["agent"], registered["builder"]}
+                        or body.builder in {registered["address"], registered["agent"]}):
+                    raise ValueError("Each user requires a different API wallet, separated from every registered user and builder.")
             data = body.model_dump() | {"last_nonce": 0, "network": "testnet"}
             session.add(Profile(address=body.address, agent=body.agent, payload=data))
             return data
