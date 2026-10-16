@@ -2,7 +2,7 @@ from copy import deepcopy
 
 import pytest
 
-from lobster.ops.probe import probe_exit_code
+from lobster.ops.probe import probe_exit_code, monitor_envelope, unavailable_envelope
 
 
 def report(ready=True):
@@ -31,3 +31,14 @@ def test_http_status_must_match_the_report():
         probe_exit_code(503, report())
     with pytest.raises(ValueError):
         probe_exit_code(200, report(False))
+
+
+def test_monitor_contract_is_scoped_and_reports_missing_observations_explicitly():
+    source = report() | {"operator_secret": "fixture-only-private-value"}
+    monitor = monitor_envelope(200, source)
+    assert monitor["exit_code"] == 0 and not monitor["delivery_attempted"]
+    assert "operator_secret" not in str(monitor)
+    assert not monitor["production_verified"]
+    missing = unavailable_envelope()
+    assert missing["exit_code"] == 2 and not missing["service_ready"]
+    assert missing["alerts"][0]["severity"] == "critical"

@@ -28,3 +28,10 @@ def monitor_envelope(status_code: int, report: dict) -> dict:
         "service_ready": report["service_ready"], "production_verified": False, "diagnostic_only": True,
         "alerts": [{"severity": item["severity"], "message": item["message"]} for item in report["alerts"]],
         "delivery_attempted": False}
+
+
+def unavailable_envelope():
+    return {"schema": "lobster-monitor-observation-v1", "scope": "local-paper-runtime", "exit_code": 2,
+        "service_ready": False, "production_verified": False, "diagnostic_only": True,
+        "alerts": [{"severity": "critical", "message": "Readiness observation unavailable or malformed."}],
+        "delivery_attempted": False}

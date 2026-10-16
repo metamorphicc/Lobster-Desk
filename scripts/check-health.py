@@ -5,7 +5,7 @@ import json
 
 import httpx
 
-from lobster.ops.probe import probe_exit_code, monitor_envelope
+from lobster.ops.probe import probe_exit_code, monitor_envelope, unavailable_envelope
 
 
 if __name__ == "__main__":
@@ -29,5 +29,7 @@ if __name__ == "__main__":
             print(f"  {alert['severity']}: {alert['message']}")
         print("Production/exchange verification: not established by this probe. No execution state was changed.")
     except Exception:
+        if args.json:
+            print(json.dumps(unavailable_envelope()))
         parser.exit(2, "Readiness probe unavailable, malformed or inconsistent. Check the local API. No execution state was changed.\n")
     raise SystemExit(code)
