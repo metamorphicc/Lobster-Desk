@@ -1,5 +1,4 @@
 """Public unfunded keys only; all signatures and handoffs stay offline."""
-import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from datetime import timedelta

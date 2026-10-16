@@ -5,8 +5,6 @@ from pathlib import Path, PurePosixPath
 import subprocess
 from typing import Literal
 
-from pydantic import Field
-
 from ..domain import Contract, utcnow
 from ..execution.contracts import fingerprint
 

@@ -1,6 +1,5 @@
 import asyncio
 from decimal import Decimal as D
-from types import SimpleNamespace
 
 import pytest
 from pydantic import SecretStr
@@ -49,7 +48,12 @@ def context(execution_rig, tmp_path):
     kwargs = dict(store=store, intents=intents, plans=plans, capital=capital, service=service, owner=ADDRESS,
         intent_id=intent["id"], gateway=gateway, key=SecretStr(OTHER_KEY), root=tmp_path / "isolated", rules=rules)
     execution = UserExecution(**kwargs)
-    return execution, gateway, modes, state, kwargs
+    try:
+        yield execution, gateway, modes, state, kwargs
+    finally:
+        execution.ledger.engine.dispose()
+        original.engine.dispose()
+        store.engine.dispose()
 
 
 def test_private_plan_reaches_isolated_journal_but_even_arming_cannot_reach_network(context):

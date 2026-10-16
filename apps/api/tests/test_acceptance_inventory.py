@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pytest
 
 from lobster.ops.acceptance import AcceptanceRecord, inventory, template

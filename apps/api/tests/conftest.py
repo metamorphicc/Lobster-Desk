@@ -111,12 +111,21 @@ def execution_rig(tmp_path):
     episode = store.submit(PitchInput(author="QA trader", direction="long", entry="60000", stop="59400", target="61800",
                          thesis="A defined BTC breakout for offline lifecycle tests."), "request-123")
     exchange = FakeTestnet()
-    for _ in range(4):
-        asyncio.run(Pipeline(store, DemoReviewer()).step(asyncio.run(exchange.market())[1]))
+    async def review():
+        pipeline = Pipeline(store, DemoReviewer())
+        for _ in range(4):
+            await pipeline.step((await exchange.market())[1])
+    # Windows asyncio.run creates a TCP socketpair. One lifecycle per review
+    # avoids exhausting ephemeral sockets during repeated full-suite runs.
+    asyncio.run(review())
     setup = ReviewedSetup.from_episode(store.get_episode(episode["id"]), store.policy)
     signer = TestnetSigner(FIXTURE_KEY, FIXTURE_ADDRESS, exchange.rules)
     url = f"sqlite:///{tmp_path / 'execution.db'}"
     ledger = ExecutionLedger(url, FIXTURE_ADDRESS, signer.address)
     broker = TestnetBroker(ledger, exchange, signer, armed=True)
-    return broker, exchange, setup, url
+    try:
+        yield broker, exchange, setup, url
+    finally:
+        ledger.engine.dispose()
+        store.engine.dispose()
 
