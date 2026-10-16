@@ -1,5 +1,7 @@
 # SQLite backup and restore drills
 
+The optional `treasury` role captures the independent receipt book plus any buyback/disposal tables. The CLI includes `data/treasury.sqlite3` when present; `--treasury-book` selects another local file. These are private owner observations, not authenticated revenue. Isolated restore tests preserve receipt links and duplicate protection; restoration never authorizes transfers.
+
 The local tool creates verified SQLite snapshots and restores them only into a new directory. It never overwrites a live database, starts a worker or activates a signer. PostgreSQL backup/restore is not implemented or verified by this tool.
 
 ## Create and verify

@@ -16,6 +16,7 @@ if __name__ == "__main__":
     actions.add_argument("--verify", type=Path, metavar="MANIFEST")
     actions.add_argument("--restore", type=Path, metavar="MANIFEST")
     parser.add_argument("--destination", type=Path, help="A new directory; an existing path is always refused")
+    parser.add_argument("--treasury-book", type=Path, default=Path("data/treasury.sqlite3"), help="Include this local treasury book if it exists")
     args = parser.parse_args()
     try:
         if args.verify:
@@ -35,6 +36,8 @@ if __name__ == "__main__":
                 raise ValueError("The configured execution ledger is missing; an incomplete backup is refused.")
             if testnet.exists():
                 sources["testnet"] = testnet
+            if args.treasury_book.exists():
+                sources["treasury"] = args.treasury_book
             destination = args.destination or Path("artifacts/backups") / (utcnow().strftime("%Y%m%dT%H%M%S") + "-" + uuid4().hex[:8])
             manifest = snapshot(sources, destination)
             print(f"Verified SQLite snapshot: {manifest.resolve()}")

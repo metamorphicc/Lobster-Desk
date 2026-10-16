@@ -14,7 +14,8 @@ from ..domain import utcnow
 
 SCHEMA = "lobster-sqlite-backup-v1"
 REQUIRED = {"paper": {"accounts", "episodes", "positions", "events"},
-    "testnet": {"testnet_control", "testnet_trades", "testnet_commands", "testnet_fills", "testnet_events"}}
+    "testnet": {"testnet_control", "testnet_trades", "testnet_commands", "testnet_fills", "testnet_events"},
+    "treasury": {"treasury_receipts"}}
 
 
 def sqlite_path(url: str) -> Path:
@@ -46,10 +47,10 @@ def inspect_database(path: Path, role: str) -> dict:
 
 def snapshot(sources: dict[str, Path], destination: Path) -> Path:
     if not sources or any(role not in REQUIRED for role in sources):
-        raise ValueError("Supply known paper and/or testnet database roles.")
+        raise ValueError("Supply known paper, testnet and/or treasury database roles.")
     paths = {role: path.resolve() for role, path in sources.items()}
     if len(set(paths.values())) != len(paths):
-        raise ValueError("Paper and testnet source files must be separate.")
+        raise ValueError("Database source files must be separate.")
     for role, path in paths.items():
         if not path.is_file():
             raise ValueError("A requested source database is missing; no empty database will be created.")
@@ -84,7 +85,7 @@ def verify(manifest_path: Path) -> dict:
     if manifest_path.stat().st_size > 1024 * 1024:
         raise ValueError("Backup manifest exceeds its size limit.")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    if manifest.get("schema") != SCHEMA or not 1 <= len(manifest.get("files", [])) <= 2:
+    if manifest.get("schema") != SCHEMA or not 1 <= len(manifest.get("files", [])) <= len(REQUIRED):
         raise ValueError("Unsupported or incomplete backup manifest.")
     seen = set()
     for item in manifest["files"]:

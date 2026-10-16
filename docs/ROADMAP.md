@@ -70,6 +70,7 @@ Each checked substage has its own local commit. No pushes or deployments. A stag
 - [ ] **7.1 Economic and legal specification.** Jurisdiction, token rights, expense/reserve waterfall, loss recovery and buyback budget.
   - [x] **7.1a Local treasury accounting and policy rehearsal.** Independent append-only receipt book, exact USDC, atomic idempotency/hash chain, capital/revenue separation, loss carry-forward and reserve-bounded provisional allocation. All token rights and owner policy choices remain unset; no transfer authority. See `ECONOMICS.md`.
 - [ ] **7.2 Buyback reporting.** Owner-approved transactions with public receipts; no autonomous treasury transfers in the trading agent.
+  - [x] **7.2a Local receipt-linked reporting.** Exact spend/purchase/disposal linkage, no duplicate spend or excess disposal, separate sink transfers/supply-reduction claims, private hashed reports and treasury snapshot recovery. No real transactions, chain authentication, publication or token contract; see `BUYBACK-REPORTING.md`.
 
 ## Initial financial policy
 
