@@ -19,3 +19,12 @@ def probe_exit_code(status_code: int, report: dict) -> int:
            or not isinstance(alert.get("message"), str) for alert in alerts):
         raise ValueError("Malformed local alert.")
     return 0 if ready and not any(alert["severity"] == "critical" for alert in alerts) else 1
+
+
+def monitor_envelope(status_code: int, report: dict) -> dict:
+    """An external owner-run collector can ingest stdout; this sends nothing."""
+    code = probe_exit_code(status_code, report)
+    return {"schema": "lobster-monitor-observation-v1", "scope": "local-paper-runtime", "exit_code": code,
+        "service_ready": report["service_ready"], "production_verified": False, "diagnostic_only": True,
+        "alerts": [{"severity": item["severity"], "message": item["message"]} for item in report["alerts"]],
+        "delivery_attempted": False}

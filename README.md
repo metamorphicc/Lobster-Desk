@@ -12,6 +12,7 @@ A public trading tank: pitch a BTC setup, watch three crustacean agents challeng
 - `docs/ARCHITECTURE.md`: financial authority, data flow, and safety boundaries.
 - `docs/BACKUP-RESTORE.md`: verified SQLite snapshots and isolated recovery drills.
 - `docs/OPERATIONS.md`: local readiness panel, scoped alerts and loopback probe command.
+- `docs/RELEASE.md`: local source packages and explicit public-release prerequisites.
 
 ## Run locally
 
