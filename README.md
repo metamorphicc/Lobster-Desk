@@ -40,6 +40,7 @@ To configure the optional modes, copy `.env.example` to `.env` at the repository
 - `OPERATOR_TOKEN` enables pause/resume/close controls; use at least 24 characters. It is never exposed in the public state response.
 - `MARKET_SOURCE=hyperliquid-testnet` evaluates setups on public testnet data. Use a new paper `DATABASE_URL`. The **Testnet** tab can inspect readiness and stage an intent locally; exchange submission requires a separate owner-run signer. See [the testnet guide](docs/TESTNET.md).
 - Use a separate `DATABASE_URL` when switching between demo and live-market experiments. Switching feeds with an open position or pending reviewed setup is blocked.
+- One paper worker owns each local SQLite database at a time. Duplicate worker startup is refused; the OS releases ownership on exit. Worker-enabled PostgreSQL requires a separate leadership implementation and is refused. See [worker ownership](docs/OPERATIONS.md#local-worker-ownership).
 
 ## Try the flow
 

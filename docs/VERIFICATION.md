@@ -4,7 +4,7 @@ Date: 2026-10-16 (Asia/Novosibirsk).
 
 ## Automated
 
-- 207 passing Python tests: schema validation, finite monetary input, direction/stop/target checks, leverage, expiry/freshness, sizing, loss thresholds, concurrent reservation, fill idempotency, transaction rollback, gap losses, fee accounting, provider failure, review budgets, feed isolation, HTTP endpoints and restart recovery. Testnet additions cover official SDK signatures/domain/expiry, atomic nonce/command claims, partial fills, uncertain requests without replay, protection failure, fixed-host HTTP, public-only readiness/preflight and operator-controlled local staging/cancellation.
+- 215 passing Python tests: schema validation, finite monetary input, direction/stop/target checks, leverage, expiry/freshness, sizing, loss thresholds, concurrent reservation, fill idempotency, transaction rollback, gap losses, fee accounting, provider failure, review budgets, feed isolation, HTTP endpoints and restart recovery. Testnet additions cover official SDK signatures/domain/expiry, atomic nonce/command claims, partial fills, uncertain requests without replay, protection failure, fixed-host HTTP, public-only readiness/preflight and operator-controlled local staging/cancellation.
 - End-to-end API scenario: pitch -> reviews -> capital reservation -> paper fill -> stop -> restart -> identical cash and journal.
 - TypeScript check passes.
 - Next.js production build passes.
@@ -53,6 +53,12 @@ Actual local checks returned exit 0 for the healthy service through both API and
 ## Durable pitch admission
 
 207 Python tests pass. Concurrent requests through four independent Store instances admitted exactly ten attempts for one peer; concurrent submissions admitted twenty pending episodes without duplicate submission events. Tests cover persisted limits after API restart, accurate sliding expiry/Retry-After, backward-clock behavior, bounded peer state, ignored forwarded headers, static 503 on database failure, corrupt-state refusal and snapshot restoration of active windows. A concurrent UTC review-budget test permits exactly one call across four stores when the daily budget is one. PostgreSQL and distributed service identity remain unverified.
+
+## Local worker ownership
+
+215 Python tests pass. An independent child process acquired the worker lock, a competing process was refused, and terminating the actual owning interpreter released the OS lock without deleting its file. The test targets the reported interpreter PID because a Windows virtual-environment launcher can be a separate process. Tests also cover canonical path aliases, separate databases, observer APIs, clean task cancellation, startup/lifespan exceptions and refusal of unimplemented database leadership modes.
+
+A real default local API returned ready while a second Uvicorn process on another port refused startup for the same paper database. Stopping the original API released ownership; the lock could be acquired again. No signer or exchange execution was activated. This establishes same-machine Windows behavior; POSIX locking uses flock but was not exercised on this host.
 
 ## Financial interpretation
 

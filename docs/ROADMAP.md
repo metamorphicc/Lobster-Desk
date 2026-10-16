@@ -50,7 +50,7 @@ Each checked substage has its own local commit. No pushes or deployments. A stag
     - [x] **6.1c.1 Local readiness API.** Separate liveness/readiness, worker task/tick checks, SQL counters and scoped non-mutating alerts. Verified: 186 Python tests, including actual local worker ticks, stale exposure, database failure and unresolved testnet state.
     - [x] **6.1c.2 Operator diagnostics interface.** Local status panel and fixed-loopback probe command. Verified: 195 Python tests, 11 wallet tests, production build, healthy/disabled-worker browser and CLI checks, responsive layouts. No external notification delivery or activation.
     - [x] **6.1c.3 Durable pitch admission.** Persistent bounded request windows and SQL queue/review-budget counts. Verified: 207 Python tests, including independent-store concurrency, restart, clock rollback, corrupt state, snapshot recovery and forwarded-header bypass attempts. This local control does not replace production identity or distributed leadership.
-    - [ ] **6.1c.4 Local paper worker ownership.** Single-process ownership per SQLite database, startup/shutdown cleanup and crash recovery. Distributed leadership remains outside this local substage.
+    - [x] **6.1c.4 Local paper worker ownership.** Single-process ownership per SQLite database, startup/shutdown cleanup and OS lock release after actual owner termination. Verified: 215 Python tests and a live duplicate-API startup refusal. Distributed leadership remains outside this local substage.
 - [ ] **6.2 Small mainnet pilot.** Owner-authorized capital and activation; monitor actual fills, fees, funding, drawdown, retention and organic volume. Never infer readiness from paper profits alone.
 
 ## Stage 7 — Token economics (after validation)

@@ -43,6 +43,14 @@ Transactions serialize admission across instances sharing this local SQLite file
 
 This adds no public identity, tenant isolation, distributed rate service or worker election. Separate databases have separate limits. Production controls remain a separate gate.
 
+## Local worker ownership
+
+With `WORKER_ENABLED=true`, startup acquires a non-blocking OS lock next to the canonical SQLite database path: `<database>.paper-worker.lock`. A second paper worker for that path fails startup before constructing its runtime. The owner keeps the lock until its tasks are cancelled, HTTP client closes and ledgers dispose. Startup/lifespan failures release it; process termination releases the OS lock automatically. An existing lock file alone is not a running owner, so do not delete it to force access.
+
+Different SQLite databases can run independently. A `WORKER_ENABLED=false` API may share the paper database for local observation/submission without starting worker tasks; it reports not ready. Its in-memory diagnostics do not observe another process's worker. Each in-memory database is separate and needs no cross-process lock.
+
+This ownership rule supports plain file-backed SQLite on the same machine. Worker-enabled PostgreSQL and query-string SQLite URLs now fail closed until a suitable leadership implementation exists. Do not use hard-link aliases, copied lock files, network filesystems or containers with separate lock namespaces to share a live database. This is not distributed leader election, signer supervision, automatic failover or protection while the owner is stopped. The testnet runner retains its separate lease and explicit owner activation.
+
 ## Operational limits
 
 These are current local observations, not durable alert delivery or a hosted monitoring system. They do not elect a worker, supervise a signer, configure external notification services, replace off-machine backups or complete funded acceptance. Production identity, distributed controls, external alerts and an independent security review remain under stage 6.1c.

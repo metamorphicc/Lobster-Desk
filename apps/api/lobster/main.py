@@ -1,7 +1,7 @@
 """Loopback development API. No exchange signing or mainnet order endpoints."""
 
 import asyncio
-from contextlib import asynccontextmanager, suppress
+from contextlib import ExitStack, asynccontextmanager
 import hmac
 import json
 import logging
@@ -28,6 +28,7 @@ from .users.service import UserTestnetService
 from .users.fees import ConsentInput, FeeQuoteInput, consent_plan, fee_quote
 from .http_boundary import LocalBoundary, LOCAL_ORIGINS
 from .ops.readiness import readiness
+from .ops.worker import worker_lease
 
 logger = logging.getLogger(__name__)
 
@@ -108,28 +109,31 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        runtime = Runtime(config, Store(config.database_url, config.initial_capital))
-        runtime.store.bind_market_source(config.market_source)
-        app.state.runtime = runtime
-        async with httpx.AsyncClient(timeout=10) as client:
-            app.state.testnet = TestnetWorkbench(testnet_config, client, config.database_url)
-            app.state.users = UserTestnetService(user_config, client)
-            feed = DemoFeed() if config.market_source == "demo" else HyperliquidFeed(client, testnet=config.market_source == "hyperliquid-testnet")
-            reviewer = DemoReviewer() if config.agent_provider == "demo" else AnthropicReviewer(client, config)
-            tasks = []
+        with ExitStack() as resources:
             if config.worker_enabled:
-                runtime.tasks = {"market": asyncio.create_task(runtime.market_loop(feed)),
-                                 "decision": asyncio.create_task(runtime.decision_loop(reviewer))}
-                tasks = list(runtime.tasks.values())
-            yield
-            for task in tasks:
-                task.cancel()
-            for task in tasks:
-                with suppress(asyncio.CancelledError):
-                    await task
-        runtime.store.engine.dispose()
-        if app.state.testnet.ledger:
-            app.state.testnet.ledger.engine.dispose()
+                resources.enter_context(worker_lease(config.database_url))
+            runtime = Runtime(config, Store(config.database_url, config.initial_capital))
+            resources.callback(runtime.store.engine.dispose)
+            runtime.store.bind_market_source(config.market_source)
+            app.state.runtime = runtime
+            async with httpx.AsyncClient(timeout=10) as client:
+                app.state.testnet = TestnetWorkbench(testnet_config, client, config.database_url)
+                if app.state.testnet.ledger:
+                    resources.callback(app.state.testnet.ledger.engine.dispose)
+                app.state.users = UserTestnetService(user_config, client)
+                feed = DemoFeed() if config.market_source == "demo" else HyperliquidFeed(client, testnet=config.market_source == "hyperliquid-testnet")
+                reviewer = DemoReviewer() if config.agent_provider == "demo" else AnthropicReviewer(client, config)
+                tasks = []
+                if config.worker_enabled:
+                    runtime.tasks = {"market": asyncio.create_task(runtime.market_loop(feed)),
+                                     "decision": asyncio.create_task(runtime.decision_loop(reviewer))}
+                    tasks = list(runtime.tasks.values())
+                try:
+                    yield
+                finally:
+                    for task in tasks:
+                        task.cancel()
+                    await asyncio.gather(*tasks, return_exceptions=True)
 
     app = FastAPI(title="Lobster Desk", version="0.1.0", lifespan=lifespan)
     app.add_middleware(CORSMiddleware, allow_origins=sorted(LOCAL_ORIGINS),

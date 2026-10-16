@@ -5,8 +5,9 @@ from pathlib import Path
 
 
 class RunnerLease:
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, purpose: str = "testnet signer"):
         self.path = path
+        self.purpose = purpose
         self.file = None
 
     def __enter__(self):
@@ -25,15 +26,17 @@ class RunnerLease:
                 fcntl.flock(self.file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError:
             self.file.close()
-            raise ValueError("Another local testnet signer owns this runner lease.") from None
+            raise ValueError(f"Another local {self.purpose} owns this runner lease.") from None
         return self
 
     def __exit__(self, *args):
-        self.file.seek(0)
-        if os.name == "nt":
-            import msvcrt
-            msvcrt.locking(self.file.fileno(), msvcrt.LK_UNLCK, 1)
-        else:
-            import fcntl
-            fcntl.flock(self.file.fileno(), fcntl.LOCK_UN)
-        self.file.close()
+        try:
+            self.file.seek(0)
+            if os.name == "nt":
+                import msvcrt
+                msvcrt.locking(self.file.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(self.file.fileno(), fcntl.LOCK_UN)
+        finally:
+            self.file.close()
