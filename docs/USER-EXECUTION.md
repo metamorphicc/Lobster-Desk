@@ -25,3 +25,13 @@ The gateway writer is **unconditionally locked** independently of `broker.armed`
 Account-scope query and builder eligibility checks follow the [official info endpoint](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint), [account modes](https://hyperliquid.gitbook.io/hyperliquid-docs/trading/account-abstraction-modes) and [builder rules](https://hyperliquid.gitbook.io/hyperliquid-docs/trading/builder-codes), checked 2026-10-16. The adapter conservatively accepts only explicit `disabled` abstraction (standard scope); `default` and all shared-collateral modes are refused. Current protocol behavior still requires funded acceptance.
 
 The owner-only project testnet runner remains separate. Stage 5.2d.5 remains partial until real wallet/transport/leadership/recovery integration is reviewed and accepted; 5.2d.6 remains unaccepted. See `USER-ACCEPTANCE.md` for required evidence. Do not remove the writer lock to obtain an acceptance label.
+
+## Unattended offline rehearsal
+
+```powershell
+node scripts/python.mjs scripts/user-rehearsal.py --output artifacts/rehearsals/new-run
+```
+
+This standalone tool exercises the user orchestration and restricted signer with public unfunded Ethereum test vectors and a deterministic in-memory exchange. It creates a **new** private directory, separate fixture databases and a hashed report. It never reads signer credentials or calls an HTTP exchange/wallet provider. It has no live mode or dispatch argument. Tests explicitly make all httpx sends and signer-settings construction fail if reached.
+
+Five cases run unattended: partial fill → stop → restart → flat cleanup; timeout after a fill without duplicate entry; unresolved timeout before a send without replay; rejected stop with latched halt and reduce-only recovery; revoked fee approval after leverage without entry. Synthetic prices/balances/fills are labelled and never become production revenue or acceptance evidence. Only this tool substitutes its locally constructed in-memory writer; the actual user gateway remains locked. The report contains hashes/statuses, not signatures/private keys. Existing evidence is never overwritten.
