@@ -1,17 +1,13 @@
-# Agreed fee and profit policy
+# Distribution policy v2
 
-Builder fee: **0.05% of executed entry notional** (50 tenths of a basis point), additional to exchange costs. Existing immutable consent/profile records are not migrated or silently reapproved. A user with a lower approval must explicitly approve the new rate before a future live implementation could charge it. Exits/protection remain fee-free in the user adapter.
+`fees-bot60-team40-author50-v2` is enforced in Decimal code and displayed in Treasury. It supersedes the previous donation policy.
 
-Received builder fees, net of refunds, are earmarked 40% for agent capital, 20% for the team and 40% for charity. USDC rounding dust remains with agent capital. Team revenue is before operating costs. Charity destinations are not selected; an earmark is not a completed donation.
+Received builder fees net of refunds allocate **60% bot capital / 40% team**, corresponding to **0.03% / 0.02%** of fee-bearing entry volume at the total 0.05% builder fee. Amounts are exact USDC; rounding dust stays in bot capital. Anonymous pitches, deposits, unrealized PnL and unclaimed rewards create no author entitlement or received revenue.
 
-50% of positive **cumulative net realized agent trading profit after expenses and recovery of prior losses** is earmarked for token buybacks, followed by burning. Capital deposits and builder receipts never count as trading profit. All previous buyback spending is subtracted from the cumulative entitlement before calculating a new budget; rereading or restarting cannot repeatedly allocate half the same profit. Later losses can suppress new allocations until recovered.
+Verified user-strategy settlements allocate **50% of cumulative positive net profit to the author / 50% to bot capital** after per-strategy loss recovery. Past author payments are subtracted once. Attributed net profit includes observed closed-fill PnL minus fill fees plus unambiguously attributed funding. Every owned execution can be allocated once, including a zero-cash account checkpoint when gains and losses offset. These metadata checkpoints create liabilities, never cash.
 
-Unpaid charity/team earmarks and operating/liability/tax reserves are excluded from the cash available to buy back tokens. Unknown reserves produce a null spendable budget. There is no holder dividend, staking entitlement, price floor or guarantee of appreciation.
+All author/team outstanding liabilities are protected from new project entry sizing and token purchases. The existing token rule is restricted to the agents' own strategy profits after expenses and portfolio losses. User-strategy profits do not fund buybacks. Unknown operating/liability/tax reserves still suppress a spendable buyback budget. A recorded payout or later loss can block further allocation until recovered.
 
-`scripts/distribution-report.py` reads the independent receipt book. `charity_payout` and `team_payout` are owner-supplied spending observations, not payment commands. Legacy `treasury-report.py` remains a generic historical policy rehearsal; use the distribution report for this agreed policy.
+Historical retired-payment receipts remain immutable cash debits so a software update does not rewrite balances. New donation receipt appends are refused; no donation runner/provider/API/UI remains. The legacy generic receipt report is capped by this current policy rather than allowing fee income or author shares to fund token purchases.
 
-```powershell
-node scripts/python.mjs scripts/distribution-report.py --output artifacts/economics/distribution-new.json
-```
-
-No fee collection, transfer, donation, purchase or burn is performed. Token network/contract, recipients and actual chain evidence remain external configuration. The existing buyback report links purchases and disposal observations; a sink transfer is distinguished from verified total-supply reduction and owner-supplied claims are never automatically certified.
+No local report authorizes a transfer or proves external acceptance. Author balances and verified observed-payment handling are described in [STRATEGY-SHARING.md](STRATEGY-SHARING.md).

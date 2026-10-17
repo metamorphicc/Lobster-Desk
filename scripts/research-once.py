@@ -27,7 +27,7 @@ async def run(args):
             report = research.get(identifier)
             with (args.output / "report.json").open("x", encoding="utf-8") as output:
                 json.dump(report, output, indent=2)
-            print(f"Research recorded: {report['status']}. Paper only; no exchange orders, donations or token operations.")
+            print(f"Research recorded: {report['status']}. Paper only; no exchange orders, payouts or token operations.")
             if report["status"] == "failed": raise ValueError("Research failed")
     finally:
         store.engine.dispose()

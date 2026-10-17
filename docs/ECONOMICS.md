@@ -1,6 +1,6 @@
 # Economics: accounting before token decisions
 
-The owner selected the fee distribution and profit-funded buyback/burn policy described in `DISTRIBUTION.md`. Token network/contract, reserve amounts and recipients remain undecided; jurisdiction remains blank and does not block local software. No token contract, staking entitlement, profit share, issuance, treasury transfer or revenue promise is enabled. A tentative US audience is not a legal/product specification. This document defines local accounting, not legal or tax advice.
+The owner selected the fee distribution and profit-funded buyback/burn policy described in `DISTRIBUTION.md`. The token uses Solana; mint and reserve amounts remain unspecified; jurisdiction remains blank and does not block local software. Verified strategy-author accruals and the separate opt-in payout runner are documented in `STRATEGY-SHARING.md`; completed payouts require matching source and recipient transfer observations. There is no token-holder payout or staking entitlement. A tentative US audience is not a legal/product specification. This document defines local accounting, not legal or tax advice.
 
 ## What is revenue
 
@@ -38,12 +38,12 @@ Use `--append path/to/private-entry.json` only for an owner-supplied entry match
 | --- | --- | --- |
 | Operating entity/jurisdiction and eligible users | Unspecified | Platform access, applicable obligations, disclosures and operating model need review. |
 | Token role/rights | Profit-funded buyback followed by burning; no holder payout entitlement | Utility, governance and further holder rights are not specified. |
-| Network, standard, supply, allocations and authority | Unspecified | No chain/contract or mint/burn/admin design can be selected responsibly from the current brief. |
-| Fee/profit allocation | Agreed in `DISTRIBUTION.md` | 40/20/40 received fees and 50% eligible net trading profit; expense/reserve/tax amounts remain unset. |
+| Network, standard, supply, allocations and authority | Solana; classic SPL execution adapter implemented; mint/supply/administrative design unspecified | Actual mint, liquidity, allocations and administrative permissions remain owner decisions. |
+| Fee/profit allocation | Agreed in `DISTRIBUTION.md` | 60/40 bot/team received fees, 50/50 author/bot user-strategy net profit and a separate own-agent-only token rule; expense/reserve/tax amounts remain unset. |
 | Buyback approval, execution and custody | Disabled | Needs a reviewed mandate, supported venue, treasury controls and independent reconciliation. |
 | Holder payouts/staking/backing | Disabled, no entitlement | No implementation or marketing claim until explicitly designed and reviewed. |
 
 The project can potentially earn a builder fee from eligible user fills only after actual approval, execution and receipt acceptance. Profitability depends on received fees minus operating costs and losses; neither this calculation nor a paper strategy establishes that it will earn money. Token operations remain a separate later decision.
 ## Owner policy update — 2026-10-17
 
-The agreed distribution is now specified in [DISTRIBUTION.md](DISTRIBUTION.md): 0.05% entry builder fee, 40/20/40 agent/team/charity earmarks, and 50% of eligible cumulative net realized trading profit for buybacks followed by burning. The generic policy rehearsal above remains available for historical reports; it is not the agreed distribution engine. Token network/contract, recipient identities, reserve amounts and actual transfers remain unset.
+The current distribution is specified in [DISTRIBUTION.md](DISTRIBUTION.md): 0.05% entry builder fee, with 0.02% of volume for the team and 0.03% for bot capital (40/60 of received fees). Verified user-strategy net profit accrues 50% to its author and 50% to bot capital. Only eligible own-agent strategy profit follows the separate buyback/burn rule; user-strategy profits are excluded entirely. Donation execution has been removed. The legacy generic report remains available with current-policy spending caps. The Solana mint, reserve amounts and actual financial activation remain unset.

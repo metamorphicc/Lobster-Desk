@@ -23,13 +23,13 @@ The first cohort can take several minutes to fetch/validate history, call the re
 
 ## Included economics
 
-The Treasury tab shows the agreed 0.05% entry builder fee, 40% agent capital / 20% team / 40% charity earmarks, and 50% of eligible net realized trading profit for buyback followed by burning. The receipt book remains independent of simulated trading. No virtual profit is presented as received revenue.
+The Treasury tab shows the agreed 0.05% entry builder fee, 60% bot capital / 40% team allocation and verified user-strategy net-profit sharing (50% author / 50% bot). Only eligible own-agent profits remain subject to the separate token buyback/burn rule. The receipt book remains independent of simulated trading. No virtual profit is presented as received revenue.
 
 ## Separate financial integration setup
 
-Stage 9 implements separately gated project/user trading, exact financial wallet consent, received-fee observation, Solana purchase/burn, The Giving Block charity payments and public-operation/recovery/alerting code. These are distinct from this model-key paper preset. The latest configuration map and remaining integration boundaries are in [HANDOFF.md](HANDOFF.md).
+Stage 9 implements separately gated project/user trading, exact financial wallet consent, received-fee observation, Solana purchase/burn, public-operation/recovery/alerting code. These are distinct from this model-key paper preset. The latest configuration map and remaining integration boundaries are in [HANDOFF.md](HANDOFF.md).
 
-A model API key cannot supply a funded exchange account, approved dedicated API wallet, public builder identity, Solana mint/liquidity, treasury balances/gas, reserve policy, charity partner credentials or public domain/hosting. Actual reward claiming, allocation transfers and Hyperliquid-to-Solana/Ethereum bridging still require owner handling; an autonomous bridge is not implemented. Financial adapters require prefunded destination wallets. Funded exchange/chain/provider acceptance and independent security review remain open. Do not put exchange keys into `.env.agents` or describe this preset as enabling real financial execution.
+A model API key cannot supply a funded exchange account, approved dedicated API wallet, public builder identity, Solana mint/liquidity, treasury balances/gas, reserve policy or public domain/hosting. Actual reward claiming, allocation transfers and Hyperliquid-to-Solana bridging still require owner handling; an autonomous bridge is not implemented. Financial adapters require prefunded destination wallets. Funded exchange/chain/provider acceptance and independent security review remain open. Do not put exchange keys into `.env.agents` or describe this preset as enabling real financial execution.
 
 No jurisdiction choice, wallet funding or token deployment is required to run local research/paper trading.
 

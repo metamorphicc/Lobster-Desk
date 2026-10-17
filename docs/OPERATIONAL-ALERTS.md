@@ -2,7 +2,7 @@
 
 `npm run ops` performs a local read-only API/journal observation and records an alert transition. It does **not** send notifications by default. `npm run ops -- --watch` repeats every 15 seconds. The API origin is fixed to loopback; public-single-host internal probes additionally use the configured private proxy token. `OPS_APPLICATION_PATH` must identify the same application database as the API; a hashed instance binding detects accidental monitoring of another workspace. Missing/stale/malformed API observations produce a static critical alert rather than a healthy result.
 
-The monitor reads every canonical financial journal in `execution_catalog`, private financial permission handoffs and Solana/charity operation state. It detects uncertain commands/transactions, missing journals, exposure needing review and absent/stale runner heartbeat while financial work is active. Runner heartbeats report attempt/success separately. A telemetry write failure cannot authorize or block an order: it leaves stale telemetry for the independent monitor to detect. The monitor itself has no exchange submission method or financial key map.
+The monitor reads every canonical financial journal in `execution_catalog`, private financial permission handoffs and Solana operation state and strategy-author settlement/payment records. It detects uncertain commands/transactions, missing journals, exposure needing review and absent/stale runner heartbeat while financial work is active. Runner heartbeats report attempt/success separately. A telemetry write failure cannot authorize or block an order: it leaves stale telemetry for the independent monitor to detect. The monitor itself has no exchange submission method or financial key map.
 
 ## Notification delivery
 

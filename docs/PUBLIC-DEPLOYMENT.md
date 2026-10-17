@@ -1,6 +1,6 @@
 # Public single-host server preparation
 
-This is deployable-source preparation, **not a completed deployment or launch approval**. `deploy/compose.yaml` defines one API/worker, standalone Next.js server and Caddy HTTPS proxy on one host. Only the proxy publishes ports. Financial runner processes are deliberately absent from the default stack; creating or starting the web stack cannot activate trading, donation or token signers.
+This is deployable-source preparation, **not a completed deployment or launch approval**. `deploy/compose.yaml` defines one API/worker, standalone Next.js server and Caddy HTTPS proxy on one host. Only the proxy publishes ports. Financial runner processes are deliberately absent from the default stack; creating or starting the web stack cannot activate trading or token signers.
 
 ## Boundary and identity
 

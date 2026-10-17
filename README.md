@@ -86,15 +86,12 @@ node scripts/python.mjs -m uvicorn lobster.main:create_app --factory --app-dir a
 
 ## Delivery status
 
-Stages 0–4 implement the local paper MVP. Stage 5 adds a testnet-only signer, persistent execution lifecycle and local workbench, verified with offline exchange fixtures. Funded exchange acceptance is still outstanding. User wallet trading, actual builder-fee collection and token operations remain separate roadmap stages. This release has no mainnet order endpoint and should not be deployed as a public financial service.
+The local paper application and separately gated project/user financial execution code are implemented; default operation remains paper. Stage 10 removes donations and implements 0.05% entry fees split 0.02% team / 0.03% bot, plus verified user-strategy net-profit accruals split 50% author / 50% bot. Signed-in users submit attributed strategies and inspect private balances. Payments use a separate opt-in bounded Hyperliquid author payout process, or operator verification of an existing transfer. Source/recipient observations are required; the API does not send payouts. See [strategy sharing](docs/STRATEGY-SHARING.md) and [the delivery handoff](docs/HANDOFF.md).
 
-Later local substages add private user capital/consent records, locked user orchestration, acceptance inventories, source packaging/monitor interfaces, pilot-budget rehearsals and receipt-based treasury/buyback reports. These preserve disabled financial/production/token gates. Jurisdiction, hosting and token rights remain unspecified. See [the delivery handoff](docs/HANDOFF.md) for the exact implemented scope and unfinished integrations.
-
-Every completed substage is a separate local commit on `lobster-desk` (renamed at the owner's request). The `origin` remote points to `https://github.com/metamorphicc/Lobster-Desk.git`; nothing is pushed automatically.
+Funded exchange/wallet/chain acceptance, treasury routing, independent review and public deployment remain external work. All completed substages are committed locally on `lobster-desk`; nothing is pushed automatically.
 
 ## Autonomous agents update
 
 For self-generated, historically tested BTC strategies and forward **paper** observation, see [agent setup](docs/AGENT-SETUP.md). Run `npm run setup:agents`, fill `ANTHROPIC_API_KEY` in the ignored `.env.agents`, then `npm run agents:check` and `npm run agents`. The preset contains the model/data configuration; actual provider access remains unverified without a key.
 
-Research results and the agreed fee/charity/buyback/burn policy appear in the Research and Treasury tabs. Real financial execution, received fee ingestion, donations and token purchase/burn transactions remain disabled/unimplemented; one model API key does not complete those external integrations. See [research mechanics](docs/RESEARCH.md) and [distribution policy](docs/DISTRIBUTION.md).
-
+Research results, the current 60/40 bot/team fee split and 50/50 strategy-author profit accounting appear in Research and Treasury. Paper profit is never real revenue. The separate own-agent token policy excludes user-strategy profits. One model API key does not activate real financial execution. See [research mechanics](docs/RESEARCH.md), [distribution policy](docs/DISTRIBUTION.md) and [strategy sharing](docs/STRATEGY-SHARING.md).
