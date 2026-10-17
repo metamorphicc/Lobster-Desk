@@ -30,6 +30,7 @@ from .users.auth import AuthError, ChallengeInput, VerifyInput, UserAuth
 from .users.orders import PreviewInput, UserPlans, illustrate
 from .users.capital import UserCapital
 from .users.intents import UserIntents, IntentInput, ProfileInput
+from .users.financial import UserFinancial, FinancialRequest, FinancialProof
 from .execution.gateway import HyperliquidTestnet
 from .execution.contracts import ReviewedSetup
 from .http_boundary import LocalBoundary, LOCAL_ORIGINS
@@ -178,6 +179,7 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
             app.state.user_plans = UserPlans(runtime.store)
             app.state.user_capital = UserCapital(runtime.store)
             app.state.user_intents = UserIntents(runtime.store)
+            app.state.user_financial = UserFinancial(runtime.store, app.state.user_intents, app.state.user_plans)
             async with httpx.AsyncClient(timeout=10) as client:
                 app.state.testnet = TestnetWorkbench(testnet_config, client, config.database_url)
                 if app.state.testnet.ledger:
@@ -489,6 +491,43 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
         if not result:
             raise HTTPException(404, "User intent not found.")
         return request.app.state.user_intents.view(result)
+
+    def financial_identity(request, authorization, *, write=False):
+        identity = auth_call(request, request.app.state.user_auth.require, authorization)
+        if write:
+            if not user_config.financial_enabled: raise HTTPException(503, "Explicit user financial testnet consent is disabled.")
+            auth_call(request, request.app.state.user_auth.admit, "financial:" + identity["address"])
+        return identity["address"]
+
+    @app.get("/api/v1/users/testnet/financial")
+    def financial_context(request: Request, authorization: str | None = Header(default=None)):
+        owner = financial_identity(request, authorization)
+        try: return request.app.state.user_financial.context(owner, user_config.execution_root, user_config.financial_enabled)
+        except Exception: raise HTTPException(503, "Private financial execution context is unavailable.") from None
+
+    @app.post("/api/v1/users/testnet/financial/jobs", status_code=201)
+    def financial_prepare(body: FinancialRequest, request: Request, authorization: str | None = Header(default=None),
+                          idempotency_key: str = Header(alias="Idempotency-Key")):
+        owner = financial_identity(request, authorization, write=True)
+        if not re.fullmatch(r"[a-zA-Z0-9_-]{8,64}", idempotency_key): raise HTTPException(422, "Bounded request identity required.")
+        financial = request.app.state.user_financial
+        try: return financial.view(financial.prepare(owner, body, idempotency_key))
+        except ValueError as error: raise HTTPException(409, str(error)) from None
+
+    @app.post("/api/v1/users/testnet/financial/jobs/{job_id}/proof")
+    def financial_proof(job_id: str, body: FinancialProof, request: Request, authorization: str | None = Header(default=None)):
+        owner = financial_identity(request, authorization, write=True)
+        financial = request.app.state.user_financial
+        try: return financial.view(financial.verify(owner, job_id, body.signature))
+        except ValueError as error: raise HTTPException(409, str(error)) from None
+
+    @app.get("/api/v1/users/testnet/financial/jobs/{job_id}")
+    def financial_job(job_id: str, request: Request, authorization: str | None = Header(default=None)):
+        owner = financial_identity(request, authorization)
+        financial = request.app.state.user_financial
+        result = financial.get(owner, job_id)
+        if not result: raise HTTPException(404, "Owner-bound financial job not found.")
+        return financial.view(result)
 
     @app.get("/api/v1/testnet/inspect")
     async def testnet_inspect(request: Request):
