@@ -78,7 +78,7 @@ class ReviewedSetup(Contract):
             raise ValueError("The episode has no current, bound capital approval.")
         source = "hyperliquid-testnet" if network == "testnet" else "hyperliquid" if network == "mainnet" else None
         if source is None or episode.get("snapshot", {}).get("source") != source:
-            raise ValueError("Only an episode reviewed against the selected network can authorize execution.")
+            raise ValueError(f"Only an episode reviewed against {network} data can authorize execution.")
         if episode.get("policy") != policy.model_dump(mode="json") or not episode.get("risk", {}).get("approved"):
             raise ValueError("Risk approval does not match the current policy.")
         # Metadata is audit information, not part of the model's authority.
