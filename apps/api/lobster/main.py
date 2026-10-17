@@ -185,6 +185,8 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
                 app.state.testnet = TestnetWorkbench(testnet_config, client, config.database_url)
                 if app.state.testnet.ledger:
                     resources.callback(app.state.testnet.ledger.engine.dispose)
+                    from .ops.catalog import register_journal
+                    register_journal(runtime.store, app.state.testnet.ledger, "testnet")
                 app.state.users = UserTestnetService(user_config, client)
                 feed = DemoFeed() if config.market_source == "demo" else HyperliquidFeed(client, testnet=config.market_source == "hyperliquid-testnet")
                 reviewer = DemoReviewer() if config.agent_provider == "demo" else AnthropicReviewer(client, config)

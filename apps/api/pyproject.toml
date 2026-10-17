@@ -16,6 +16,7 @@ dependencies = [
   "psycopg[binary]>=3.2,<4",
   "hyperliquid-python-sdk==0.24.0",
   "solders==0.29.0",
+  "boto3==1.43.114",
 ]
 
 [project.optional-dependencies]

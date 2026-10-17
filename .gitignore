@@ -19,6 +19,8 @@ htmlcov/
 !.env.charity.example
 !.env.users.example
 !.env.server.example
+!.env.ops.example
+*.ldb
 data/
 artifacts/
 *.paper-worker.lock

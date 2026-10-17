@@ -68,6 +68,8 @@ class ProjectLedger(ExecutionLedger):
 
 class ProjectRunner:
     def __init__(self, store, settings, ledger, gateway, signer, service, *, armed=False):
+        from ..ops.catalog import register_journal
+        register_journal(store, ledger, "project")
         self.store, self.settings, self.ledger, self.gateway, self.service = store, settings, ledger, gateway, service
         self.armed = armed
         ledger.owner, ledger.reserve_floor = settings.account, settings.reserve_floor
@@ -161,4 +163,7 @@ async def create_runner(store, settings, client, *, armed=False):
     if signer.address.lower() != settings.agent: raise ValueError("Configured project API wallet differs from its key.")
     ledger = ProjectLedger(settings.database_url, settings.account, settings.agent, network=settings.network)
     service = UserTestnetService(UserTestnetSettings(_env_file=None), client, network=settings.network)
-    return ProjectRunner(store, settings, ledger, gateway, signer, service, armed=armed)
+    try: return ProjectRunner(store, settings, ledger, gateway, signer, service, armed=armed)
+    except Exception:
+        ledger.engine.dispose()
+        raise

@@ -16,6 +16,8 @@ from lobster.execution.ledger import ExecutionLedger
 from lobster.execution.settings import SignerSettings, TestnetSettings, require_separate_database
 from lobster.execution.signer import TestnetSigner
 from lobster.execution.workbench import TestnetWorkbench
+from lobster.ops.catalog import register_journal
+from lobster.store import Store
 
 
 async def main(args):
@@ -42,7 +44,9 @@ async def main(args):
         lease = Path(url.database + ".runner.lock") if url.drivername.startswith("sqlite") and url.database else Path("data/testnet.runner.lock")
         with RunnerLease(lease):
             ledger = ExecutionLedger(public.database_url, public.account_address, signer.address)
+            application = Store(Settings().database_url)
             try:
+                register_journal(application, ledger, "testnet")
                 broker = TestnetBroker(ledger, gateway, signer, armed=True)
                 result = await (broker.dispatch(args.trade) if args.dispatch else broker.reconcile(args.trade))
                 print(json.dumps(result, indent=2))
@@ -55,6 +59,7 @@ async def main(args):
                         print("Reconciliation observation failed; no entry replayed. Retrying observations in five seconds.")
             finally:
                 ledger.engine.dispose()
+                application.engine.dispose()
 
 
 if __name__ == "__main__":

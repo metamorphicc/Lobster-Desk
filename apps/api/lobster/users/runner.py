@@ -89,6 +89,8 @@ class UserFinancialRunner:
         ledger = RecoveryLedger("sqlite:///" + path.as_posix(), owner, profile["agent"])
         ledger.bind(self.capital, owner)
         try:
+            from ..ops.catalog import register_journal
+            register_journal(self.store, ledger, "user")
             active = next((trade for trade in ledger.snapshot()["trades"] if trade["status"] not in TERMINAL), None)
             if active and ledger.commands(active["id"]):
                 # Reconstruct from the execution journal, not an expired model

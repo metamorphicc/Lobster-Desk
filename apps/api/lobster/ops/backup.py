@@ -7,6 +7,7 @@ from pathlib import Path
 import shutil
 import sqlite3
 import time
+import re
 
 from sqlalchemy.engine import make_url
 
@@ -16,6 +17,13 @@ SCHEMA = "lobster-sqlite-backup-v1"
 REQUIRED = {"paper": {"accounts", "episodes", "positions", "events"},
     "testnet": {"testnet_control", "testnet_trades", "testnet_commands", "testnet_fills", "testnet_events"},
     "treasury": {"treasury_receipts"}}
+MAX_DATABASES = 128
+
+
+def required_tables(role):
+    if role in REQUIRED: return REQUIRED[role]
+    if re.fullmatch(r"execution-[a-f0-9]{24}", role): return REQUIRED["testnet"]
+    raise ValueError("Unknown recovery database role.")
 
 
 def sqlite_path(url: str) -> Path:
@@ -39,15 +47,16 @@ def inspect_database(path: Path, role: str) -> dict:
         if connection.execute("PRAGMA quick_check").fetchall() != [("ok",)]:
             raise ValueError("SQLite integrity check failed.")
         tables = [row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")]
-        if not REQUIRED[role].issubset(tables):
+        if not required_tables(role).issubset(tables):
             raise ValueError("The snapshot does not contain the required application tables.")
         counts = {table: connection.execute('SELECT COUNT(*) FROM "' + table.replace('"', '""') + '"').fetchone()[0] for table in tables}
         return {"tables": counts, "user_version": connection.execute("PRAGMA user_version").fetchone()[0]}
 
 
 def snapshot(sources: dict[str, Path], destination: Path) -> Path:
-    if not sources or any(role not in REQUIRED for role in sources):
+    if not sources or len(sources) > MAX_DATABASES:
         raise ValueError("Supply known paper, testnet and/or treasury database roles.")
+    for role in sources: required_tables(role)
     paths = {role: path.resolve() for role, path in sources.items()}
     if len(set(paths.values())) != len(paths):
         raise ValueError("Database source files must be separate.")
@@ -85,12 +94,13 @@ def verify(manifest_path: Path) -> dict:
     if manifest_path.stat().st_size > 1024 * 1024:
         raise ValueError("Backup manifest exceeds its size limit.")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    if manifest.get("schema") != SCHEMA or not 1 <= len(manifest.get("files", [])) <= len(REQUIRED):
+    if manifest.get("schema") != SCHEMA or not 1 <= len(manifest.get("files", [])) <= MAX_DATABASES:
         raise ValueError("Unsupported or incomplete backup manifest.")
     seen = set()
     for item in manifest["files"]:
         role = item["role"]
-        if role not in REQUIRED or role in seen or item["filename"] != f"{role}.sqlite3":
+        required_tables(role)
+        if role in seen or item["filename"] != f"{role}.sqlite3":
             raise ValueError("Invalid or duplicate database role/filename in manifest.")
         seen.add(role)
         path = (manifest_path.parent / item["filename"]).resolve()

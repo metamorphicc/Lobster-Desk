@@ -8,6 +8,9 @@ from lobster.config import Settings
 from lobster.domain import utcnow
 from lobster.execution.settings import TestnetSettings
 from lobster.ops.backup import restore_drill, snapshot, sqlite_path, verify
+from lobster.ops.inventory import discover_sources
+from lobster.execution.project import ProjectSettings
+from lobster.users.contracts import UserTestnetSettings
 
 
 if __name__ == "__main__":
@@ -16,7 +19,7 @@ if __name__ == "__main__":
     actions.add_argument("--verify", type=Path, metavar="MANIFEST")
     actions.add_argument("--restore", type=Path, metavar="MANIFEST")
     parser.add_argument("--destination", type=Path, help="A new directory; an existing path is always refused")
-    parser.add_argument("--treasury-book", type=Path, default=Path("data/treasury.sqlite3"), help="Include this local treasury book if it exists")
+    parser.add_argument("--treasury-book", type=Path, help="Override the configured treasury book path")
     args = parser.parse_args()
     try:
         if args.verify:
@@ -28,16 +31,9 @@ if __name__ == "__main__":
             print(f"Isolated restore verified: {destination.resolve()}")
             print("Live databases were not replaced. Exchange state and signer nonces still require recovery review.")
         else:
-            paper = sqlite_path(Settings().database_url)
-            testnet_config = TestnetSettings()
-            testnet = sqlite_path(testnet_config.database_url)
-            sources = {"paper": paper}
-            if testnet_config.account_address and testnet_config.api_wallet_address and not testnet.is_file():
-                raise ValueError("The configured execution ledger is missing; an incomplete backup is refused.")
-            if testnet.exists():
-                sources["testnet"] = testnet
-            if args.treasury_book.exists():
-                sources["treasury"] = args.treasury_book
+            config = Settings()
+            if args.treasury_book is not None: config.treasury_path = str(args.treasury_book)
+            sources = discover_sources(config, TestnetSettings(), ProjectSettings(), UserTestnetSettings())
             destination = args.destination or Path("artifacts/backups") / (utcnow().strftime("%Y%m%dT%H%M%S") + "-" + uuid4().hex[:8])
             manifest = snapshot(sources, destination)
             print(f"Verified SQLite snapshot: {manifest.resolve()}")
