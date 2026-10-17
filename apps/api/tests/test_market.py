@@ -27,7 +27,7 @@ def test_live_feed_parses_btc_without_assuming_asset_index(testnet):
         if kind == "metaAndAssetCtxs":
             return httpx.Response(200, json=[{"universe": [{"name": "ETH"}, {"name": "BTC"}]},
                 [{}, {"midPx": "70000", "markPx": "69999", "prevDayPx": "69000", "funding": "0.0001", "openInterest": "20000"}]])
-        return httpx.Response(200, json=[{"t": 1700000000000, "o": "69900", "h": "70100", "l": "69800", "c": "70000"}])
+        return httpx.Response(200, json=[{"t": int(utcnow().timestamp()) // 60 * 60000, "o": "69900", "h": "70100", "l": "69800", "c": "70000"}])
     async def run():
         async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as client:
             feed = HyperliquidFeed(client, testnet=testnet)
@@ -46,3 +46,26 @@ def test_live_failure_never_falls_back_to_demo():
                 await HyperliquidFeed(client).fetch()
     asyncio.run(run())
 
+
+
+@pytest.mark.parametrize("failure", ["empty", "conflict", "invalid_ohlc", "stale", "nonfinite"])
+def test_public_candles_refuse_corrupt_or_stale_history(failure):
+    def respond(request):
+        import json
+        if json.loads(request.content)["type"] == "metaAndAssetCtxs":
+            return httpx.Response(200, json=[{"universe": [{"name": "BTC"}]},
+                [{"midPx": "70000", "markPx": "70000", "prevDayPx": "69000", "funding": "0.0001", "openInterest": "20000"}]])
+        row = {"t": int(utcnow().timestamp()) // 60 * 60000, "o": "69900", "h": "70100", "l": "69800", "c": "70000"}
+        rows = [row]
+        if failure == "empty": rows = []
+        if failure == "conflict": rows.append(row | {"c": "69999"})
+        if failure == "invalid_ohlc": rows[0] = row | {"h": "69000"}
+        if failure == "stale": rows[0] = row | {"t": row["t"] - 240000}
+        if failure == "nonfinite": rows[0] = row | {"c": "NaN"}
+        return httpx.Response(200, json=rows)
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as client:
+            feed = HyperliquidFeed(client)
+            with pytest.raises(ValueError): await feed.fetch()
+            assert not feed.candles
+    asyncio.run(run())

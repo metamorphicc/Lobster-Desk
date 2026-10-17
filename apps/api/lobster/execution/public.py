@@ -8,7 +8,7 @@ from ..ops.backup import read_only
 from .contracts import fingerprint
 
 
-def project_activity(store):
+def project_activity(store, *, network=None):
     path = Path(store.engine.url.database).resolve()
     with closing(read_only(path)) as db:
         exists = db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='execution_catalog'").fetchone()
@@ -19,6 +19,7 @@ def project_activity(store):
         item = json.loads(row[0])
         if fingerprint({k: item[k] for k in ("network", "account", "signer", "path", "role")}) != item["id"]:
             raise ValueError("Project catalog binding changed.")
+        if network is not None and item["network"] != network: continue
         with closing(read_only(Path(item["path"]).resolve())) as db:
             db.execute("BEGIN")
             control = json.loads(db.execute("SELECT payload FROM testnet_control WHERE id=1").fetchone()[0])
@@ -35,6 +36,7 @@ def project_activity(store):
                     fills.append({key: fill[key] for key in ("time", "px", "sz", "fee", "feeToken", "closedPnl", "side")})
                 trades.append({"id": trade["id"], "network": trade["network"], "status": trade["status"],
                     "created_at": trade["created_at"], "direction": setup["pitch"]["direction"],
+                    "pitch": {k: setup["pitch"][k] for k in ("author", "symbol", "direction", "entry", "stop", "target", "leverage", "thesis")},
                     "entry": {k: entry[k] for k in ("side", "quantity", "price")},
                     "stop": setup["pitch"]["stop"], "target": setup["pitch"]["target"],
                     "filled_quantity": trade["filled_quantity"], "protected_quantity": trade["protected_quantity"],
@@ -49,8 +51,23 @@ def project_activity(store):
                 record = db.execute("SELECT payload FROM ops_heartbeats WHERE id='project'").fetchone()
                 if record:
                     beat = json.loads(record[0]); heartbeat = {k: beat.get(k) for k in ("attempt_at", "last_success_at", "ok")}
+            capital = None
+            if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='user_capital_references'").fetchone():
+                row = db.execute("SELECT payload FROM user_capital_references WHERE address=?", (item["account"],)).fetchone()
+                if row:
+                    from datetime import datetime
+                    from decimal import Decimal
+                    reference = json.loads(row[0])
+                    if reference["network"] != item["network"] or reference["address"].lower() != item["account"]:
+                        raise ValueError("Published capital identity differs.")
+                    if reference["policy_hash"] != fingerprint(store.policy.model_dump(mode="json")):
+                        raise ValueError("Published capital policy differs.")
+                    age = (utcnow() - datetime.fromisoformat(reference["observed_at"])).total_seconds()
+                    keys = ("equity", "net_equity_change_excluding_cashflows")
+                    if not reference["halt_reason"] and -2 <= age <= 30 and all(Decimal(reference[k]).is_finite() for k in keys) and Decimal(reference["equity"]) >= 0:
+                        capital = {k: reference[k] for k in (*keys, "observed_at")}
             journals.append({"id": item["id"], "network": item["network"], "halted": bool(control["halt_reason"]),
-                "heartbeat": heartbeat, "trades": trades})
+                "heartbeat": heartbeat, "trades": trades, "capital": capital})
     return {"schema": "lobster-public-project-activity-v1", "observed_at": utcnow().isoformat(), "journals": journals,
         "scope": "registered-project-journals-only", "submission_enabled": False,
         "limits": "Latest 20 trades per journal and 40 fills per trade. Local runner observations are not independently verified exchange acceptance. Paper performance and private user journals are excluded."}

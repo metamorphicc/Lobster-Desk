@@ -120,6 +120,11 @@ These are code deliverables, not documentation substitutes. Default operation re
 - [x] **10.4 Bounded author payout runner.** Dedicated project source, exact earned recipients/reserves/batches, fixed mainnet USD sends, durable claims/nonces, matching source/recipient payment observations and no replay/auto-clear after timeout. Seven focused offline cases pass; default CLI makes no HTTP or financial request. Actual payments remain disabled/unobserved.
 - [x] **10.3 Integrated verification/handoff.** Current policy/configuration documentation and setup/handoff updated. Full backend: 522 passed; client: 69 passed; production build passes. Actual React submission/earnings states and live Treasury checked at 320/375/414/768 without overflow; local preview retained. No push or financial activation.
 
+## Stage 11 — Product surface and actual BTC chart
+
+- [x] **11.1 Public market and project data boundary.** Independent read-only mainnet BTC feed and product endpoint; only registered mainnet project activity can supply setups/fills. Missing, stale, halted or ambiguous account observations publish null capital, never the paper seed. BTC OHLC is bounded, ordered and validated; corrupt/stale/conflicting candles refuse without synthetic fallback. Nineteen focused backend cases pass.
+- [ ] **11.2 Product interface and chart.** Main navigation focuses on tank, journal, research and My strategies. Internal treasury/testnet/operations move to `/operator`; fee allocation copy belongs in repository docs. Actual BTC chart with 1m/5m/15m controls, account empty states and wallet-linked author experience. Production build, responsive/state checks and integrated verification required before completion.
+
 ## Financial policy
 
 The owner-directed economics revision is implemented in Stage 10: received fees allocate 40% team / 60% bot; verified user-strategy net profits allocate 50% author / 50% bot. Donation execution is retired. See `STRATEGY-SHARING.md` for accounting, authorship and observed payment boundaries. Historical Stage 8–9 descriptions below/above record the superseded implementation.

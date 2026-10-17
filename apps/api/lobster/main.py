@@ -55,6 +55,7 @@ class Runtime:
         self.settings = settings
         self.store = store
         self.market: Snapshot | None = None
+        self.product_market: Snapshot | None = None
         self.market_error: str | None = None
         self.worker_error: str | None = None
         self.tasks: dict[str, asyncio.Task] = {}
@@ -105,6 +106,7 @@ class Runtime:
         while True:
             try:
                 self.market = await feed.fetch()
+                if self.market.source == "hyperliquid": self.product_market = self.market
                 self.market_error = None
                 # Protection runs independently from model latency.
                 self.store.mark(self.market)
@@ -119,6 +121,17 @@ class Runtime:
                 self.market = None
             finally:
                 self.last_market_tick = utcnow()
+            await asyncio.sleep(self.settings.market_poll_seconds)
+
+    async def product_market_loop(self, feed):
+        """Public mainnet prices, independent of the paper execution journal."""
+        while True:
+            try:
+                self.product_market = await feed.fetch()
+            except Exception:
+                # The public projection independently expires this observation
+                # after 15s; a transient read must not replace it with fake data.
+                logger.warning("Public BTC market feed unavailable.")
             await asyncio.sleep(self.settings.market_poll_seconds)
 
     async def decision_loop(self, reviewer):
@@ -203,6 +216,8 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
                 if config.worker_enabled:
                     runtime.tasks = {"market": asyncio.create_task(runtime.market_loop(feed)),
                                      "decision": asyncio.create_task(runtime.decision_loop(reviewer))}
+                    if config.market_source != "hyperliquid":
+                        runtime.tasks["product_market"] = asyncio.create_task(runtime.product_market_loop(HyperliquidFeed(client)))
                     if config.research_enabled:
                         researcher = DemoResearcher() if config.agent_provider == "demo" else AnthropicResearcher(client, config)
                         runtime.tasks["research"] = asyncio.create_task(runtime.research_loop(
@@ -306,6 +321,12 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
     @app.get("/api/v1/state")
     def state(request: Request):
         return request.app.state.runtime.snapshot()
+
+    @app.get("/api/v1/product/state")
+    def product_state(request: Request):
+        from .product import product_state
+        try: return product_state(request.app.state.runtime)
+        except Exception: raise HTTPException(503, "The tank is temporarily unavailable. Please retry.") from None
 
     @app.get("/api/v1/research")
     def research_summary(request: Request):
