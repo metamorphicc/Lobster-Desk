@@ -56,7 +56,7 @@ export function ResearchView({ data, error, loading, refresh, exporting, exportE
           <div><dt>History / cadence</dt><dd>{data.history_bars} hours / {data.interval_seconds / 3600}h</dd></div></dl>
           {!data.enabled && <p className="notice">Autonomous research is off. The prepared agent preset starts it after a model API key is configured.</p>}
           {data.error && <p className="notice notice--error" role="alert">{data.error}</p>}
-          <p className="small-note">60% development · 20% validation · 20% final holdout. Historical tests include funding and stressed fees/slippage. Forward paper fills currently exclude funding. Passing a test does not establish profitability.</p>
+          <p className="small-note">60% development · 20% validation · 20% final holdout. Historical tests include funding and stressed fees/slippage. New forward paper positions settle hourly funding when enabled; older unmodeled positions remain labelled. Passing a test does not establish profitability.</p>
         </>}
       </div></section>
     {exportError && <p className="notice notice--error" role="alert">{exportError}</p>}

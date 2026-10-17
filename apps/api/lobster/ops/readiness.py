@@ -69,6 +69,9 @@ def readiness(runtime, testnet=None) -> dict:
         if counters["paper_halt_reason"]:
             blockers.append("Latched paper risk halt")
             alert("paper_halted", "warning", "paper", "A latched risk halt blocks new paper entries. Investigate the recorded account reason.")
+        if counters.get("paper_funding_error") or counters.get("paper_funding_pending"):
+            blockers.append("Paper funding reconciliation pending")
+            alert("paper_funding_pending", "warning", "paper", "New paper entries wait for complete hourly funding settlement; position protection remains independent.")
         if counters["open_positions"] or counters["reserved_entries"]:
             blockers.append("Paper execution slot occupied")
         budget = {"day": counters["review_budget_day"], "used": counters["review_calls_today"],

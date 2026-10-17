@@ -110,8 +110,12 @@ class Store:
         unrealized = D("0")
         occupied = False
         reserved = D("0")
+        funding_pending = False
         for pos in session.scalars(select(Position)):
             p = pos.payload
+            if p.get("funding_included"):
+                cutoff = datetime.fromisoformat(p["closed_at"]).timestamp() if p["closed_at"] else utcnow().timestamp()
+                funding_pending |= int(cutoff) // 3600 * 3600 > p["funding_cursor"]
             if p["status"] == "open":
                 occupied = True
                 sign = D("1") if p["direction"] == "long" else D("-1")
@@ -126,7 +130,7 @@ class Store:
             available_cash=D(account["cash"]) - reserved,
             day_start_equity=D(account["day_start_equity"]),
             high_water_equity=D(account["high_water_equity"]), occupied=occupied,
-            paused=account["paused"] or account["halt_reason"] is not None)
+            paused=account["paused"] or account["halt_reason"] is not None or funding_pending or bool(account.get("funding_error")))
 
     def bind_market_source(self, source: str):
         with self.transaction() as session:
@@ -296,6 +300,8 @@ class Store:
                 "exit_price": None, "net_pnl": None, "opened_at": stamp(), "closed_at": None,
                 "close_reason": None, "execution_mode": "paper", "market_source": market.source,
                 "entry_fill_id": str(uuid4()), "exit_fill_id": None}
+            if account.payload.get("funding_enabled"):
+                pos |= {"funding_included": True, "funding_net": "0", "funding_cursor": int(datetime.fromisoformat(pos["opened_at"]).timestamp()) // 3600 * 3600}
             session.add(Position(id=pos["id"], episode_id=episode_id, payload=pos))
             row.payload = ep | {"status": "filled", "position_id": pos["id"], "reason": "Paper order filled; stop and target monitoring active."}
             self.event(session, "executor", "filled", row.payload["reason"], episode_id, pos)
@@ -315,7 +321,7 @@ class Store:
             "realized_gross": str(D(account.payload["realized_gross"]) + gross),
             "fees_paid": str(D(account.payload["fees_paid"]) + exit_fee)}
         closed = pos | {"status": "closed", "exit_price": str(exit_price), "exit_fee": str(exit_fee),
-            "net_pnl": str(gross - D(pos["entry_fee"]) - exit_fee), "closed_at": stamp(),
+            "net_pnl": str(gross - D(pos["entry_fee"]) - exit_fee + D(pos.get("funding_net", "0"))), "closed_at": stamp(),
             "close_reason": reason, "exit_fill_id": str(uuid4())}
         row.payload = closed
         ep = session.get(Episode, pos["episode_id"])
@@ -387,8 +393,9 @@ class Store:
             latest = list(session.scalars(select(Event).order_by(Event.id.desc()).limit(80)))
             return {"account": account | {"equity": str(capital.equity) if capital else None,
                 "available_cash": str(capital.available_cash) if capital else None,
-                "net_realized_pnl": str(D(account["realized_gross"]) - D(account["fees_paid"])),
-                "builder_revenue": "0", "funding_included": False},
+                "net_realized_pnl": str(D(account["realized_gross"]) - D(account["fees_paid"]) + D(account.get("funding_net", "0"))),
+                "builder_revenue": "0", "funding_included": bool(account.get("funding_enabled")),
+                "funding_scope": "New positions since enablement; legacy unmodeled positions excluded." if account.get("funding_legacy") else "Tracked paper positions only."},
                 "episodes": sorted(episodes, key=lambda e: e["created_at"], reverse=True)[:100],
                 "positions": sorted(positions, key=lambda p: p["opened_at"], reverse=True)[:100],
                 "events": [row.payload | {"id": row.id} for row in reversed(latest)],
@@ -407,6 +414,9 @@ class Store:
                 Event.payload["kind"].as_string() == "review_started",
                 Event.payload["timestamp"].as_string().startswith(day)))
             return {"paper_paused": bool(account["paused"]), "paper_halt_reason": account["halt_reason"],
+                "paper_funding_error": account.get("funding_error"),
+                "paper_funding_pending": sum(bool(p.get("funding_included")) and int(datetime.fromisoformat(p["closed_at"]).timestamp() if p["closed_at"] else utcnow().timestamp()) // 3600 * 3600 > p.get("funding_cursor", 0)
+                    for p in (row.payload for row in session.scalars(select(Position)))),
                 "open_positions": open_positions, "reserved_entries": statuses.get("approved", 0),
                 "pending_reviews": sum(statuses.get(status, 0) for status in ("queued", "analyzing", "risk_check", "capital_check")),
                 "episodes_total": sum(statuses.values()), "review_calls_today": calls, "review_budget_day": day}

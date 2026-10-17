@@ -28,7 +28,8 @@ def test_state_is_honest_about_modes_and_revenue(client):
     assert result["service"]["execution_mode"] == "paper"
     assert result["service"]["agent_provider"] == "demo"
     assert result["account"]["builder_revenue"] == "0"
-    assert result["account"]["funding_included"] is False
+    assert result["account"]["funding_included"] is True
+    assert result["account"]["funding_net"] == "0"
     assert result["service"]["fee_collection_enabled"] is False
 
 

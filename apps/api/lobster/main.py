@@ -41,6 +41,7 @@ from .research.service import Research
 from .economics.distribution import DistributionPolicy, distribution
 from .economics.book import TreasuryBook
 from pathlib import Path
+from .funding import PaperFunding
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +59,22 @@ class Runtime:
         self.last_research_tick = None
         self.research_error = None
         self.research = Research(store, settings)
+        self.funding = PaperFunding(store)
+        if settings.paper_funding_enabled: self.funding.enable()
+
+    async def funding_loop(self, client):
+        while True:
+            try:
+                pending = await asyncio.to_thread(self.funding.pending)
+                if pending:
+                    earliest = min(p["funding_cursor"] for p in pending)
+                    count = max(240, (int(utcnow().timestamp()) // 3600 * 3600 - earliest) // 3600 + 1)
+                    if count > 4000: raise ValueError("Paper funding recovery exceeds available history.")
+                    dataset = await HistoryFeed(client, self.settings.market_source, count).fetch()
+                    await asyncio.to_thread(self.funding.apply, dataset)
+            except Exception:
+                await asyncio.to_thread(self.funding.fail)
+            await asyncio.sleep(15)
 
     async def research_loop(self, history, researcher):
         dataset, next_fetch = None, 0
@@ -174,6 +191,8 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
                         researcher = DemoResearcher() if config.agent_provider == "demo" else AnthropicResearcher(client, config)
                         runtime.tasks["research"] = asyncio.create_task(runtime.research_loop(
                             HistoryFeed(client, config.market_source, config.research_history_bars), researcher))
+                    if config.paper_funding_enabled:
+                        runtime.tasks["funding"] = asyncio.create_task(runtime.funding_loop(client))
                     tasks = list(runtime.tasks.values())
                 try:
                     yield

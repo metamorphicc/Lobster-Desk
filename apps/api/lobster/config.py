@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     research_history_bars: int = Field(default=1440, ge=720, le=4000)
     max_research_calls_per_day: int = Field(default=4, ge=1, le=20)
     treasury_path: str = "data/treasury.sqlite3"
+    paper_funding_enabled: bool = True
 
     @model_validator(mode="after")
     def configured_provider(self):

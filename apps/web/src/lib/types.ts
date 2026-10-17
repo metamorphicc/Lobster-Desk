@@ -34,7 +34,7 @@ export type State = {
   market: Market | null; episodes: Episode[]; positions: Position[]; events: JournalEvent[]; last_event_id: number;
   account: { initial_capital: string; cash: string; equity: string | null; available_cash: string | null;
     net_realized_pnl: string; fees_paid: string; builder_revenue: string; paused: boolean; halt_reason: string | null;
-    high_water_equity: string; day_start_equity: string; funding_included: boolean; created_at: string };
+    high_water_equity: string; day_start_equity: string; funding_included: boolean; funding_net?: string; funding_scope?: string; created_at: string };
   policy: { risk_fraction: string; max_leverage: number; max_notional_fraction: string; version: string };
   service: { execution_mode: "paper"; market_source: string; agent_provider: string; model: string;
     data_stale: boolean; market_error: string | null; worker_error: string | null;
