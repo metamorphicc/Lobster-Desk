@@ -7,7 +7,7 @@ from ..execution.contracts import fingerprint
 from .backup import read_only, sqlite_path, inspect_database
 
 
-def discover_sources(config, testnet, project, user_config):
+def discover_sources(config, testnet, project, user_config, *, operations_path=None):
     paper = sqlite_path(config.database_url)
     if not paper.is_file(): raise ValueError("Application database is missing.")
     sources = {"paper": paper}
@@ -49,4 +49,8 @@ def discover_sources(config, testnet, project, user_config):
     if treasury.exists():
         if treasury in sources.values(): raise ValueError("Treasury/application journals must remain separate.")
         inspect_database(treasury, "treasury"); sources["treasury"] = treasury
+    operations = Path(operations_path or getattr(config, "operations_path", "data/operations.sqlite3")).resolve()
+    if operations.exists():
+        if operations in sources.values(): raise ValueError("Operations state must remain separate.")
+        inspect_database(operations, "operations"); sources["operations"] = operations
     return sources

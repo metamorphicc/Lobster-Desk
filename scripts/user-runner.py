@@ -18,6 +18,7 @@ from lobster.users.intents import UserIntents
 from lobster.users.orders import UserPlans
 from lobster.users.runner import UserRunnerSettings, UserFinancialRunner
 from lobster.users.service import UserTestnetService
+from lobster.ops.heartbeat import ping
 
 
 async def main(args):
@@ -46,6 +47,8 @@ async def main(args):
                     for owner, key in keys.items():
                         try:
                             result = await runner.tick(owner, key, HyperliquidTestnet(client, owner))
+                            profile = financial.intents.profile(owner)
+                            ping(runner.root / owner / (profile["agent"] + ".sqlite3"), "user", state=result["status"] if result else "idle")
                             print(json.dumps({"owner": owner, "trade_id": result["id"] if result else None, "status": result["status"] if result else "idle"}))
                         except Exception:
                             print(json.dumps({"owner": owner, "status": "requires_reconciliation", "note": "No uncertain command is replayed. Other user journals continue independently."}))

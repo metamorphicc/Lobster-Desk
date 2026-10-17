@@ -105,7 +105,7 @@ These are code deliverables, not documentation substitutes. Default operation re
 - [ ] **9.8 Public operation code.** Configurable public identity boundary, server packaging, external alerts, encrypted backup integration and operational checks. No deployment during implementation.
   - [x] **9.8a Public single-host boundary/packaging.** Exact HTTPS signing origin, distinct proxy/operator secrets, trusted client identity, connection bounds, standalone Next/Docker/Caddy source and private config generator. 52 focused backend/58 Node cases and build pass; Compose validates. Container runtime/HTTPS acceptance unverified because Docker daemon is unavailable. No deployment; see `PUBLIC-DEPLOYMENT.md`.
   - [x] **9.8b Complete encrypted recovery.** Canonical financial-journal catalog/inventory, authenticated AES-256-GCM bundles, bounded immutable AWS SDK S3 transport and isolated restore. Thirteen focused/49 combined cases pass, including uncertain-entry nonce recovery without replay; actual local two-database encrypted restore passed. Real off-machine AWS acceptance remains unobserved. See `ENCRYPTED-RECOVERY.md`.
-  - [ ] **9.8c External operational alerts.** Durable observations of runner/financial uncertainty, bounded redacted notifications and outage recovery.
+  - [x] **9.8c External operational alerts.** Durable static-code outbox, runner/financial uncertainty observations, fresh instance-bound API checks, heartbeat aging, HMAC generic/Slack format and bounded retry/recovery. Eleven focused cases and a real local no-notification probe pass. External receiver/whole-host outage acceptance remains open. See `OPERATIONAL-ALERTS.md` and `SECURITY-STAGE9.md`.
 
 ## Financial policy
 

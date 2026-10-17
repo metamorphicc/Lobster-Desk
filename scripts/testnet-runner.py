@@ -18,6 +18,7 @@ from lobster.execution.signer import TestnetSigner
 from lobster.execution.workbench import TestnetWorkbench
 from lobster.ops.catalog import register_journal
 from lobster.store import Store
+from lobster.ops.heartbeat import ping
 
 
 async def main(args):
@@ -49,13 +50,16 @@ async def main(args):
                 register_journal(application, ledger, "testnet")
                 broker = TestnetBroker(ledger, gateway, signer, armed=True)
                 result = await (broker.dispatch(args.trade) if args.dispatch else broker.reconcile(args.trade))
+                ping(url.database, "testnet", state=result["status"])
                 print(json.dumps(result, indent=2))
                 while args.watch and result["status"] not in {"closed", "rejected", "expired", "cancelled"}:
                     await asyncio.sleep(5)
                     try:
                         result = await broker.reconcile(args.trade)
+                        ping(url.database, "testnet", state=result["status"])
                         print(json.dumps({"trade": result["id"], "status": result["status"], "reason": result["reason"]}))
                     except Exception:
+                        ping(url.database, "testnet", ok=False, state="unavailable")
                         print("Reconciliation observation failed; no entry replayed. Retrying observations in five seconds.")
             finally:
                 ledger.engine.dispose()

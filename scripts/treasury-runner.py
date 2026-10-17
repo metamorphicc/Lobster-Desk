@@ -12,6 +12,7 @@ from lobster.economics.distribution import distribution
 from lobster.economics.solana_treasury import SolanaSettings, create_treasury
 from lobster.execution.lease import RunnerLease
 from lobster.domain import utcnow
+from lobster.ops.heartbeat import ping
 
 
 def public(row):
@@ -58,7 +59,9 @@ async def main(args):
                             budget = report["reserve_bounded_buyback_budget"]
                             if budget is not None and D(budget) >= 5:
                                 print(json.dumps(public(await treasury.prepare_buyback(min(D(budget), settings.max_buyback_usdc)))))
+                    ping(settings.book, "solana", state="active")
                 except Exception:
+                    ping(settings.book, "solana", ok=False, state="unavailable")
                     print("Treasury cycle awaits configuration, liquidity, funding or reconciliation. No uncertain transaction is rebuilt.")
                 if args.once: break
                 await asyncio.sleep(5)

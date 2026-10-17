@@ -11,6 +11,7 @@ from lobster.ops.backup import restore_drill, snapshot, sqlite_path, verify
 from lobster.ops.inventory import discover_sources
 from lobster.execution.project import ProjectSettings
 from lobster.users.contracts import UserTestnetSettings
+from lobster.ops.alerts import AlertSettings
 
 
 if __name__ == "__main__":
@@ -33,7 +34,7 @@ if __name__ == "__main__":
         else:
             config = Settings()
             if args.treasury_book is not None: config.treasury_path = str(args.treasury_book)
-            sources = discover_sources(config, TestnetSettings(), ProjectSettings(), UserTestnetSettings())
+            sources = discover_sources(config, TestnetSettings(), ProjectSettings(), UserTestnetSettings(), operations_path=AlertSettings().state_path)
             destination = args.destination or Path("artifacts/backups") / (utcnow().strftime("%Y%m%dT%H%M%S") + "-" + uuid4().hex[:8])
             manifest = snapshot(sources, destination)
             print(f"Verified SQLite snapshot: {manifest.resolve()}")

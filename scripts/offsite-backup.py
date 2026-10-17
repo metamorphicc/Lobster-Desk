@@ -12,6 +12,7 @@ from lobster.users.contracts import UserTestnetSettings
 from lobster.ops.backup import snapshot
 from lobster.ops.inventory import discover_sources
 from lobster.ops.offsite import OffsiteSettings, seal_snapshot, open_snapshot, upload, download, s3_client
+from lobster.ops.alerts import AlertSettings
 
 
 def main(args):
@@ -27,7 +28,7 @@ def main(args):
             print(json.dumps({"verified_manifest": str(manifest), "live_database_replaced": False, "exchange_reconciled": False})); return
         manifest = args.seal
         if args.snapshot:
-            sources = discover_sources(Settings(), TestnetSettings(), ProjectSettings(), UserTestnetSettings())
+            sources = discover_sources(Settings(), TestnetSettings(), ProjectSettings(), UserTestnetSettings(), operations_path=AlertSettings().state_path)
             folder = Path("artifacts/backups") / (utcnow().strftime("%Y%m%dT%H%M%S") + "-" + uuid4().hex[:8])
             manifest = snapshot(sources, folder)
         if not args.output: raise ValueError("An unused encrypted output filename is required.")

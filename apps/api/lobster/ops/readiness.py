@@ -1,6 +1,8 @@
 """Local observations and alerts. Never mutates a ledger or calls an exchange."""
 
 from collections import Counter
+from pathlib import Path
+from ..execution.contracts import fingerprint
 
 from ..domain import utcnow
 
@@ -95,6 +97,7 @@ def readiness(runtime, testnet=None) -> dict:
             alert("testnet_ledger_unavailable", "critical", "testnet", "The local testnet execution journal could not be read.")
     ready = all(item["status"] == "ok" for item in checks)
     return {"schema": "lobster-local-readiness-v1", "observed_at": now.isoformat(), "scope": "local-paper-runtime",
+        "instance_fingerprint": fingerprint({"database": str(Path(runtime.store.engine.url.database).resolve())}),
         "status": "ready" if ready else "not_ready", "service_ready": ready, "execution_mode": "paper",
         "production_verified": False, "exchange_execution_verified": False,
         "market_source": runtime.settings.market_source, "market_age_seconds": round(age, 3) if age is not None else None,

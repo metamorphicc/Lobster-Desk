@@ -12,6 +12,7 @@ from lobster.execution.lease import RunnerLease
 from lobster.execution.project import ProjectSettings, create_runner
 from lobster.economics.book import TreasuryBook
 from lobster.economics.ingestion import sync_project_settlement
+from lobster.ops.heartbeat import ping
 from lobster.store import Store
 
 
@@ -37,6 +38,7 @@ async def main(args):
                 while True:
                     try:
                         result = await runner.tick()
+                        ping(path.database, "project", state=result["status"] if result else "idle")
                         print(json.dumps({"network": config.network, "trade_id": result["id"] if result else None,
                             "status": result["status"] if result else "idle"}))
                         if config.network == "mainnet" and config.treasury_path:
@@ -46,6 +48,7 @@ async def main(args):
                             except Exception:
                                 print("Treasury settlement awaits flat-account reconciliation. No treasury transfer attempted.")
                     except Exception:
+                        ping(path.database, "project", ok=False, state="unavailable")
                         print("Project tick requires reconciliation or a fresh eligible signal. No uncertain entry is replayed.")
                     if args.once: break
                     await asyncio.sleep(5)

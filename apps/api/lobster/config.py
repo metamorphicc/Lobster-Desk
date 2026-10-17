@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     deployment_mode: Literal["local", "public-single-host"] = "local"
     web_origin: str = "http://127.0.0.1:3000"
     proxy_token: SecretStr | None = None
+    operations_path: str = "data/operations.sqlite3"
 
     @model_validator(mode="after")
     def configured_provider(self):

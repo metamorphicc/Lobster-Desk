@@ -16,7 +16,7 @@ from ..domain import utcnow
 SCHEMA = "lobster-sqlite-backup-v1"
 REQUIRED = {"paper": {"accounts", "episodes", "positions", "events"},
     "testnet": {"testnet_control", "testnet_trades", "testnet_commands", "testnet_fills", "testnet_events"},
-    "treasury": {"treasury_receipts"}}
+    "treasury": {"treasury_receipts"}, "operations": {"ops_alert_state", "ops_alert_outbox"}}
 MAX_DATABASES = 128
 
 

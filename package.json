@@ -11,6 +11,7 @@
     "treasury": "node scripts/python.mjs scripts/treasury-runner.py",
     "charity": "node scripts/python.mjs scripts/charity-runner.py",
     "users:execution": "node scripts/python.mjs scripts/user-runner.py",
+    "ops": "node scripts/python.mjs scripts/ops-runner.py",
     "dev": "node scripts/dev.mjs",
     "dev:web": "npm run dev --workspace @lobster/web",
     "build": "npm run build --workspace @lobster/web",

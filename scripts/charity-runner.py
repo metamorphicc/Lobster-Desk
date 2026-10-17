@@ -10,6 +10,7 @@ import httpx
 from lobster.economics.book import TreasuryBook
 from lobster.economics.charity import CharitySettings, GivingBlock, EthereumUsdc, CharityPayments, RECIPIENTS, public_charity_report
 from lobster.execution.lease import RunnerLease
+from lobster.ops.heartbeat import ping
 
 
 def public(row):
@@ -52,7 +53,9 @@ async def main(args):
                         print(json.dumps(public(await payments.prepare(recipient, settings.batch_usdc))))
                     for row in rows:
                         if row["status"] == "finalized" and row.get("provider_status") != "record_observed": await payments.reconcile(row["id"])
+                    ping(settings.book, "charity", state="active")
                 except Exception:
+                    ping(settings.book, "charity", ok=False, state="unavailable")
                     print("Charity cycle awaits earmarks, provider/network support, wallet funding or reconciliation. No uncertain payment is repeated.")
                 if args.once: break
                 await asyncio.sleep(60)
