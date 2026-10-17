@@ -20,7 +20,7 @@ export function useLocalReport<T>(path: string) {
         const result = await response.json() as T;
         if (!controller.signal.aborted) { setData(result); setError(""); }
       } catch {
-        if (!controller.signal.aborted) setError("The local report is unavailable. Displayed observations may be outdated. Retry after checking the API.");
+        if (!controller.signal.aborted) setError("This report is temporarily unavailable. Please retry.");
       } finally {
         if (!controller.signal.aborted) setLoading(false);
         busy = false;

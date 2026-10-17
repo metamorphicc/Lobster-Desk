@@ -4,7 +4,9 @@ Completed substages are committed locally on `lobster-desk`, the branch name req
 
 ## Run locally
 
-Open `http://127.0.0.1:3000`. The current demonstration uses synthetic data/scripted reviews, autonomous research and the preserved `data/tryout.db`; paper positions and fees are labelled as simulations. `npm run dev` starts the default local application. For paid-model research with public market history, use `npm run setup:agents`, enter the model key in ignored `.env.agents`, then `npm run agents:check` and `npm run agents`. That preset is paper-only and uses a separate database. See `AGENT-SETUP.md`.
+Open `http://127.0.0.1:3000` for the product. Its independent mainnet market feed supplies actual BTC candles; public setups/fills come only from registered mainnet project journals, and capital requires a fresh single-project reference. Missing financial observations display `—`. Main navigation contains The tank, Journal, Research and My strategies, with no fee-allocation or treasury panels.
+
+The `/operator` workspace retains treasury, paper history, diagnostics and testnet tools. It is a separate presentation surface, not a new authentication gate; financial writes retain operator authorization. The preserved `data/tryout.db` remains an internal synthetic/scripted paper journal and is not relabelled as project performance. `npm run dev` starts both data surfaces. For paid-model research with public market history, use `npm run setup:agents`, enter the model key in ignored `.env.agents`, then `npm run agents:check` and `npm run agents`. That preset is paper-only and uses a separate database. See `AGENT-SETUP.md`.
 
 The tank accepts BTC pitches and can generate its own bounded trend/breakout/mean-reversion hypotheses. Code tests chronological history and stressed costs, applies critic/analyst/risk vetoes and deterministic capital limits, and records accepted, rejected and skipped decisions. Forward paper funding is reconciled hourly for tracked positions; legacy unmodeled positions retain their label. Models never run arbitrary generated code, hold wallets or enlarge risk limits.
 

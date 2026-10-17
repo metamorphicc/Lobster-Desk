@@ -63,6 +63,17 @@
 }
 
 * { box-sizing: border-box; }
+.chart-toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-xs); padding: 0 var(--space-md) var(--space-xs); color: var(--color-muted); font-family: var(--font-mono); font-size: 10px; }
+.chart-toolbar > div { display: flex; gap: var(--space-2xs); }
+.chart-toolbar button { min-height: 36px; min-width: 38px; border-radius: .375rem; }
+.chart-toolbar button:hover { background: var(--color-raised); color: var(--color-ink); }
+.chart-toolbar button.is-selected { background: var(--color-accent-soft); color: var(--color-accent); }
+.chart-container > .form-error { padding: var(--space-sm); }
+.product-fill-list { list-style: none; margin: 0; padding: var(--space-md); display: grid; gap: var(--space-sm); }
+.product-fill-list li { display: grid; gap: var(--space-xs); padding: var(--space-sm); border-top: 1px solid var(--color-rule); overflow-wrap: anywhere; min-width: 0; }
+.product-fill-list time, .product-fill-list span { color: var(--color-muted); font-size: 11px; }
+@media (max-width: 39.99rem) { .app-shell--product .nav-item { flex: 1 1 auto; } }
+@media (max-width: 23rem) { .app-shell--product .nav-item > svg { display: none; } }
 html, body { overflow-x: clip; }
 html { scroll-behavior: smooth; }
 body { margin: 0; background: var(--color-paper); color: var(--color-ink); font-family: var(--font-body); font-size: 14px; line-height: 1.55; font-variant-numeric: tabular-nums; }

@@ -40,7 +40,14 @@ export function ProjectActivity() {
   return <ProjectActivityView data={data} busy={busy} error={error} refresh={() => { void refresh(); }} />;
 }
 
-export function ProjectActivityView({ data, busy, error, refresh }: { data: ProjectActivityData | null; busy: boolean; error: string; refresh: () => void }) {
+export function ProjectActivityView({ data, busy, error, refresh, product = false }: { data: ProjectActivityData | null; busy: boolean; error: string; refresh: () => void; product?: boolean }) {
+  if (product) return <section className="journal-panel"><div className="panel-heading"><h2>Recent exchange fills</h2></div>
+    {!data?.journals.some(j => j.trades.some(t => t.recent_fills.length)) ? <div className="journal-empty"><RefreshCw size={22} /><div><strong>No trades recorded yet.</strong><p>Executed trades will appear here with their prices and fees.</p></div></div> :
+      <ul className="product-fill-list">{data.journals.filter(j => j.network === "mainnet").flatMap(j => j.trades.flatMap(t => t.recent_fills.map((f, i) => <li key={`${j.id}:${t.id}:${i}`}>
+        <strong>{f.side === "B" ? "Buy" : "Sell"} BTC · {money(f.px)}</strong><time dateTime={new Date(f.time).toISOString()}>{new Date(f.time).toLocaleString("en-GB")}</time>
+        <span>{number(f.sz, 6)} BTC · Fee {money(f.fee, 4)} · Closed PnL {money(f.closedPnl, 4)}</span>
+      </li>)))}</ul>}
+  </section>;
   return <section className="testnet-panel" aria-labelledby="project-activity-title">
     <div className="panel-heading"><h2 id="project-activity-title">Project exchange activity</h2><button className="text-button" disabled={busy} onClick={refresh}>
       {busy ? <LoaderCircle size={14} className="spinner" /> : <RefreshCw size={14} />}{busy ? "Reading…" : "Refresh exchange journal"}</button></div>

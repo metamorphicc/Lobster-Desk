@@ -2,7 +2,7 @@
 
 /* Hallmark · component: research workbench · Midnight · P4 H4 E4 S5 R5 V4 */
 import { useState } from "react";
-import { Download, FlaskConical, LoaderCircle, RefreshCw } from "lucide-react";
+import { BookOpen, Download, FlaskConical, LoaderCircle, RefreshCw } from "lucide-react";
 import { useLocalReport } from "@/lib/use-local-report";
 import { money, signed } from "@/lib/types";
 
@@ -17,7 +17,7 @@ export type ResearchReport = { enabled: boolean; provider: string; active_id: st
   history_bars: number; calls_today: number; daily_call_limit: number; error: string | null;
   campaigns: Campaign[]; signals: { episode_id: string | null; signal_bar: number; strategy_hash: string; status: string; reason?: string }[] };
 
-export function ResearchWorkbench({ onSelect }: { onSelect: (id: string) => void }) {
+export function ResearchWorkbench({ onSelect, product = false }: { onSelect: (id: string) => void; product?: boolean }) {
   const report = useLocalReport<ResearchReport>("/api/v1/research");
   const [exporting, setExporting] = useState<string | null>(null);
   const [exportError, setExportError] = useState("");
@@ -35,8 +35,34 @@ export function ResearchWorkbench({ onSelect }: { onSelect: (id: string) => void
     } catch { setExportError("The evidence could not be exported. Retry after the local API is available."); }
     finally { setExporting(null); }
   }
+  if (product) return <ProductResearchView data={report.data} loading={report.loading} error={report.error} refresh={report.refresh} />;
   return <ResearchView {...report} exporting={exporting} exportError={exportError} exported={exported}
     onDownload={id => { void download(id); }} onSelect={onSelect} />;
+}
+
+export function ProductResearchView({ data, loading, error, refresh }: {
+  data: ResearchReport | null; loading: boolean; error: string; refresh: () => void;
+}) {
+  const campaigns = data?.provider === "anthropic" ? data.campaigns.filter(c => c.source === "hyperliquid") : [];
+  return <section className="testnet-panel"><div className="panel-heading"><h2>Strategy research</h2>
+    <button className="text-button" onClick={refresh} disabled={loading}>{loading ? <LoaderCircle size={14} className="spinner" /> : <RefreshCw size={14} />}{loading ? "Loading…" : "Refresh"}</button></div>
+    <div className="testnet-body research-body">
+      <p>Market history, trading costs and an independent risk review. Every hypothesis has to earn its place.</p>
+      {error && <p className="form-error" role="alert">Research is temporarily unavailable. Please retry.</p>}
+      {loading && !data && <p role="status">Reading the latest research…</p>}
+      {data && !campaigns.length && <div className="journal-empty"><BookOpen size={22} /><div><strong>The next idea starts here.</strong><p>Completed market research will appear here. You can pitch your own strategy in My strategies.</p></div></div>}
+      {campaigns.map(c => <article className="research-candidate" key={c.id}>
+        <h3>{c.hypotheses?.regime || "BTC strategy research"}</h3><p className="small-note">{new Date(c.created_at).toLocaleString("en-GB")}</p>
+        {c.critic && <p><strong>Risk review · {c.critic.verdict}</strong> {c.critic.summary}</p>}
+        {c.evaluation?.candidates.map(candidate => <div className="research-verdict" key={candidate.strategy_hash}>
+          <h4>{candidate.strategy.name}</h4><p>{candidate.strategy.hypothesis}</p><dl className="testnet-observations">
+            <div><dt>Validation PnL</dt><dd>{signed(candidate.validation.net_pnl)}</dd></div>
+            <div><dt>Validation trades</dt><dd>{candidate.validation.trade_count}</dd></div>
+            <div><dt>Validation drawdown</dt><dd>{(Number(candidate.validation.max_drawdown_fraction) * 100).toFixed(2)}%</dd></div>
+          </dl><p className="small-note">Historical test results with fees and funding. Past performance does not guarantee future results.</p>
+        </div>)}
+      </article>)}
+    </div></section>;
 }
 
 export function ResearchView({ data, error, loading, refresh, exporting, exportError, exported, onDownload, onSelect }: {

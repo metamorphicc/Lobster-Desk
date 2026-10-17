@@ -9,7 +9,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Lobster Desk — The trading tank",
-  description: "Pitch a BTC setup. Watch the tank review it. Follow every paper trade.",
+  description: "A collective trading desk on Hyperliquid. Pitch BTC strategies and follow every decision.",
   robots: { index: false, follow: false },
 };
 

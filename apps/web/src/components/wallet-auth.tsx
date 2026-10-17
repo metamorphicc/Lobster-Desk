@@ -18,7 +18,7 @@ async function revoke(token: string, network: "testnet" | "mainnet"): Promise<bo
   } catch { return false; }
 }
 
-export function WalletAuth({ address, chainId, session, now, episodes, network = "testnet" }: { address: string; chainId: string; session: WalletSession; now: number; episodes: Episode[]; network?: "testnet" | "mainnet" }) {
+export function WalletAuth({ address, chainId, session, now, episodes, network = "testnet", strategyOnly = false }: { address: string; chainId: string; session: WalletSession; now: number; episodes: Episode[]; strategyOnly?: boolean; network?: "testnet" | "mainnet" }) {
   const prefix = `/api/v1/users/${network}/auth/`;
   const expectedChain = network === "testnet" ? 421614 : 42161;
   const [challenge, setChallenge] = useState<AuthChallenge | null>(null);
@@ -89,13 +89,13 @@ export function WalletAuth({ address, chainId, session, now, episodes, network =
   return <section className="builder-consent wallet-auth" aria-labelledby="wallet-auth-title">
     <h3 id="wallet-auth-title">Verify this wallet for private previews</h3>
     <p className="small-note">Optional sign-in proves control of this wallet. It grants no trading, transfers or builder-fee permission. The session stays in this page&apos;s memory and expires within 15 minutes.</p>
-    {ready ? <><p className="positive user-connected"><Check size={16} />Verified for local previews</p><p className="small-note">Expires {new Date(result.expires_at).toLocaleTimeString("en-GB", { hour12: false })}. Scope: {network} private views and attributed pitches; no trading permission.</p>
+    {ready ? <><p className="positive user-connected"><Check size={16} />Signed in</p><p className="small-note">Expires {new Date(result.expires_at).toLocaleTimeString("en-GB", { hour12: false })}. Scope: {network} private views and attributed pitches; no trading permission.</p>
       <button className="button button--secondary" onClick={() => { void logout(); }}><LogOut size={16} />Sign out</button>
       <UserStrategies network={network} token={result.access_token} onSessionInvalid={() => { credential.current = null; setResult(null); setError("Sign in again to access strategy earnings."); }} />
-      <UserCapital network={network} address={address} token={result.access_token} now={now} onSessionInvalid={() => { credential.current = null; setResult(null); setError("The server session is no longer valid. Sign in again."); }} />
+      {!strategyOnly && <><UserCapital network={network} address={address} token={result.access_token} now={now} onSessionInvalid={() => { credential.current = null; setResult(null); setError("The server session is no longer valid. Sign in again."); }} />
       <UserFinancial network={network} address={address} token={result.access_token} session={session} now={now} onSessionInvalid={() => { credential.current = null; setResult(null); setError("The server session is no longer valid. Sign in again."); }} />
-      <UserOrderPreview network={network} address={address} token={result.access_token} episodes={episodes} now={now} session={session} onSessionInvalid={() => { credential.current = null; setResult(null); setError("The server session is no longer valid. Sign in again."); }} /></> : <>
-      {result && <p className="notice">The local session expired. Sign in again for private previews.</p>}
+      <UserOrderPreview network={network} address={address} token={result.access_token} episodes={episodes} now={now} session={session} onSessionInvalid={() => { credential.current = null; setResult(null); setError("The server session is no longer valid. Sign in again."); }} /></>}</> : <>
+      {result && <p className="notice">Your session expired. Sign in again.</p>}
       {!chainOk && <p className="notice">Sign-in requires wallet chain {expectedChain} ({network === "testnet" ? "Arbitrum Sepolia" : "Arbitrum One"}). Select it manually, then reconnect. Public account viewing works without signing in.</p>}
       <button className="button button--secondary" disabled={!!busy || !chainOk} onClick={() => { void act(false); }}>{busy === "prepare" ? <LoaderCircle size={16} className="spinner" /> : <FileCheck2 size={16} />}Prepare sign-in message</button>
       {challenge && <SignInMessage challenge={challenge} expired={!!expired} busy={busy === "sign"} sign={() => { void act(true); }} />}

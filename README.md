@@ -1,6 +1,6 @@
 # Lobster Desk
 
-A public trading tank: pitch a BTC setup, watch three crustacean agents challenge it, and follow the decision through a verifiable paper trade.
+A collective trading desk on Hyperliquid: pitch a BTC strategy, follow three crustacean agents and track decisions and trades.
 
 **Local development. No mainnet order execution, deposits, token, or fee collection is enabled.** Market data and execution modes are independent: live Hyperliquid data can drive simulated trades.
 
@@ -33,7 +33,9 @@ On macOS/Linux, use `python3 -m venv .venv`, then `.venv/bin/python` for the two
 
 Open **http://127.0.0.1:3000**. The API is at **http://127.0.0.1:8000**, with interactive documentation at `/docs`. Stop both services with Ctrl+C. Ports 3000 and 8000 must be available.
 
-No environment file or credentials are needed for the scripted demo. SQLite creates `data/lobster.db` on first launch; it survives restarts and is ignored by Git. The initial $1,000 is simulated capital, not a deposit. `INITIAL_CAPITAL` only applies when creating a new database.
+The main site reads actual public BTC candles without credentials. It publishes only registered mainnet project setups/fills and fresh project capital observations; missing account data appears as `—`. It does not expose the internal seeded balance or synthetic trade history. Fee allocation is documented in `docs/DISTRIBUTION.md`, outside the main navigation.
+
+The separate `/operator` workspace retains treasury reporting, testnet tools, diagnostics and the paper journal. This read-only workspace is not an authentication boundary; financial controls still require server-side operator authorization, and deployment should restrict operational access. SQLite creates `data/lobster.db` on first launch and stays ignored by Git. The internal $1,000 is simulated capital; `INITIAL_CAPITAL` only applies to a new paper database. It never becomes a public account balance.
 
 To configure the optional modes, copy `.env.example` to `.env` at the repository root:
 

@@ -1,14 +1,19 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CandlestickSeries, ColorType, createChart, LineStyle, type IChartApi, type ISeriesApi, type UTCTimestamp } from "lightweight-charts";
 import type { Episode, Market } from "@/lib/types";
+import { aggregateCandles, type ChartInterval } from "@/lib/candles";
 
 export function PriceChart({ market, episode }: { market: Market; episode?: Episode }) {
   const element = useRef<HTMLDivElement>(null);
   const chart = useRef<IChartApi | null>(null);
   const series = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const fitted = useRef(false);
+  const [interval, setInterval] = useState<ChartInterval>(1);
+  const bars = useMemo(() => {
+    try { return aggregateCandles(market.candles, interval); } catch { return null; }
+  }, [market.candles, interval]);
 
   useEffect(() => {
     if (!element.current) return;
@@ -29,12 +34,12 @@ export function PriceChart({ market, episode }: { market: Market; episode?: Epis
       return `rgb(${r}, ${g}, ${b})`;
     };
     const instance = createChart(element.current, {
-      autoSize: true, height: 258,
+      autoSize: true, height: 300,
       layout: { background: { type: ColorType.Solid, color: color("--color-panel") }, textColor: color("--color-muted"),
         fontFamily: tokens.getPropertyValue("--font-mono").trim(), fontSize: 10,
         attributionLogo: true },
       grid: { vertLines: { color: color("--color-chart-grid") }, horzLines: { color: color("--color-chart-grid") } },
-      rightPriceScale: { borderVisible: false },
+      rightPriceScale: { borderVisible: false, scaleMargins: { top: .12, bottom: .12 } },
       timeScale: { borderVisible: false, timeVisible: true, secondsVisible: false },
       crosshair: { vertLine: { color: color("--color-muted"), style: LineStyle.Dashed }, horzLine: { color: color("--color-muted") } },
       handleScroll: { vertTouchDrag: false },
@@ -49,11 +54,15 @@ export function PriceChart({ market, episode }: { market: Market; episode?: Epis
   }, []);
 
   useEffect(() => {
-    if (!series.current || !market.candles.length) return;
-    series.current.setData(market.candles.map(c => ({ time: c.time as UTCTimestamp,
+    fitted.current = false;
+  }, [interval, market.source]);
+
+  useEffect(() => {
+    if (!series.current) return;
+    series.current.setData((bars || []).map(c => ({ time: c.time as UTCTimestamp,
       open: Number(c.open), high: Number(c.high), low: Number(c.low), close: Number(c.close) })));
-    if (!fitted.current) { chart.current?.timeScale().fitContent(); fitted.current = true; }
-  }, [market]);
+    if (!fitted.current && bars?.length) { chart.current?.timeScale().fitContent(); fitted.current = true; }
+  }, [bars]);
 
   useEffect(() => {
     if (!series.current || !episode) return;
@@ -75,6 +84,11 @@ export function PriceChart({ market, episode }: { market: Market; episode?: Epis
     };
   }, [episode]);
 
-  return <div ref={element} className="price-chart" aria-label="BTC one-minute candlestick chart. Exact setup levels are listed in the pitch details." role="img" />;
+  return <div className="chart-container">
+    <div className="chart-toolbar"><div role="group" aria-label="Candle interval">{([1, 5, 15] as const).map(value =>
+      <button key={value} className={interval === value ? "is-selected" : ""} type="button" disabled={!bars?.length} aria-pressed={interval === value} onClick={() => setInterval(value)}>{value}m</button>)}</div><span>BTC perpetual · UTC</span></div>
+    {(!bars || !bars.length) && <p className="form-error" role="status">Candle history is unavailable. Waiting for the next market update.</p>}
+    <div ref={element} className="price-chart" aria-label={`BTC ${interval}-minute candlestick chart in UTC. Drag to pan, scroll to zoom.`} role="img" />
+  </div>;
 }
 

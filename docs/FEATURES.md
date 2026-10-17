@@ -14,6 +14,7 @@ Current economics v2 replaces the former donation allocation. Executable donatio
 | F08 | Strategy-author share | 50% of positive cumulative net realized profit per verified user strategy goes to its author; 50% remains in bot capital. Fees/funding count once, strategy losses must be recovered, and retries do not allocate again. |
 | F09 | Author balances/payments | Private earned/paid/outstanding balances and public aggregate totals. A separate opt-in bounded Hyperliquid USDC payout runner selects verified earned recipients, persists commands before sending and requires matching debit/credit observations. Operator-only recording of an existing transfer is also supported; uncertainty blocks replacement payments. |
 | F10 | Bot-only token policy | Existing 50% eligible own-agent net-profit buyback/burn rule remains for the agents' own strategies. User-strategy profits and author/team liabilities are excluded. Solana mint/funding/acceptance remain external configuration. |
+| F11 | Product data and navigation | Actual public mainnet BTC candles with 1m/5m/15m views. Public capital and trades use registered mainnet project observations; absent/stale capital stays blank. The tank, Journal, Research and My strategies form the main navigation; treasury, fee allocation and operational tools remain in docs and `/operator`. |
 
 ## Fee distribution
 

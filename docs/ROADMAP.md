@@ -123,7 +123,7 @@ These are code deliverables, not documentation substitutes. Default operation re
 ## Stage 11 — Product surface and actual BTC chart
 
 - [x] **11.1 Public market and project data boundary.** Independent read-only mainnet BTC feed and product endpoint; only registered mainnet project activity can supply setups/fills. Missing, stale, halted or ambiguous account observations publish null capital, never the paper seed. BTC OHLC is bounded, ordered and validated; corrupt/stale/conflicting candles refuse without synthetic fallback. Nineteen focused backend cases pass.
-- [ ] **11.2 Product interface and chart.** Main navigation focuses on tank, journal, research and My strategies. Internal treasury/testnet/operations move to `/operator`; fee allocation copy belongs in repository docs. Actual BTC chart with 1m/5m/15m controls, account empty states and wallet-linked author experience. Production build, responsive/state checks and integrated verification required before completion.
+- [x] **11.2 Product interface and chart.** Main navigation focuses on tank, journal, research and My strategies. Internal treasury/testnet/operations move to `/operator`; fee allocation copy belongs in repository docs. Actual BTC chart with 1m/5m/15m controls, account empty states and wallet-linked author experience. Production build and 72 client tests pass; final backend regression: 533 passed. All four product tabs checked at 320/375/414/768, with desktop 1280 and corrected narrow navigation. API outage clears cached public data and automatic recovery restores the actual feed. No financial activation or push.
 
 ## Financial policy
 

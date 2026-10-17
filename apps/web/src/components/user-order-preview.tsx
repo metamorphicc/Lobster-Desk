@@ -25,7 +25,7 @@ export function UserOrderPreview({ address, token, episodes, now, session, onSes
   const [busy, setBusy] = useState(false);
   const controller = useRef<AbortController | null>(null);
   const pendingKey = useRef<string | null>(null);
-  const eligible = episodes.filter(ep => ["approved", "filled"].includes(ep.status) && ep.approval_hash && ep.snapshot?.source === (network === "testnet" ? "hyperliquid-testnet" : "hyperliquid") && Date.parse(ep.expires_at) > now);
+  const eligible = episodes.filter(ep => ["approved", "filled"].includes(ep.status) && ep.approval_hash && ep.snapshot?.source === (network === "testnet" ? "hyperliquid-testnet" : "hyperliquid") && ep.expires_at && Date.parse(ep.expires_at) > now);
   useEffect(() => () => controller.current?.abort(), []);
   const expired = plan && (plan.expired || now >= Date.parse(plan.expires_at));
 

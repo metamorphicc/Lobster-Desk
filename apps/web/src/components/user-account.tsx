@@ -16,7 +16,7 @@ type Account = UserConfig & {
 };
 const initial: WalletState = { status: "idle", address: null, chainId: null, error: null, revision: 0 };
 
-export function UserAccount({ episodes = [], network = "testnet" }: { episodes?: Episode[]; network?: "testnet" | "mainnet" }) {
+export function UserAccount({ episodes = [], network = "testnet", product = false }: { episodes?: Episode[]; network?: "testnet" | "mainnet"; product?: boolean }) {
   const session = useRef<WalletSession | null>(null);
   const [wallet, setWallet] = useState(initial);
   const [wallets, setWallets] = useState<Wallet[]>([]);
@@ -71,10 +71,10 @@ export function UserAccount({ episodes = [], network = "testnet" }: { episodes?:
   }
 
   return <section className="testnet-panel user-account" aria-labelledby="user-account-title">
-    <div className="panel-heading"><h2 id="user-account-title"><WalletIcon size={17} /> Your {network} account</h2><span className="tag">READ ONLY</span></div>
+    <div className="panel-heading"><h2 id="user-account-title"><WalletIcon size={17} /> {product ? "Your account" : `Your ${network} account`}</h2><span className="tag">READ ONLY</span></div>
     <div className="testnet-body">
-      {network === "mainnet" && <p className="notice">Mainnet uses real funds. Viewing and sign-in grant no trading permission. Review each delegation, fee and exact trade separately.</p>}
-      <p>Connect a wallet or watch a public address. Your account stays separate from the tank&apos;s capital. Public viewing requests no signature. Optional sign-in below requires a separate, explicit message signature.</p>
+      {!product && network === "mainnet" && <p className="notice">Mainnet uses real funds. Viewing and sign-in grant no trading permission. Review each delegation, fee and exact trade separately.</p>}
+      <p>{product ? "Connect your wallet to submit strategies and track your share of the profits." : "Connect a wallet or watch a public address. Your account stays separate from the tank’s capital. Viewing requests no signature."}</p>
       <div className="user-account-layout"><div className="user-account-controls">
         {wallet.status === "connected" ? <><p className="positive user-connected"><Check size={16} />Wallet connected for public data</p><p className="small-note">Wallet chain {wallet.chainId}. Account observations below always use Hyperliquid {network}.</p>
           <button className="button button--secondary" onClick={() => { session.current?.disconnect(); setWatched(null); }}>Disconnect view</button><p className="small-note">This clears the page view. Site permissions in your wallet are managed separately.</p></> : <>
@@ -103,12 +103,12 @@ export function UserAccount({ episodes = [], network = "testnet" }: { episodes?:
           </>}
         </> : <p className="empty-note">Your {network} balances and orders appear after an explicit connection or address lookup. No account is selected automatically.</p>}
       </div></div>
-      <div className="user-fee-note"><strong>Builder fee · {availableConfig?.builder_fee_percent || "—"}</strong><p>Additional to exchange trading costs on executed notional. Collection applies only after explicit exchange approval and an executed order. The account view itself grants no permission.</p>
+      {!product && <div className="user-fee-note"><strong>Builder fee · {availableConfig?.builder_fee_percent || "—"}</strong><p>Additional to exchange trading costs on executed notional. Collection applies only after explicit exchange approval and an executed order. The account view itself grants no permission.</p>
         <dl className="testnet-addresses"><div><dt>Builder recipient</dt><dd>{availableConfig?.builder_address || "Not configured"}</dd></div></dl>
         {data && <p>Approval: <strong>{data.builder_approval_status.replaceAll("_", " ")}</strong>{data.approved_builder_fee_tenths_bps != null ? ` · Maximum ${(data.approved_builder_fee_tenths_bps / 1000).toLocaleString("en-US", { maximumFractionDigits: 3 })}%` : ""}. Reported account taker rate {(Number(data.reported_taker_rate) * 100).toLocaleString("en-US", { maximumFractionDigits: 5 })}%.</p>}
-      </div>
-      {wallet.address && wallet.chainId && session.current && <WalletAuth network={network} key={`${network}:${wallet.address}:${wallet.revision}`} address={wallet.address} chainId={wallet.chainId} session={session.current} now={now} episodes={episodes} />}
-      {!wallet.address && <p className="small-note">Private previews require a connected wallet and a separate sign-in message. Watching an address grants no private session.</p>}
+      </div>}
+      {wallet.address && wallet.chainId && session.current && <WalletAuth strategyOnly={product} network={network} key={`${network}:${wallet.address}:${wallet.revision}`} address={wallet.address} chainId={wallet.chainId} session={session.current} now={now} episodes={episodes} />}
+      {!wallet.address && <p className="small-note">Connect and sign in to see your strategies and earnings. Watching an address does not sign you in.</p>}
       {network === "testnet" && address && <BuilderConsent key={key} address={address} configured={!!availableConfig?.builder_address} now={now} />}
     </div>
   </section>;
