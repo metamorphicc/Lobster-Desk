@@ -113,7 +113,12 @@ class ProjectRunner:
             from ..economics.book import TreasuryBook
             from ..economics.distribution import distribution
             if not self.settings.treasury_path.is_file(): raise ValueError("The shared treasury book is unavailable.")
-            report = distribution(TreasuryBook(self.settings.treasury_path))
+            book = TreasuryBook(self.settings.treasury_path)
+            report = distribution(book)
+            with book.transaction() as db:
+                if any(row["entry"]["kind"] in {"author_payout", "team_payout"}
+                        and int(datetime.fromisoformat(row["entry"]["occurred_at"]).timestamp()*1000) > state["exchange_time_ms"] for row in book.read(db)):
+                    raise ValueError("Project observations must include the latest recorded payouts before new entry.")
             self.ledger.entry_liability_reserve = sum((D(v) for v in report["outstanding_earmarks"].values()), D(0))
         with self.store.transaction() as session:
             app = session.get(Account, 1).payload

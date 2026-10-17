@@ -17,13 +17,13 @@ from ..domain import utcnow
 from ..execution.contracts import fingerprint
 from .backup import read_only
 
-SAFE_CODES = {"revenue_observation_unavailable", "database_unavailable", "worker_disabled", "market_worker_unavailable", "decision_worker_unavailable", "market_unavailable",
+SAFE_CODES = {"author_payout_uncertain", "revenue_observation_unavailable", "database_unavailable", "worker_disabled", "market_worker_unavailable", "decision_worker_unavailable", "market_unavailable",
     "decision_error", "research_unavailable", "paper_paused", "paper_halted", "paper_funding_pending", "review_budget_exhausted",
     "testnet_reconciliation", "testnet_halted", "testnet_ledger_unavailable", "financial_runner_unavailable", "user_permission_uncertain",
     "user_consent_handoff", "exchange_command_uncertain", "exchange_exposure_review", "financial_journal_unavailable",
     "application_inventory_unavailable", "solana_transaction_uncertain",
     "treasury_journal_unavailable", "api_runtime_unavailable", "monitor_scope_mismatch"}
-SAFE_SCOPES = {"service", "paper", "research", "testnet", "project", "user", "execution", "solana", "treasury"}
+SAFE_SCOPES = {"service", "paper", "research", "testnet", "project", "user", "execution", "solana", "author_payouts", "treasury"}
 
 
 class AlertSettings(BaseSettings):
@@ -100,6 +100,9 @@ def financial_observations(application_path, treasury_path):
     if Path(treasury_path).exists():
         try:
             with closing(read_only(Path(treasury_path))) as db:
+                payouts = rows(db, "author_payout_jobs")
+                alert("author_payout_uncertain", "critical", "author_payouts", sum(r["status"] in {"sending", "unknown"} for r in payouts))
+                stale_heartbeat(db, "author_payouts", any(r["status"] not in {"recorded", "rejected", "cancelled"} for r in payouts))
                 solana = rows(db, "solana_operations")
                 alert("solana_transaction_uncertain", "critical", "solana", sum(r["status"] in {"sending", "unknown"} for r in solana))
                 stale_heartbeat(db, "solana", any(r["status"] in {"sending", "submitted", "unknown"} for r in solana))

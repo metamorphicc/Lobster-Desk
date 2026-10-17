@@ -2,6 +2,7 @@
 from datetime import datetime, timezone
 from decimal import Decimal as D
 from pathlib import Path
+import json
 import re
 from typing import Literal
 
@@ -28,7 +29,12 @@ class PayoutReceipt(Contract):
     amount: Money = Field(gt=0, le=1000000, decimal_places=6)
 
 
-async def record_payout(store, book, service, body):
+async def record_payout(store, book, service, body, *, operation_id=None):
+    with book.transaction() as db:
+        if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='author_payout_jobs'").fetchone():
+            active = [json.loads(r[0]) for r in db.execute("SELECT payload FROM author_payout_jobs") if json.loads(r[0])["status"] not in {"recorded", "rejected", "cancelled"}]
+            if active and (len(active) != 1 or active[0]["id"] != operation_id or active[0]["status"] != "acknowledged"):
+                raise ValueError("An automatic payout is unresolved; reconcile its own job before recording another payment.")
     if service.network != "mainnet" or body.timestamp_ms > int(utcnow().timestamp()*1000) - 1:
         raise ValueError("A completed mainnet transfer observation is required.")
     with Session(store.engine) as db:
@@ -75,11 +81,20 @@ def install(app, config, require_operator):
         owner = identity(request, network, authorization)
         strategies = UserStrategies(request.app.state.runtime.store, network).list(owner)
         balance = None
+        jobs = []
         if network == "mainnet":
             book = TreasuryBook(Path(config.treasury_path))
-            with book.transaction() as db: balance = author_balances(book.read(db)).get(owner)
+            with book.transaction() as db:
+                balance = author_balances(book.read(db)).get(owner)
+                if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='author_payout_jobs'").fetchone():
+                    for r in db.execute("SELECT payload FROM author_payout_jobs ORDER BY rowid DESC"):
+                        job = json.loads(r[0])
+                        if job["plan"]["action"]["destination"] == owner:
+                            jobs.append({"id": job["id"], "status": job["status"], "amount": job["plan"]["action"]["amount"]})
+                            if len(jobs) == 10: break
         return {"network": network, "strategies": strategies, "balance": balance,
-            "payout_submission_enabled": False, "note": "Only verified, realized project trades accrue author shares. Testnet/paper results are not payable. Accrued shares and observed payments are separate."}
+            "payout_jobs": jobs, "payout_submission_enabled": False,
+            "note": "Only verified, realized project trades accrue author shares. Testnet/paper results are not payable. A separately enabled owner-run process pays authors; this API cannot send money. Accrued shares and observed payments are separate."}
 
     @app.post("/api/v1/operator/strategy-payout-receipt")
     async def payout_receipt(body: PayoutReceipt, request: Request, authorization: str | None = Header(default=None)):

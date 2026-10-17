@@ -19,6 +19,7 @@ htmlcov/
 !.env.users.example
 !.env.users-mainnet.example
 !.env.revenue.example
+!.env.author-payouts.example
 !.env.server.example
 !.env.ops.example
 *.ldb
