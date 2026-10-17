@@ -384,6 +384,12 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
     def testnet_status(request: Request):
         return request.app.state.testnet.status()
 
+    @app.get("/api/v1/project/activity")
+    def public_project_activity(request: Request):
+        from .execution.public import project_activity
+        try: return project_activity(request.app.state.runtime.store)
+        except Exception: raise HTTPException(503, "Project execution observations are unavailable. No performance is inferred.") from None
+
     @app.get("/api/v1/users/testnet/config")
     def user_testnet_config(request: Request):
         return request.app.state.users.config()

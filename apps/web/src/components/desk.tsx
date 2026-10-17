@@ -7,6 +7,7 @@ import { ArrowDownLeft, ArrowRight, ArrowUpRight, BookOpen, ChevronRight, Circle
 import { Creature } from "./creature";
 import { PriceChart } from "./price-chart";
 import { UserAccount } from "./user-account";
+import { ProjectActivity } from "./project-activity";
 import { TestnetWorkbench } from "./testnet-workbench";
 import { OpsStatus } from "./ops-status";
 import { ResearchWorkbench } from "./research-workbench";
@@ -196,6 +197,7 @@ export function Desk() {
         </>}
 
         {tab === "journal" && <>
+          <ProjectActivity />
           <Journal state={state} onSelect={setSelectedId} />
           {current && <section className="detail-panel"><div className="panel-heading"><h2>Decision details</h2><span className="micro-label">{current.id.slice(0, 8)}</span></div><div className="detail-layout"><Setup episode={current} position={state?.positions.find(p => p.episode_id === current.id)} /><div className="review-details">{Object.entries(current.reviews).map(([role, review]) => review && <div key={role}><h3>{role === "analyst" ? "Clawdius · Analyst" : "Pinch · Risk manager"}</h3><p>{review.summary}</p><ul>{review.evidence.map(item => <li key={item}>{item}</li>)}</ul><small>{review.metadata.provider} / {review.metadata.model} · {review.metadata.input_tokens + review.metadata.output_tokens} tokens</small></div>)}{!Object.keys(current.reviews).length && <p className="empty-note">No reviews recorded yet. The worker will review this pitch when fresh market data is available.</p>}{current.approval_hash && <p className="hash-note">Approval binding <code>{current.approval_hash}</code></p>}</div></div></section>}
         </>}
