@@ -115,6 +115,8 @@ These are code deliverables, not documentation substitutes. Default operation re
 
 ## Financial policy
 
+Pending owner-directed economics revision: [NEXT-ECONOMICS.md](NEXT-ECONOMICS.md). Retire donations, allocate received fees 40% team / 60% bot, and implement author/bot profit sharing for attributable user-strategy trades. Recorded only; implementation deferred at the owner's request. Existing Stage 9 checks do not cover this new policy.
+
 - BTC only; one open position, including outstanding reservations.
 - Up to 2x leverage; isolated account assumptions for the future exchange adapter.
 - Planned loss at the stop including estimated execution costs <= 0.25% of equity.

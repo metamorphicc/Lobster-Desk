@@ -1,5 +1,7 @@
 # Lobster Desk — agreed product features
 
+**Superseded economics:** the owner cancelled donations and selected a 40% team / 60% bot split of received fees, plus 50/50 author/bot profit sharing for user-strategy trades. See [NEXT-ECONOMICS.md](NEXT-ECONOMICS.md). The earlier policy below describes the existing implementation; the revised policy is not implemented yet.
+
 Product baseline v1, recorded 2026-10-17. This is the agreed feature list, not a statement that all financial integrations are live. Implementation work is tracked separately in [ROADMAP.md](ROADMAP.md).
 
 ## Product
