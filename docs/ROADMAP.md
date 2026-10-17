@@ -93,7 +93,7 @@ Current handoff: local preparation includes Stage 8 autonomous paper research an
 These are code deliverables, not documentation substitutes. Default operation remains paper; implementing a writer does not authorize the developer to send funds/orders. Every external integration must distinguish executable code, offline verification and observed external acceptance.
 
 - [x] **9.1 Network-bound execution core.** Explicit mainnet/testnet fixed transports/signing domains, immutable network/account journals and disjoint order IDs. Offline mainnet fixtures reuse partial-fill protection and restart recovery. No real orders; see `EXECUTION-NETWORKS.md`.
-- [ ] **9.2 Autonomous project execution runner.** Persistent signal-to-order bridge, single runner ownership, live capital/cash-flow controls, time exits and restart reconciliation.
+- [x] **9.2 Autonomous project execution runner.** Separate opt-in owner process bridges reviewed research signals to network-bound dispatch, with OS lease, exact observed cash-flow/loss references, explicit budgets, strategy time exits and restart recovery. Five focused runner tests use an in-memory exchange; no financial command run. Web paper state remains separate; see `PROJECT-EXECUTION.md`.
 - [ ] **9.3 User financial signing and runner.** Explicit permission/intent signing, verified submission endpoints, per-user execution ownership and full journal recovery.
 - [ ] **9.4 Forward paper funding.** Historical hourly settlements applied exactly once, including restart/closed positions and missing-data controls.
 - [ ] **9.5 Received revenue reconciliation.** Observed builder proceeds and trading settlements, idempotent ingestion and separation from estimates/paper PnL.

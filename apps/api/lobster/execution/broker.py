@@ -71,13 +71,15 @@ class TestnetBroker:
             await self.entry_guard(account)
         return self.ledger.observe_capital(account, self.policy)
 
-    async def stage(self, setup: ReviewedSetup) -> dict:
+    async def stage(self, setup: ReviewedSetup, *, audit_binding: dict | None = None) -> dict:
         rules, market = await self.gateway.market()
         account = await self.gateway.account()
         if rules != self.signer.rules:
             raise ValueError("BTC metadata changed; recreate the signer with current rules.")
         capital = await self._entry_capital(account)
         order = size_entry(setup, market, account, capital, rules, self.policy, utcnow(), self.signer.max_entry_notional)
+        if audit_binding is not None:
+            return self.ledger.stage(setup, order.model_dump(mode="json"), rules.model_dump(mode="json"), audit_binding=audit_binding)
         return self.ledger.stage(setup, order.model_dump(mode="json"), rules.model_dump(mode="json"))
 
     async def _send(self, trade_id: str, key: str, kind: str, request: dict) -> dict:
@@ -206,9 +208,9 @@ class TestnetBroker:
             and item.get("isTrigger") is True and item.get("side") == ("B" if order.side == "buy" else "A")
             and D(item["sz"]) == order.quantity and D(item["triggerPx"]) == order.trigger_price for item in observed)
 
-    async def _emergency_exit(self, trade: dict, quantity: D):
-        self.ledger.halt("Position protection was not confirmed. New entries are blocked.")
-        self.ledger.update_trade(trade["id"], "emergency", "Protection failed; attempting an owned reduce-only exit.")
+    async def _emergency_exit(self, trade: dict, quantity: D, *, reason: str | None = None):
+        if reason is None: self.ledger.halt("Position protection was not confirmed. New entries are blocked.")
+        self.ledger.update_trade(trade["id"], "closing" if reason else "emergency", reason or "Protection failed; attempting an owned reduce-only exit.")
         if not self.armed:
             return
         commands = [c for c in self.ledger.commands(trade["id"]) if c["kind"] == "close"]
@@ -267,6 +269,12 @@ class TestnetBroker:
             self.ledger.halt("Observed BTC exposure cannot be attributed to the owned entry.")
             self.ledger.update_trade(trade_id, "needs_review", "Unexpected account exposure. No unidentified position will be modified.")
             return self.ledger.trade(trade_id)
+        limit = (trade.get("audit_binding") or {}).get("max_holding_seconds")
+        entry_times = [f["time"] for f in fills if f["oid"] == entry_oid]
+        started = min(entry_times) if entry_times else int(datetime.fromisoformat(trade["created_at"]).timestamp() * 1000)
+        if trade.get("requested_close_reason") or (type(limit) is int and 3600 <= limit <= 172800 and now_ms() - started >= limit * 1000):
+            await self._emergency_exit(trade, quantity, reason=trade.get("requested_close_reason") or "Strategy holding-time limit reached; closing owned exposure.")
+            return self.ledger.trade(trade_id)
         capital = self.ledger.observe_capital(account, self.policy)
         if capital.paused or account.btc_is_cross is not False or account.btc_leverage is None or account.btc_leverage > 2:
             await self._emergency_exit(trade, quantity)
@@ -297,4 +305,9 @@ class TestnetBroker:
             filled_quantity=str(entered or acknowledged), protected_quantity=str(quantity),
             target_confirmed=self._confirmed(target, observed))
         return self.ledger.trade(trade_id)
+
+    async def close_owned(self, trade_id: str, reason: str = "Operator requested owned reduce-only exit."):
+        async with self.lock:
+            self.ledger.update_trade(trade_id, self.ledger.trade(trade_id)["status"], "Owned exit requested.", requested_close_reason=reason)
+            return await self._reconcile(trade_id)
 

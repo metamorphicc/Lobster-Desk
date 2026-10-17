@@ -5,7 +5,7 @@ from decimal import Decimal as D
 import httpx
 
 from ..domain import utcnow
-from ..execution.gateway import HyperliquidTestnet
+from ..execution.gateway import HyperliquidTestnet, HyperliquidMainnet
 from .contracts import UserTestnetSettings, fee_percent
 
 
@@ -20,12 +20,15 @@ def amount(value) -> str:
 
 
 class UserTestnetService:
-    def __init__(self, settings: UserTestnetSettings, client: httpx.AsyncClient):
+    def __init__(self, settings: UserTestnetSettings, client: httpx.AsyncClient, *, network: str = "testnet"):
+        if network not in {"testnet", "mainnet"}: raise ValueError("Unsupported account network.")
+        self.network = network
+        self.gateway_type = HyperliquidTestnet if network == "testnet" else HyperliquidMainnet
         self.settings = settings
         self.client = client
 
     def config(self) -> dict:
-        return {"network": "testnet", "account_access": "public_read_only", "authenticated": False,
+        return {"network": self.network, "account_access": "public_read_only", "authenticated": False,
             "order_submission_enabled": False, "fee_collection_enabled": False,
             "builder_address": self.settings.builder_address,
             "builder_fee_tenths_bps": self.settings.builder_fee_tenths_bps,
@@ -33,7 +36,7 @@ class UserTestnetService:
 
     async def inspect(self, address: str) -> dict:
         observed = utcnow()
-        gateway = HyperliquidTestnet(self.client, address)
+        gateway = self.gateway_type(self.client, address)
         state = await gateway.info("clearinghouseState", user=address)
         orders = await gateway.open_orders()
         fees = await gateway.info("userFees", user=address)
@@ -70,7 +73,7 @@ class UserTestnetService:
         from .capital import normalize_receipt
         if not 0 <= start <= end or end - start > 7 * 86400000:
             raise ValueError("The accounting window exceeds its seven-day recovery bound.")
-        gateway = HyperliquidTestnet(self.client, address)
+        gateway = self.gateway_type(self.client, address)
         normalized = []
         for stream, kind in (("ledger", "userNonFundingLedgerUpdates"), ("funding", "userFunding")):
             cursor, seen = start, set()

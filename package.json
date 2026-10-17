@@ -7,6 +7,7 @@
     "setup:agents": "node scripts/agents.mjs --setup",
     "agents:check": "node scripts/agents.mjs --check",
     "agents": "node scripts/agents.mjs",
+    "execution": "node scripts/execution.mjs",
     "dev": "node scripts/dev.mjs",
     "dev:web": "npm run dev --workspace @lobster/web",
     "build": "npm run build --workspace @lobster/web",

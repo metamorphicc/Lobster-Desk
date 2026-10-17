@@ -69,20 +69,23 @@ def normalize_receipt(address: str, stream: str, row: dict, start: int, end: int
 
 
 class UserCapital:
-    def __init__(self, store):
+    def __init__(self, store, *, network: str = "testnet"):
+        if network not in {"testnet", "mainnet"}: raise ValueError("Unsupported accounting network.")
+        self.network = network
         self.store = store
         Base.metadata.create_all(store.engine)
 
     def get(self, address: str) -> dict | None:
         with self.store.transaction() as session:
             row = session.get(Reference, address)
+            if row and row.payload["network"] != self.network: raise ValueError("Capital reference network differs.")
             return self.view(row.payload) if row else None
 
     @staticmethod
     def view(state: dict) -> dict:
         age = (utcnow() - datetime.fromisoformat(state["observed_at"])).total_seconds()
         return state | {"stale": not -2 <= age <= 15, "entry_permission": False,
-            "history_before_baseline": "unknown", "scope": "first-perps-dex-testnet-observations",
+            "history_before_baseline": "unknown", "scope": f"first-perps-dex-{state['network']}-observations",
             "limits": "References start at the first observed flat positive account, not reconstructed midnight/all-time history. Funding is already included in equity. Unsupported/late/ambiguous history latches review. No entry permission is granted."}
 
     def halt(self, address: str, reason: str):
@@ -93,7 +96,7 @@ class UserCapital:
                 session.add(Observation(id=uuid4().hex, address=address, payload={"kind": "halt", "at": utcnow().isoformat(), "reason": reason}))
 
     def observe(self, address: str, account: dict, start: int, receipts: list[dict], *, complete: bool) -> dict:
-        require_fresh(account, address)
+        require_fresh(account, address, network=self.network)
         end = account.get("exchange_time_ms")
         if type(end) is not int or not -2000 <= int(utcnow().timestamp() * 1000) - end <= 15000 or type(start) is not int:
             raise ValueError("An exact fresh exchange timestamp is required for capital accounting.")
@@ -108,7 +111,7 @@ class UserCapital:
                 if equity <= 0 or account["positions"] or account["open_orders"] or receipts or start != end:
                     raise ValueError("Start references with a flat positive account and a point observation.")
                 day = datetime.fromtimestamp(end / 1000, timezone.utc).date().isoformat()
-                state = {"address": address, "network": "testnet", "initial_equity": str(equity), "equity": str(equity),
+                state = {"address": address, "network": self.network, "initial_equity": str(equity), "equity": str(equity),
                     "policy_hash": fingerprint(self.store.policy.model_dump(mode="json")),
                     "baseline_ms": end, "cursor_ms": end, "observed_at": account["observed_at"], "day": day,
                     "day_reference_ms": end, "day_reference": str(equity), "high_water": str(equity),
@@ -118,6 +121,7 @@ class UserCapital:
                 session.add(Observation(id=uuid4().hex, address=address, payload={"kind": "baseline", **state}))
                 return self.view(state)
             state = row.payload
+            if state["network"] != self.network: raise ValueError("Capital reference network differs.")
             if state["policy_hash"] != fingerprint(self.store.policy.model_dump(mode="json")):
                 raise ValueError("User capital policy changed; owner review is required.")
             if end < state["cursor_ms"]:
