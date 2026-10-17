@@ -23,7 +23,7 @@ from .pipeline import Pipeline
 from .store import Store
 from .execution.settings import TestnetSettings
 from .execution.workbench import TestnetWorkbench
-from .users.contracts import Address, UserTestnetSettings
+from .users.contracts import Address, UserTestnetSettings, UserMainnetSettings
 from .users.service import UserTestnetService
 from .users.fees import ConsentInput, FeeQuoteInput, consent_plan, fee_quote
 from .users.auth import AuthError, ChallengeInput, VerifyInput, UserAuth
@@ -153,10 +153,13 @@ class StageTestnetInput(Contract):
 
 
 def create_app(settings: Settings | None = None, testnet_settings: TestnetSettings | None = None,
-               user_settings: UserTestnetSettings | None = None) -> FastAPI:
+               user_settings: UserTestnetSettings | None = None, mainnet_user_settings: UserMainnetSettings | None = None) -> FastAPI:
     config = settings or Settings()
     testnet_config = testnet_settings or TestnetSettings()
     user_config = user_settings or UserTestnetSettings()
+    mainnet_user_config = mainnet_user_settings or UserMainnetSettings()
+    if Path(user_config.execution_root).resolve() == Path(mainnet_user_config.execution_root).resolve():
+        raise ValueError("Mainnet and testnet user execution roots must be distinct.")
 
     def require_operator(authorization: str | None):
         if not config.operator_token:
@@ -181,6 +184,11 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
             app.state.user_capital = UserCapital(runtime.store)
             app.state.user_intents = UserIntents(runtime.store)
             app.state.user_financial = UserFinancial(runtime.store, app.state.user_intents, app.state.user_plans)
+            app.state.mainnet_auth = UserAuth(runtime.store, origin=config.web_origin, network="mainnet")
+            app.state.mainnet_plans = UserPlans(runtime.store, network="mainnet")
+            app.state.mainnet_capital = UserCapital(runtime.store, network="mainnet", namespaced=True)
+            app.state.mainnet_intents = UserIntents(runtime.store, network="mainnet")
+            app.state.mainnet_financial = UserFinancial(runtime.store, app.state.mainnet_intents, app.state.mainnet_plans)
             async with httpx.AsyncClient(timeout=10) as client:
                 app.state.testnet = TestnetWorkbench(testnet_config, client, config.database_url)
                 if app.state.testnet.ledger:
@@ -188,6 +196,7 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
                     from .ops.catalog import register_journal
                     register_journal(runtime.store, app.state.testnet.ledger, "testnet")
                 app.state.users = UserTestnetService(user_config, client)
+                app.state.mainnet_users = UserTestnetService(mainnet_user_config, client, network="mainnet")
                 feed = DemoFeed() if config.market_source == "demo" else HyperliquidFeed(client, testnet=config.market_source == "hyperliquid-testnet")
                 reviewer = DemoReviewer() if config.agent_provider == "demo" else AnthropicReviewer(client, config)
                 tasks = []
@@ -578,5 +587,7 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
             raise HTTPException(409, str(error)) from None
         return {"ok": True}
 
+    from .users.mainnet_http import install
+    install(app, mainnet_user_config, require_operator)
     return app
 

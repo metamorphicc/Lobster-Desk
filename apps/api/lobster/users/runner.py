@@ -1,6 +1,7 @@
 """Opt-in user testnet writer. The legacy UserExecution remains locked."""
 from decimal import Decimal as D
 from pathlib import Path
+from typing import Literal
 
 from eth_account import Account
 from pydantic import SecretStr
@@ -18,6 +19,7 @@ TERMINAL = {"closed", "rejected", "expired", "cancelled"}
 class UserRunnerSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env.users", env_prefix="USER_EXECUTION_", extra="ignore", hide_input_in_errors=True)
     enabled: bool = False
+    network: Literal["testnet", "mainnet"] = "testnet"
     keys_json: SecretStr | None = None
 
     def keys(self):
@@ -41,6 +43,7 @@ class FinancialUserExecution(UserExecution):
         if not armed: raise ValueError("The financial user writer must be explicitly armed.")
         original = kwargs["gateway"]
         self.financial = financial
+        self.network = financial.network
         super().__init__(intents=FinancialIntentAdapter(financial), **kwargs)
         # This is a separate explicit executable class. The original rehearsal
         # gateway cannot be unlocked by changing its armed flag.
@@ -53,10 +56,14 @@ class FinancialUserExecution(UserExecution):
 
     def status(self):
         return {"intent_id": self.intent["id"], "plan_id": self.plan["id"], "address": self.owner,
-            "ledger": self.ledger.snapshot(), "exchange_submission_enabled": True, "network": "testnet"}
+            "ledger": self.ledger.snapshot(), "exchange_submission_enabled": True, "network": self.network}
 
 
 class RecoverySigner(TestnetSigner):
+    def __init__(self, *args, network="testnet", **kwargs):
+        if network not in {"testnet", "mainnet"}: raise ValueError("Unsupported recovery network.")
+        self.network = network
+        super().__init__(*args, **kwargs)
     def order(self, order, *args, **kwargs):
         if order.kind == "entry": raise ValueError("Recovery cannot create an entry.")
         return super().order(order, *args, **kwargs, include_builder=False)
@@ -77,16 +84,19 @@ class UserFinancialRunner:
     def __init__(self, *, store, financial, capital, service, root, enabled=False, armed=False):
         self.store, self.financial, self.capital, self.service = store, financial, capital, service
         self.root, self.enabled, self.armed = Path(root).resolve(), enabled, armed
+        self.network = financial.network
+        if capital.network != self.network or getattr(service, "network", "testnet") != self.network: raise ValueError("User runner network mismatch.")
 
     async def tick(self, owner, key, gateway):
         if not self.armed: raise ValueError("User runner is not armed.")
+        if getattr(gateway, "network", "testnet") != self.network: raise ValueError("User gateway network mismatch.")
         profile = self.financial.intents.profile(owner)
         if not profile or Account.from_key(key.get_secret_value()).address.lower() != profile["agent"]:
             raise ValueError("Runner key differs from the user's immutable dedicated API-wallet profile.")
         rules, _ = await gateway.market()
         path = self.root / owner / (profile["agent"] + ".sqlite3")
         if path == Path(self.store.engine.url.database).resolve(): raise ValueError("User financial journal must be separate.")
-        ledger = RecoveryLedger("sqlite:///" + path.as_posix(), owner, profile["agent"])
+        ledger = RecoveryLedger("sqlite:///" + path.as_posix(), owner, profile["agent"], network=self.network)
         ledger.bind(self.capital, owner)
         try:
             from ..ops.catalog import register_journal
@@ -99,7 +109,7 @@ class UserFinancialRunner:
                 except Exception:
                     try: self.capital.halt(owner, "Financial user accounting unavailable; entries blocked while owned risk is reconciled.")
                     except Exception: pass
-                signer = RecoverySigner(key, owner, rules, D("50"))
+                signer = RecoverySigner(key, owner, rules, D("50"), network=self.network)
                 broker = TestnetBroker(ledger, gateway, signer, armed=True, policy=self.store.policy)
                 result = await broker.reconcile(active["id"])
                 await self.permissions(owner, gateway, revoke_only=True)
@@ -130,7 +140,7 @@ class UserFinancialRunner:
     async def refresh_capital(self, owner):
         from .fees import require_fresh
         state = await self.service.inspect(owner)
-        require_fresh(state, owner)
+        require_fresh(state, owner, network=self.network)
         ref = self.capital.get(owner)
         end = state.get("exchange_time_ms")
         if not ref or type(end) is not int: raise ValueError("Existing capital history and exact timestamp required.")

@@ -28,3 +28,8 @@ class UserTestnetSettings(BaseSettings):
     @field_validator("builder_address", mode="before")
     @classmethod
     def blank_builder(cls, value): return None if value == "" else value
+
+
+class UserMainnetSettings(UserTestnetSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_prefix="USER_MAINNET_", extra="ignore", hide_input_in_errors=True)
+    execution_root: str = "data/users-mainnet"

@@ -22,7 +22,9 @@ class LockedUserGateway:
 
 
 class PlanSigner(TestnetSigner):
-    def __init__(self, key, owner, rules, plan, profile, deadline_ms):
+    def __init__(self, key, owner, rules, plan, profile, deadline_ms, *, network="testnet"):
+        if network not in {"testnet", "mainnet"}: raise ValueError("Unsupported user signing network.")
+        self.network = network
         super().__init__(key, owner, rules, D("50"), builder=profile["builder"], builder_fee_tenths_bps=profile["fee_tenths_bps"])
         self.plan, self.deadline_ms = plan, deadline_ms
 
@@ -68,6 +70,7 @@ class UserLedger(ExecutionLedger):
 
 class UserExecution:
     """No HTTP registration, financial RPC or live writer. One canonical DB per owner/agent."""
+    network = "testnet"
     def __init__(self, *, store, intents, plans, capital, service, owner, intent_id, gateway, key, root: Path, rules):
         profile = intents.profile(owner)
         intent = intents.get(owner, intent_id)
@@ -75,15 +78,15 @@ class UserExecution:
             raise ValueError("An owner-bound verified offline intent/profile is required.")
         plan = plans.get(owner, intent["plan_id"])
         immutable = {k: v for k, v in (plan or {}).items() if k not in {"plan_hash", "expired", "observation"}}
-        if not plan or fingerprint(immutable) != intent["plan_hash"] or plan["address"] != owner:
+        if not plan or fingerprint(immutable) != intent["plan_hash"] or plan["address"] != owner or plan["network"] != self.network:
             raise ValueError("The saved private user plan changed.")
         episode = store.get_episode(plan["episode_id"])
-        setup = ReviewedSetup.from_episode(episode, store.policy)
+        setup = ReviewedSetup.from_episode(episode, store.policy, network=self.network)
         if setup.approval_hash != plan["approval_hash"] or setup.policy_version != plan["policy_version"]:
             raise ValueError("The current review does not match the user plan.")
-        if gateway.account_address.lower() != owner or service.settings.builder_address != profile["builder"] or service.settings.builder_fee_tenths_bps != profile["fee_tenths_bps"]:
+        if getattr(gateway, "network", "testnet") != self.network or getattr(service, "network", "testnet") != self.network or gateway.account_address.lower() != owner or service.settings.builder_address != profile["builder"] or service.settings.builder_fee_tenths_bps != profile["fee_tenths_bps"]:
             raise ValueError("User gateway/builder identity differs from the consent profile.")
-        signer = PlanSigner(key, owner, rules, plan, profile, intent["expires_ms"])
+        signer = PlanSigner(key, owner, rules, plan, profile, intent["expires_ms"], network=self.network)
         if plan["entry"]["asset_id"] != rules.asset_id:
             raise ValueError("The preview's BTC market identity changed.")
         if signer.address.lower() != profile["agent"]:
@@ -94,7 +97,7 @@ class UserExecution:
         path = root.resolve() / owner / (profile["agent"] + ".sqlite3")
         if path.resolve() == Path(store.engine.url.database).resolve():
             raise ValueError("The user execution journal must be separate from the application database.")
-        self.ledger = UserLedger("sqlite:///" + path.as_posix(), owner, profile["agent"])
+        self.ledger = UserLedger("sqlite:///" + path.as_posix(), owner, profile["agent"], network=self.network)
         self.ledger.bind(capital, owner)
         self.ledger.audit_binding = {"user_intent_id": intent_id, "user_plan_id": plan["id"],
             "user_plan_hash": plan["plan_hash"], "user_profile_hash": intent["profile_hash"], "user_proof_hash": intent["proof_hash"]}
@@ -126,7 +129,7 @@ class UserExecution:
         if not await gateway.agent_approved(self.profile["agent"]):
             raise ValueError("The user's dedicated API wallet is no longer approved.")
         state = await self.service.inspect(self.owner)
-        require_fresh(state, self.owner)
+        require_fresh(state, self.owner, network=self.network)
         if (state["builder_address"] != self.profile["builder"] or state["builder_fee_tenths_bps"] != self.profile["fee_tenths_bps"]
                 or state["builder_approval_status"] != "approved"
                 or D(amount(state["reported_taker_rate"])) > D(self.plan["fees"]["reported_taker_rate"])):

@@ -26,20 +26,20 @@ class UserPlan(Base):
     __tablename__ = "user_order_plans"
     __table_args__ = (UniqueConstraint("address", "request_id"),)
     id: Mapped[str] = mapped_column(String(32), primary_key=True)
-    address: Mapped[str] = mapped_column(String(42), index=True)
+    address: Mapped[str] = mapped_column(String(64), index=True)
     request_id: Mapped[str] = mapped_column(String(64))
     payload: Mapped[dict] = mapped_column(JSON)
 
 
 def illustrate(episode: dict, address: str, account: dict, market: Snapshot, rules: BtcRules, policy: RiskPolicy,
-               capital_reference: dict | None = None) -> dict:
+               capital_reference: dict | None = None, *, network="testnet") -> dict:
     now = utcnow()
-    setup = ReviewedSetup.from_episode(episode, policy)
-    require_fresh(account, address)
+    setup = ReviewedSetup.from_episode(episode, policy, network=network)
+    require_fresh(account, address, network=network)
     if capital_reference and (capital_reference["address"] != address or capital_reference["halt_reason"]):
         raise ValueError("User capital observations have a latched halt or identity mismatch. Owner review is required.")
-    if market.source != "hyperliquid-testnet" or not -2 <= (now - market.timestamp).total_seconds() <= 15:
-        raise ValueError("A fresh testnet market observation is required.")
+    if market.source != ("hyperliquid-testnet" if network == "testnet" else "hyperliquid") or not -2 <= (now - market.timestamp).total_seconds() <= 15:
+        raise ValueError("A fresh matching-network market observation is required.")
     if setup.expires_at <= now:
         raise ValueError("The reviewed setup expired. Ask the tank to review a new pitch.")
     if account["positions"] or account["open_orders"]:
@@ -80,7 +80,7 @@ def illustrate(episode: dict, address: str, account: dict, market: Snapshot, rul
     if quantity <= 0 or notional < policy.min_notional:
         raise ValueError("The risk-sized user order falls below the $10 minimum notional.")
     expires = min(now + timedelta(seconds=30), setup.expires_at)
-    plan = {"schema": "lobster-user-order-preview-v1", "id": uuid4().hex, "network": "testnet", "address": address,
+    plan = {"schema": "lobster-user-order-preview-v1", "id": uuid4().hex, "network": network, "address": address,
         "episode_id": setup.episode_id, "approval_hash": setup.approval_hash, "policy_version": policy.version,
         "created_at": now.isoformat(), "expires_at": expires.isoformat(), "account_observed_at": account["observed_at"],
         "market_observed_at": market.timestamp.isoformat(), "market_price": str(market.price),
@@ -111,9 +111,13 @@ def illustrate(episode: dict, address: str, account: dict, market: Snapshot, rul
 
 
 class UserPlans:
-    def __init__(self, store):
+    def __init__(self, store, *, network="testnet"):
+        if network not in {"testnet", "mainnet"}: raise ValueError("Unsupported user-plan network.")
+        self.network = network
         self.store = store
         Base.metadata.create_all(store.engine)
+
+    def key(self, owner): return owner if self.network == "testnet" else "mainnet:"+owner
 
     @staticmethod
     def view(plan: dict) -> dict:
@@ -122,26 +126,26 @@ class UserPlans:
 
     def by_request(self, address: str, key: str, episode_id: str) -> dict | None:
         with self.store.transaction() as session:
-            row = session.scalar(select(UserPlan).where(UserPlan.address == address, UserPlan.request_id == key))
+            row = session.scalar(select(UserPlan).where(UserPlan.address == self.key(address), UserPlan.request_id == key))
             if row and row.payload["episode_id"] != episode_id:
                 raise ValueError("This request ID belongs to another user preview input.")
             return self.view(row.payload) if row else None
 
     def save(self, address: str, key: str, plan: dict) -> dict:
         with self.store.transaction() as session:
-            row = session.scalar(select(UserPlan).where(UserPlan.address == address, UserPlan.request_id == key))
+            row = session.scalar(select(UserPlan).where(UserPlan.address == self.key(address), UserPlan.request_id == key))
             if row:
                 if row.payload["episode_id"] != plan["episode_id"]:
                     raise ValueError("This request ID belongs to another user preview input.")
                 return self.view(row.payload)
-            if (plan["address"] != address or plan["executable"] or plan["submitted"] or plan["signed"]
+            if (plan["address"] != address or plan["network"] != self.network or plan["executable"] or plan["submitted"] or plan["signed"]
                     or plan["nonce_reserved"] or plan["order_submission_enabled"] or plan["fee_collection_enabled"]
                     or plan["plan_hash"] != fingerprint({key: value for key, value in plan.items() if key != "plan_hash"})):
                 raise ValueError("Only unsigned user-bound illustrations can be stored.")
-            session.add(UserPlan(id=plan["id"], address=address, request_id=key, payload=plan))
+            session.add(UserPlan(id=plan["id"], address=self.key(address), request_id=key, payload=plan))
             return self.view(plan)
 
     def get(self, address: str, plan_id: str) -> dict | None:
         with self.store.transaction() as session:
             row = session.get(UserPlan, plan_id)
-            return self.view(row.payload) if row and row.address == address else None
+            return self.view(row.payload) if row and row.address == self.key(address) else None

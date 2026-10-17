@@ -4,12 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { LoaderCircle, RefreshCw } from "lucide-react";
 import { money } from "@/lib/types";
 
-type Reference = { address: string; equity: string; cashflows: string; funding_observed: string; initial_equity: string;
+type Reference = { network: "testnet" | "mainnet"; address: string; equity: string; cashflows: string; funding_observed: string; initial_equity: string;
   net_equity_change_excluding_cashflows: string; observed_at: string; baseline_ms: number; day_reference_ms: number;
   halt_reason: string | null; stale: boolean; entry_permission: false; receipt_count: number; limits: string };
 
-export function UserCapital({ address, token, now, onSessionInvalid }: {
-  address: string; token: string; now: number; onSessionInvalid: () => void;
+export function UserCapital({ address, token, now, onSessionInvalid, network = "testnet" }: {
+  address: string; token: string; now: number; onSessionInvalid: () => void; network?: "testnet" | "mainnet";
 }) {
   const [data, setData] = useState<Reference | null>(null);
   const [busy, setBusy] = useState(false);
@@ -23,12 +23,12 @@ export function UserCapital({ address, token, now, onSessionInvalid }: {
     controller.current?.abort(); const current = new AbortController(); controller.current = current;
     setBusy(true); setError("");
     try {
-      const response = await fetch("/api/v1/users/testnet/capital/refresh", { method: "POST", cache: "no-store",
+      const response = await fetch(`/api/v1/users/${network}/capital/refresh`, { method: "POST", cache: "no-store",
         headers: { Authorization: "Bearer " + token }, signal: AbortSignal.any([current.signal, AbortSignal.timeout(30000)]) });
       if (response.status === 401) { onSessionInvalid(); return; }
       const value = await response.json();
       if (!response.ok) throw new Error(typeof value.detail === "string" ? value.detail : "Capital observation is unavailable.");
-      if (value.entry_permission !== false || value.reference?.address !== address || value.reference?.entry_permission !== false) throw new Error("Capital observations did not match this account.");
+      if (value.entry_permission !== false || value.reference?.network !== network || value.reference?.address !== address || value.reference?.entry_permission !== false) throw new Error("Capital observations did not match this account.");
       if (!current.signal.aborted && revision === generation.current) setData(value.reference);
     } catch (failure) {
       if (!current.signal.aborted && revision === generation.current) { setData(null); setError(failure instanceof Error ? failure.message : "Capital observation failed."); }

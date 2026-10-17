@@ -1,5 +1,5 @@
 /** Unsigned review contracts only. This module never calls a wallet/provider. */
-export type ExecutionProfile = { address: string; agent: string; builder: string; fee_tenths_bps: number; network: "testnet" };
+export type ExecutionProfile = { address: string; agent: string; builder: string; fee_tenths_bps: number; network: "testnet" | "mainnet" };
 export type IntentSummary = { id: string; plan_id: string; plan_hash: string; status: "unsigned" | "verified_local" | "claimed_offline"; expires_ms: number; expired: boolean };
 export type ExecutionContext = { schema: "lobster-user-execution-context-v1"; address: string; network: "testnet";
   profile: ExecutionProfile | null; intents: IntentSummary[]; wallet_signing_enabled: false; exchange_submission_enabled: false; signatures_accepted: false };
@@ -17,16 +17,16 @@ function address(value: unknown) { check(typeof value === "string" && /^0x[0-9a-
 function id(value: unknown) { check(typeof value === "string" && /^[a-f0-9]{32}$/.test(value)); }
 function hash(value: unknown) { check(typeof value === "string" && /^[a-f0-9]{64}$/.test(value)); }
 function integer(value: unknown): value is number { return typeof value === "number" && Number.isSafeInteger(value) && value >= 0; }
-function profile(value: unknown, owner: string): ExecutionProfile {
-  const p = object(value); check(address(p.address) === owner && p.network === "testnet");
+export function validateExecutionProfile(value: unknown, owner: string, network: "testnet" | "mainnet" = "testnet"): ExecutionProfile {
+  const p = object(value); check(address(p.address) === owner && p.network === network);
   check(new Set([owner, address(p.agent), address(p.builder)]).size === 3 && integer(p.fee_tenths_bps) && p.fee_tenths_bps <= 100);
   return value as ExecutionProfile;
 }
-export function typed(value: unknown, name: string, primary: string, fields: { name: string; type: string }[]): TypedData {
+export function typed(value: unknown, name: string, primary: string, fields: { name: string; type: string }[], network: "testnet" | "mainnet" = "testnet"): TypedData {
   const data = object(value), domain = object(data.domain), types = object(data.types); object(data.message);
   keys(data, ["domain", "types", "primaryType", "message"]); keys(domain, ["name", "version", "chainId", "verifyingContract"]);
   keys(types, [primary, "EIP712Domain"]);
-  check(domain.name === name && domain.version === "1" && domain.chainId === 421614 && domain.verifyingContract === zero && data.primaryType === primary);
+  check(domain.name === name && domain.version === "1" && domain.chainId === (network === "testnet" ? 421614 : 42161) && domain.verifyingContract === zero && data.primaryType === primary);
   check(JSON.stringify(types.EIP712Domain) === JSON.stringify(domainFields) && JSON.stringify(types[primary]) === JSON.stringify(fields));
   return value as TypedData;
 }
@@ -38,12 +38,12 @@ function summary(value: unknown): IntentSummary {
 export function validateExecutionContext(value: unknown, owner: string): ExecutionContext {
   const data = object(value); check(data.schema === "lobster-user-execution-context-v1" && data.address === owner && data.network === "testnet");
   check(data.wallet_signing_enabled === false && data.exchange_submission_enabled === false && data.signatures_accepted === false);
-  if (data.profile !== null) profile(data.profile, owner);
+  if (data.profile !== null) validateExecutionProfile(data.profile, owner);
   check(Array.isArray(data.intents) && data.intents.length <= 10); data.intents.forEach(summary);
   return value as ExecutionContext;
 }
 export function validateLocalIntent(value: unknown, p: ExecutionProfile, plan: { id: string; plan_hash: string; episode_id: string; expires_at: string }, now = Date.now()): LocalIntent {
-  const data = object(value); summary(value); profile(p, p.address); hash(data.profile_hash);
+  const data = object(value); summary(value); validateExecutionProfile(p, p.address); hash(data.profile_hash);
   check(data.address === p.address && data.plan_id === plan.id && data.plan_hash === plan.plan_hash && data.episode_id === plan.episode_id && data.status === "unsigned");
   check(data.proof === null && data.scope === "local-testnet-trade-intent" && data.wallet_signing_enabled === false && data.exchange_submission_enabled === false && data.expired === false);
   check(integer(data.nonce) && integer(data.expires_ms) && data.nonce <= now + 1000 && data.nonce >= now - 30000
@@ -57,7 +57,7 @@ export function validateLocalIntent(value: unknown, p: ExecutionProfile, plan: {
   return value as LocalIntent;
 }
 export function validatePermissionPlans(value: unknown, p: ExecutionProfile): PermissionPlans {
-  const data = object(value); profile(p, p.address);
+  const data = object(value); validateExecutionProfile(p, p.address);
   check(data.address === p.address && data.network === "testnet" && data.wallet_signing_enabled === false && data.submitted === false);
   let previous = 0;
   for (const kind of ["agent", "builder"] as const) {

@@ -19,21 +19,21 @@ class Base(DeclarativeBase):
 
 class Reference(Base):
     __tablename__ = "user_capital_references"
-    address: Mapped[str] = mapped_column(String(42), primary_key=True)
+    address: Mapped[str] = mapped_column(String(64), primary_key=True)
     payload: Mapped[dict] = mapped_column(JSON)
 
 
 class Receipt(Base):
     __tablename__ = "user_capital_receipts"
-    id: Mapped[str] = mapped_column(String(64), primary_key=True)
-    address: Mapped[str] = mapped_column(String(42), index=True)
+    id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    address: Mapped[str] = mapped_column(String(64), index=True)
     payload: Mapped[dict] = mapped_column(JSON)
 
 
 class Observation(Base):
     __tablename__ = "user_capital_observations"
     id: Mapped[str] = mapped_column(String(32), primary_key=True)
-    address: Mapped[str] = mapped_column(String(42), index=True)
+    address: Mapped[str] = mapped_column(String(64), index=True)
     payload: Mapped[dict] = mapped_column(JSON)
 
 
@@ -69,15 +69,18 @@ def normalize_receipt(address: str, stream: str, row: dict, start: int, end: int
 
 
 class UserCapital:
-    def __init__(self, store, *, network: str = "testnet"):
+    def __init__(self, store, *, network: str = "testnet", namespaced: bool = False):
         if network not in {"testnet", "mainnet"}: raise ValueError("Unsupported accounting network.")
         self.network = network
+        self.namespaced = namespaced
         self.store = store
         Base.metadata.create_all(store.engine)
 
+    def key(self, value): return self.network + ":" + value if self.namespaced else value
+
     def get(self, address: str) -> dict | None:
         with self.store.transaction() as session:
-            row = session.get(Reference, address)
+            row = session.get(Reference, self.key(address))
             if row and row.payload["network"] != self.network: raise ValueError("Capital reference network differs.")
             return self.view(row.payload) if row else None
 
@@ -90,10 +93,10 @@ class UserCapital:
 
     def halt(self, address: str, reason: str):
         with self.store.transaction() as session:
-            row = session.get(Reference, address)
+            row = session.get(Reference, self.key(address))
             if row and not row.payload["halt_reason"]:
                 row.payload = row.payload | {"halt_reason": reason}
-                session.add(Observation(id=uuid4().hex, address=address, payload={"kind": "halt", "at": utcnow().isoformat(), "reason": reason}))
+                session.add(Observation(id=uuid4().hex, address=self.key(address), payload={"kind": "halt", "at": utcnow().isoformat(), "reason": reason}))
 
     def observe(self, address: str, account: dict, start: int, receipts: list[dict], *, complete: bool) -> dict:
         require_fresh(account, address, network=self.network)
@@ -106,7 +109,7 @@ class UserCapital:
         if equity < 0:
             raise ValueError("Invalid user equity observation.")
         with self.store.transaction() as session:
-            row = session.get(Reference, address)
+            row = session.get(Reference, self.key(address))
             if not row:
                 if equity <= 0 or account["positions"] or account["open_orders"] or receipts or start != end:
                     raise ValueError("Start references with a flat positive account and a point observation.")
@@ -117,8 +120,8 @@ class UserCapital:
                     "day_reference_ms": end, "day_reference": str(equity), "high_water": str(equity),
                     "cashflows": "0", "funding_observed": "0", "performance_balance": str(equity),
                     "net_equity_change_excluding_cashflows": "0", "halt_reason": None, "receipt_count": 0}
-                session.add(Reference(address=address, payload=state))
-                session.add(Observation(id=uuid4().hex, address=address, payload={"kind": "baseline", **state}))
+                session.add(Reference(address=self.key(address), payload=state))
+                session.add(Observation(id=uuid4().hex, address=self.key(address), payload={"kind": "baseline", **state}))
                 return self.view(state)
             state = row.payload
             if state["network"] != self.network: raise ValueError("Capital reference network differs.")
@@ -134,7 +137,7 @@ class UserCapital:
             for receipt in receipts:
                 if receipt["address"] != address or not start <= receipt["time"] <= end:
                     raise ValueError("Capital receipt is outside its account/window.")
-                existing = session.get(Receipt, receipt["id"])
+                existing = session.get(Receipt, self.key(receipt["id"]))
                 if existing:
                     if existing.payload != receipt:
                         raise ValueError("Conflicting capital receipt identity.")
@@ -144,7 +147,7 @@ class UserCapital:
                 if receipt["time"] <= state["cursor_ms"]:
                     raise ValueError("Late receipt changed an already observed capital interval.")
                 flow += D(receipt["cashflow"]); funding += D(receipt["funding"])
-                session.add(Receipt(id=receipt["id"], address=address, payload=receipt)); session.flush()
+                session.add(Receipt(id=self.key(receipt["id"]), address=self.key(address), payload=receipt)); session.flush()
                 added.append(receipt["id"])
             if end == state["cursor_ms"] and not added:
                 return self.view(state)
@@ -167,5 +170,5 @@ class UserCapital:
                 "performance_balance": str(performance), "net_equity_change_excluding_cashflows": str(performance - D(state["initial_equity"])),
                 "high_water": str(max(high, performance)), "halt_reason": reason, "receipt_count": state["receipt_count"] + len(added)}
             row.payload = state
-            session.add(Observation(id=uuid4().hex, address=address, payload={"kind": "observation", "new_receipts": added, **state}))
+            session.add(Observation(id=uuid4().hex, address=self.key(address), payload={"kind": "observation", "new_receipts": added, **state}))
             return self.view(state)

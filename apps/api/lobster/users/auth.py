@@ -70,15 +70,21 @@ def iso(now: datetime) -> str:
     return now.isoformat().replace("+00:00", "Z")
 
 
-def message(address: str, nonce: str, issued: str, expires: str, request_id: str, *, origin=ORIGIN) -> str:
+def message(address: str, nonce: str, issued: str, expires: str, request_id: str, *, origin=ORIGIN, network="testnet") -> str:
+    if network not in {"testnet", "mainnet"}: raise ValueError("Unsupported authentication network.")
     statement = STATEMENT if origin == ORIGIN else STATEMENT.replace("local ", "")
+    statement = statement.replace("testnet", network)
+    chain_id = CHAIN_ID if network == "testnet" else 42161
     return (f"{origin} wants you to sign in with your Ethereum account:\n{to_checksum_address(address)}\n\n"
-        f"{statement}\n\nURI: {origin}\nVersion: 1\nChain ID: {CHAIN_ID}\nNonce: {nonce}"
+        f"{statement}\n\nURI: {origin}\nVersion: 1\nChain ID: {chain_id}\nNonce: {nonce}"
         f"\nIssued At: {issued}\nExpiration Time: {expires}\nRequest ID: {request_id}")
 
 
 class UserAuth:
-    def __init__(self, store, *, origin=ORIGIN):
+    def __init__(self, store, *, origin=ORIGIN, network="testnet"):
+        if network not in {"testnet", "mainnet"}: raise ValueError("Unsupported authentication network.")
+        self.network, self.scope = network, network + ":preview"
+        self.chain_id = CHAIN_ID if network == "testnet" else 42161
         self.store = store
         self.origin = origin
         self.boot = secrets.token_hex(16)  # Restart invalidates every prior proof/session.
@@ -117,10 +123,10 @@ class UserAuth:
             expires = now + timedelta(minutes=2)
             data = {"address": address, "boot": self.boot, "nonce": nonce, "issued_at": iso(now), "expires_at": iso(expires), "used": False}
             session.add(Challenge(id=request_id, expires_us=micros(expires), payload=data))
-        return {"challenge_id": request_id, "address": address, "origin": self.origin, "chain_id": CHAIN_ID,
+        return {"challenge_id": request_id, "address": address, "origin": self.origin, "chain_id": self.chain_id,
             "nonce": nonce, "issued_at": data["issued_at"], "expires_at": data["expires_at"],
-            "message": message(address, nonce, data["issued_at"], data["expires_at"], request_id, origin=self.origin),
-            "scope": SCOPE, "order_submission_enabled": False, "fee_collection_enabled": False}
+            "message": message(address, nonce, data["issued_at"], data["expires_at"], request_id, origin=self.origin, network=self.network),
+            "scope": self.scope, "order_submission_enabled": False, "fee_collection_enabled": False}
 
     def verify(self, body: VerifyInput, peer: str) -> dict:
         self.admit(peer)
@@ -137,7 +143,7 @@ class UserAuth:
             raise AuthError()
         try:
             signer = Account.recover_message(encode_defunct(text=message(data["address"], data["nonce"],
-                data["issued_at"], data["expires_at"], body.challenge_id, origin=self.origin)), signature=signature).lower()
+                data["issued_at"], data["expires_at"], body.challenge_id, origin=self.origin, network=self.network)), signature=signature).lower()
         except Exception:
             raise AuthError() from None
         if signer != data["address"]:
@@ -151,16 +157,15 @@ class UserAuth:
             if session.scalar(select(func.count()).select_from(UserSession).where(UserSession.expires_us > current)) >= 256:
                 raise AuthError(429, "Local session capacity reached. Retry after existing sessions expire.", 900)
             expires = now + timedelta(minutes=15)
-            session_data = {"address": signer, "boot": self.boot, "scope": SCOPE, "issued_at": iso(now),
+            session_data = {"address": signer, "boot": self.boot, "scope": self.scope, "issued_at": iso(now),
                 "expires_at": iso(expires), "revoked": False}
             session.add(UserSession(id=sha256(token.encode()).hexdigest(), expires_us=micros(expires), payload=session_data))
             row.payload = data | {"used": True}
         return self.public(session_data) | {"access_token": token, "token_type": "Bearer"}
 
-    @staticmethod
-    def public(data: dict) -> dict:
+    def public(self, data: dict) -> dict:
         return {"address": data["address"], "scope": data["scope"], "expires_at": data["expires_at"],
-            "authenticated": True, "authentication_method": "eip191_eoa", "network": "testnet",
+            "authenticated": True, "authentication_method": "eip191_eoa", "network": self.network,
             "order_submission_enabled": False, "fee_collection_enabled": False}
 
     def require(self, authorization: str | None) -> dict:
@@ -171,7 +176,7 @@ class UserAuth:
             _, current = self.clock(session)
             row = session.get(UserSession, key)
             if (not row or row.expires_us <= current or row.payload["revoked"] or row.payload["boot"] != self.boot
-                    or row.payload["scope"] != SCOPE):
+                    or row.payload["scope"] != self.scope):
                 raise AuthError()
             return self.public(row.payload)
 

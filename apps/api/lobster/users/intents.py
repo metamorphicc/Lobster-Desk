@@ -4,6 +4,7 @@ from datetime import datetime
 from decimal import Decimal as D
 from hashlib import sha256
 import secrets
+from typing import Literal
 
 from eth_account import Account
 from eth_account.messages import encode_typed_data
@@ -23,6 +24,7 @@ class ProfileInput(Contract):
     agent: Address
     builder: Address
     fee_tenths_bps: int = Field(default=50, ge=0, le=100, strict=True)
+    network: Literal["testnet", "mainnet"] = "testnet"
 
     @model_validator(mode="after")
     def separate(self):
@@ -41,7 +43,7 @@ class Base(DeclarativeBase):
 
 class Profile(Base):
     __tablename__ = "user_execution_profiles"
-    address: Mapped[str] = mapped_column(String(42), primary_key=True)
+    address: Mapped[str] = mapped_column(String(64), primary_key=True)
     agent: Mapped[str] = mapped_column(String(42), unique=True)
     payload: Mapped[dict] = mapped_column(JSON)
 
@@ -53,12 +55,14 @@ class Intent(Base):
     payload: Mapped[dict] = mapped_column(JSON)
 
 
-def typed_intent(owner, profile, plan, nonce, expires):
-    return {"domain": {"name": "Lobster Desk Local Intent", "version": "1", "chainId": 421614,
-        "verifyingContract": "0x" + "0" * 40}, "primaryType": "TestnetTradeIntent",
+def typed_intent(owner, profile, plan, nonce, expires, *, network="testnet"):
+    if network not in {"testnet", "mainnet"}: raise ValueError("Unsupported consent network.")
+    primary = "TestnetTradeIntent" if network == "testnet" else "MainnetTradeIntent"
+    return {"domain": {"name": "Lobster Desk Local Intent", "version": "1", "chainId": 421614 if network == "testnet" else 42161,
+        "verifyingContract": "0x" + "0" * 40}, "primaryType": primary,
         "types": {"EIP712Domain": [{"name": "name", "type": "string"}, {"name": "version", "type": "string"},
             {"name": "chainId", "type": "uint256"}, {"name": "verifyingContract", "type": "address"}],
-            "TestnetTradeIntent": [{"name": "owner", "type": "address"}, {"name": "planHash", "type": "bytes32"},
+            primary: [{"name": "owner", "type": "address"}, {"name": "planHash", "type": "bytes32"},
                 {"name": "agent", "type": "address"}, {"name": "builder", "type": "address"},
                 {"name": "builderFeeTenthsBps", "type": "uint256"}, {"name": "nonce", "type": "uint64"},
                 {"name": "validUntil", "type": "uint64"}]},
@@ -77,13 +81,18 @@ def recover(typed, signature):
 
 
 class UserIntents:
-    def __init__(self, store):
+    def __init__(self, store, *, network="testnet"):
+        if network not in {"testnet", "mainnet"}: raise ValueError("Unsupported profile network.")
+        self.network = network
         self.store = store
         Base.metadata.create_all(store.engine)
 
+    def key(self, owner): return owner if self.network == "testnet" else "mainnet:" + owner
+
     def configure(self, body: ProfileInput):
+        if body.network != self.network: raise ValueError("Profile belongs to another network.")
         with self.store.transaction() as session:
-            existing = session.get(Profile, body.address)
+            existing = session.get(Profile, self.key(body.address))
             if existing:
                 if {key: existing.payload[key] for key in type(body).model_fields} != body.model_dump():
                     raise ValueError("Execution profiles are immutable. Cancel/reconcile old intents and migrate explicitly before replacing a profile.")
@@ -94,16 +103,17 @@ class UserIntents:
                         or body.address in {registered["agent"], registered["builder"]}
                         or body.builder in {registered["address"], registered["agent"]}):
                     raise ValueError("Each user requires a different API wallet, separated from every registered user and builder.")
-            data = body.model_dump() | {"last_nonce": 0, "network": "testnet"}
-            session.add(Profile(address=body.address, agent=body.agent, payload=data))
+            data = body.model_dump() | {"last_nonce": 0}
+            session.add(Profile(address=self.key(body.address), agent=body.agent, payload=data))
             return data
 
     def profile(self, owner):
         with self.store.transaction() as session:
-            row = session.get(Profile, owner)
+            row = session.get(Profile, self.key(owner))
             return row.payload if row else None
 
     def prepare(self, owner, plan):
+        if self.network != "testnet": raise ValueError("Legacy local rehearsal is testnet-only.")
         immutable = {key: value for key, value in plan.items() if key not in {"plan_hash", "expired", "observation"}}
         if plan.get("network") != "testnet" or fingerprint(immutable) != plan.get("plan_hash"):
             raise ValueError("The immutable testnet preview binding is invalid.")
@@ -131,6 +141,7 @@ class UserIntents:
             return intent
 
     def get(self, owner, intent_id):
+        if self.network != "testnet": raise ValueError("Legacy local rehearsal is testnet-only.")
         with self.store.transaction() as session:
             row = session.get(Intent, intent_id)
             return row.payload if row and row.address == owner else None
@@ -141,6 +152,7 @@ class UserIntents:
         return data | {"proof": None, "expired": now >= data["expires_ms"] or now < data["nonce"] - 1000}
 
     def context(self, owner):
+        if self.network != "testnet": raise ValueError("Legacy local rehearsal is testnet-only.")
         with self.store.transaction() as session:
             row = session.get(Profile, owner)
             recent = list(session.scalars(select(Intent).where(Intent.address == owner)
@@ -153,6 +165,7 @@ class UserIntents:
                 "note": "Private local consent journal. No trading permissions or signatures are accepted. API-wallet profiles require separate operator configuration."}
 
     def verify_local(self, owner, intent_id, signature):
+        if self.network != "testnet": raise ValueError("Legacy local rehearsal is testnet-only.")
         """Core/offline verification only; no public financial-signature endpoint is enabled."""
         with self.store.transaction() as session:
             row = session.get(Intent, intent_id)
@@ -165,6 +178,7 @@ class UserIntents:
             return row.payload
 
     def claim_offline(self, owner, intent_id, plan):
+        if self.network != "testnet": raise ValueError("Legacy local rehearsal is testnet-only.")
         """One-time audit handoff for offline rehearsals. Never grants transport authority.
 
         A crash after this claim requires review; another claim cannot replay entry.
@@ -187,6 +201,7 @@ class UserIntents:
             return row.payload
 
     def approval_plans(self, owner):
+        if self.network != "testnet": raise ValueError("Legacy local rehearsal is testnet-only.")
         """Unsigned SDK-compatible permissions, sharing a serialized main-wallet nonce sequence."""
         now = int(utcnow().timestamp()*1000)
         with self.store.transaction() as session:

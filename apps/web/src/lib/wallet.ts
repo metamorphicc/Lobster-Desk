@@ -101,13 +101,19 @@ export class WalletSession {
     }
   }
 
+  async signMainnetAuthentication(value: unknown, origin: string): Promise<string> {
+    return this.authenticate(value, origin, "mainnet");
+  }
   async signAuthentication(value: unknown, origin: string): Promise<string> {
+    return this.authenticate(value, origin, "testnet");
+  }
+  private async authenticate(value: unknown, origin: string, network: "testnet" | "mainnet"): Promise<string> {
     const provider = this.provider, generation = this.generation, state = this.snapshot();
     if (!provider || state.status !== "connected" || !state.address || !state.chainId) throw new Error("Connect the wallet before signing in.");
-    const challenge = validateAuthChallenge(value, state.address, origin, state.chainId);
+    const challenge = validateAuthChallenge(value, state.address, origin, state.chainId, Date.now(), network);
     const current = () => {
       if (generation !== this.generation || provider !== this.provider || state.revision !== this.state.revision) throw new Error("Wallet changed. Reconnect and prepare a fresh sign-in message.");
-      validateAuthChallenge(challenge, state.address!, origin, state.chainId!);
+      validateAuthChallenge(challenge, state.address!, origin, state.chainId!, Date.now(), network);
     };
     const checkProvider = async () => {
       const accounts = await provider.request({ method: "eth_accounts" }); current();
@@ -124,13 +130,19 @@ export class WalletSession {
     return signature;
   }
 
+  async signMainnetFinancial(value: unknown, profile: ExecutionProfile, kind: FinancialKind, origin: string, plan?: BoundPlan): Promise<string> {
+    return this.financial(value, profile, kind, origin, plan, "mainnet");
+  }
   async signFinancial(value: unknown, profile: ExecutionProfile, kind: FinancialKind, origin: string, plan?: BoundPlan): Promise<string> {
+    return this.financial(value, profile, kind, origin, plan, "testnet");
+  }
+  private async financial(value: unknown, profile: ExecutionProfile, kind: FinancialKind, origin: string, plan: BoundPlan | undefined, network: "testnet" | "mainnet"): Promise<string> {
     const provider = this.provider, generation = this.generation, state = this.snapshot();
     if (!provider || state.status !== "connected" || state.address !== profile.address || !state.chainId) throw new Error("Connect the exact wallet before financial signing.");
-    const job = structuredClone(validateFinancialJob(value, profile, kind, origin, state.chainId, plan));
+    const job = structuredClone(validateFinancialJob(value, profile, kind, origin, state.chainId, plan, Date.now(), network));
     const current = () => {
       if (generation !== this.generation || provider !== this.provider || state.revision !== this.state.revision) throw new Error("Wallet changed during financial signing.");
-      validateFinancialJob(job, profile, kind, origin, state.chainId!, plan);
+      validateFinancialJob(job, profile, kind, origin, state.chainId!, plan, Date.now(), network);
     };
     const checkProvider = async () => {
       const accounts = await provider.request({ method: "eth_accounts" }); current();

@@ -43,7 +43,7 @@ def discover_sources(config, testnet, project, user_config, *, operations_path=N
             continue  # Preserve the registered canonical path even after a config-root edit.
         path = (root / owner / (agent + ".sqlite3")).resolve()
         if not path.is_relative_to(root): raise ValueError("User journal escapes configured recovery root.")
-        claimed = any(job["owner"] == owner and job["kind"] == "trade" and job["status"] == "claimed" for job in jobs)
+        claimed = any(job["owner"] == owner and job["network"] == profile["network"] and job["kind"] == "trade" and job["status"] == "claimed" for job in jobs)
         execution(path, required=claimed)
     treasury = Path(config.treasury_path).resolve()
     if treasury.exists():

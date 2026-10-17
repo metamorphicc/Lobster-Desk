@@ -6,13 +6,14 @@ import { ArrowDownLeft, ArrowRight, ArrowUpRight, BookOpen, ChevronRight, Circle
   Terminal, Waves, X } from "lucide-react";
 import { Creature } from "./creature";
 import { PriceChart } from "./price-chart";
+import { UserAccount } from "./user-account";
 import { TestnetWorkbench } from "./testnet-workbench";
 import { OpsStatus } from "./ops-status";
 import { ResearchWorkbench } from "./research-workbench";
 import { EconomicsPolicy } from "./economics-policy";
 import { money, number, signed, statusLabel, type Episode, type Pitch, type Position, type State } from "@/lib/types";
 
-type Tab = "tank" | "journal" | "research" | "treasury" | "testnet";
+type Tab = "tank" | "journal" | "research" | "treasury" | "testnet" | "mainnet";
 const active = new Set(["queued", "analyzing", "risk_check", "capital_check", "approved", "filled"]);
 const roles = [
   { name: "Clawdius", role: "Analyst", key: "analyst", kind: "lobster", line: "Find the setup. Defend the thesis." },
@@ -108,7 +109,7 @@ export function Desk() {
       <a className="wordmark" href="/" aria-label="Lobster Desk home"><span className="brand-symbol"><Waves size={25} /></span><span>LOBSTER<span className="wordmark-bottom">DESK<span className="brand-period">.</span></span></span></a>
       <div className="sidebar-caption">A LITTLE COLLECTIVE INTELLIGENCE.</div>
       <nav aria-label="Main navigation">
-        {([{ id: "tank", label: "The tank", icon: Radio }, { id: "journal", label: "Journal", icon: FileClock }, { id: "research", label: "Research", icon: BookOpen }, { id: "treasury", label: "Treasury", icon: Landmark }, { id: "testnet", label: "Testnet", icon: FlaskConical }] as const).map(item =>
+        {([{ id: "tank", label: "The tank", icon: Radio }, { id: "journal", label: "Journal", icon: FileClock }, { id: "research", label: "Research", icon: BookOpen }, { id: "treasury", label: "Treasury", icon: Landmark }, { id: "testnet", label: "Testnet", icon: FlaskConical }, { id: "mainnet", label: "Mainnet", icon: Landmark }] as const).map(item =>
           <button key={item.id} className={`nav-item ${tab === item.id ? "is-current" : ""}`} aria-current={tab === item.id ? "page" : undefined} onClick={() => { setTab(item.id); if (item.id === "tank") setSelectedId(null); }}><item.icon size={18} /><span>{item.label}</span>{item.id === "tank" && <span className="nav-dot" />}</button>)}
       </nav>
       <div className="sidebar-bottom">
@@ -121,8 +122,8 @@ export function Desk() {
 
     <div className="workspace">
       <header className="topbar">
-        <div className="breadcrumb"><span>Lobster Desk</span><ChevronRight size={13} /><strong>{tab === "tank" ? "The tank" : tab === "journal" ? "Trade journal" : tab === "research" ? "Research" : tab === "testnet" ? "Testnet workbench" : "Treasury"}</strong></div>
-        <div className="topbar-right"><span className="mode-badge"><FlaskConical size={13} /> {tab === "testnet" ? "TESTNET LAB" : "PAPER MODE"}</span><button className="icon-button" aria-label="Open operator controls" onClick={() => operatorDialog.current?.showModal()}><SlidersHorizontal size={17} /></button></div>
+        <div className="breadcrumb"><span>Lobster Desk</span><ChevronRight size={13} /><strong>{tab === "tank" ? "The tank" : tab === "journal" ? "Trade journal" : tab === "research" ? "Research" : tab === "testnet" ? "Testnet workbench" : tab === "mainnet" ? "Mainnet account" : "Treasury"}</strong></div>
+        <div className="topbar-right"><span className="mode-badge"><FlaskConical size={13} /> {tab === "testnet" ? "TESTNET LAB" : tab === "mainnet" ? "MAINNET · REAL FUNDS" : "PAPER MODE"}</span><button className="icon-button" aria-label="Open operator controls" onClick={() => operatorDialog.current?.showModal()}><SlidersHorizontal size={17} /></button></div>
       </header>
 
       <main id="main">
@@ -132,11 +133,11 @@ export function Desk() {
         {(state?.account.paused || state?.account.halt_reason) && <div className="notice" role="status">New entries paused. {state.account.halt_reason || "The operator paused the tank. Existing position protection remains active."}</div>}
 
         <div className="page-heading">
-          <div><h1>{tab === "tank" ? "The tank is in session." : tab === "journal" ? "Every call. On record." : tab === "research" ? "Let the hypotheses compete." : tab === "testnet" ? "Check before the first fill." : "Follow the money."}</h1><p>{tab === "tank" ? "The agents can research their next idea. Your pitches are welcome too." : tab === "journal" ? "Accepted, rejected, expired. The whole story stays here." : tab === "research" ? "Bounded rules. Reproducible tests. Forward paper observation." : tab === "testnet" ? "Inspect the account. Review the size. Stage a local intent." : "Capital, trading costs and revenue, accounted for separately."}</p></div>
+          <div><h1>{tab === "tank" ? "The tank is in session." : tab === "journal" ? "Every call. On record." : tab === "research" ? "Let the hypotheses compete." : tab === "testnet" ? "Check before the first fill." : tab === "mainnet" ? "Your account. Your consent." : "Follow the money."}</h1><p>{tab === "tank" ? "The agents can research their next idea. Your pitches are welcome too." : tab === "journal" ? "Accepted, rejected, expired. The whole story stays here." : tab === "research" ? "Bounded rules. Reproducible tests. Forward paper observation." : tab === "testnet" ? "Inspect the account. Review the size. Stage a local intent." : tab === "mainnet" ? "Read your balance. Review exchange permissions and each exact trade." : "Capital, trading costs and revenue, accounted for separately."}</p></div>
           <button className="button button--primary" onClick={() => pitchDialog.current?.showModal()}><span>Pitch a setup</span><ArrowUpRight size={17} /></button>
         </div>
 
-        {tab !== "testnet" && <section className="account-strip" aria-label="Paper account performance">
+        {tab !== "testnet" && tab !== "mainnet" && <section className="account-strip" aria-label="Paper account performance">
           <Metric label="Tank equity" value={money(state?.account.equity)} note="Simulated USDC" />
           <Metric label="Net realized PnL" value={state ? signed(state.account.net_realized_pnl) : "—"} note="After modeled trading fees" tone={Number(state?.account.net_realized_pnl || 0) < 0 ? "negative" : ""} />
           <Metric label="Open PnL" value={state?.market ? signed(pnl) : "—"} note={openPosition ? "1 paper position" : "No open position"} />
@@ -202,8 +203,9 @@ export function Desk() {
         {tab === "treasury" && <Treasury state={state} />}
         {tab === "research" && <ResearchWorkbench onSelect={id => { setSelectedId(id); setTab("journal"); }} />}
         {tab === "testnet" && <TestnetWorkbench state={state} />}
+        {tab === "mainnet" && <UserAccount key="mainnet" network="mainnet" episodes={state?.episodes || []} />}
 
-        {tab !== "testnet" && <section className="event-panel" aria-labelledby="event-title"><div className="panel-heading"><h2 id="event-title"><Terminal size={16} /> Decision feed</h2><button className="text-button" onClick={() => { void exportJournal(); }} disabled={exporting || !state}>{exporting ? <LoaderCircle size={14} className="spinner" /> : <Download size={14} />}{exporting ? "Exporting…" : "Export journal"}</button></div>
+        {tab !== "testnet" && tab !== "mainnet" && <section className="event-panel" aria-labelledby="event-title"><div className="panel-heading"><h2 id="event-title"><Terminal size={16} /> Decision feed</h2><button className="text-button" onClick={() => { void exportJournal(); }} disabled={exporting || !state}>{exporting ? <LoaderCircle size={14} className="spinner" /> : <Download size={14} />}{exporting ? "Exporting…" : "Export journal"}</button></div>
           {exportError && <p role="alert" className="form-error">{exportError}</p>}
           <div className="event-list">{state?.events.length ? state.events.slice(-12).reverse().map(event => <div className="event-row" key={event.id}><time dateTime={event.timestamp}>{new Date(event.timestamp).toLocaleTimeString("en-GB", { hour12: false })}</time><span className={`event-actor event-actor--${event.actor}`}>{event.actor}</span><p>{event.message}</p></div>) : <p className="empty-note">The journal starts when the local API is ready. Every decision and paper fill will appear here.</p>}</div>
         </section>}
@@ -292,7 +294,7 @@ function PitchForm({ state, onSent }: { state: State | null; onSent: (id: string
 function Treasury({ state }: { state: State | null }) {
   const [volume, setVolume] = useState("1000000");
   const [fee, setFee] = useState("0.05");
-  return <div className="treasury-grid"><EconomicsPolicy /><section className="treasury-panel"><div className="panel-heading"><h2>Paper capital ledger</h2><Landmark size={17} /></div><dl className="levels"><div><dt>Initial simulated deposit</dt><dd>{money(state?.account.initial_capital)}</dd></div><div><dt>Current cash</dt><dd>{money(state?.account.cash)}</dd></div><div><dt>Modeled trading fees paid</dt><dd>{money(state?.account.fees_paid, 4)}</dd></div><div><dt>Net realized PnL</dt><dd>{state ? signed(state.account.net_realized_pnl) : "—"}</dd></div><div><dt>Collected builder fees</dt><dd>{money(state?.account.builder_revenue)}</dd></div><div><dt>Buybacks / distributions</dt><dd>Not enabled</dd></div></dl><p className="empty-note">Deposits are separate from earnings. {state?.account.funding_included ? `Hourly funding: ${money(state.account.funding_net, 4)}. ${state.account.funding_scope || ""}` : "Funding accounting is disabled."} Fees on open trades are expensed when filled.</p></section><section className="treasury-panel"><div className="panel-heading"><h2>Fee revenue calculator</h2><Gauge size={17} /></div><p className="empty-note">Illustration only. Revenue is recorded only after actual received-fee reconciliation.</p><div className="calculator"><label>Executed entry volume (USD)<input type="number" min="0" max="1000000000000" value={volume} onChange={e => setVolume(e.target.value)} /></label><label>Builder fee (%)<input type="number" min="0" max="0.1" step="0.001" value={fee} onChange={e => setFee(e.target.value)} /></label><div className="calculator-result"><span>Hypothetical gross revenue</span><strong>{Number(volume) >= 0 && Number(fee) >= 0 && Number(fee) <= 0.1 ? money(Number(volume) * Number(fee) / 100) : "—"}</strong><small>Before models, infrastructure, support and other costs.</small></div></div></section><section className="treasury-roadmap"><h2>User-owned testnet trading</h2><p>Connect a wallet in Testnet to review SDK permissions and exact order consent. A separate armed runner is required. User funds and positions remain separate from the tank; user mainnet trading is not enabled.</p><span className="tag">OPT-IN TESTNET · DEFAULT OFF</span></section></div>;
+  return <div className="treasury-grid"><EconomicsPolicy /><section className="treasury-panel"><div className="panel-heading"><h2>Paper capital ledger</h2><Landmark size={17} /></div><dl className="levels"><div><dt>Initial simulated deposit</dt><dd>{money(state?.account.initial_capital)}</dd></div><div><dt>Current cash</dt><dd>{money(state?.account.cash)}</dd></div><div><dt>Modeled trading fees paid</dt><dd>{money(state?.account.fees_paid, 4)}</dd></div><div><dt>Net realized PnL</dt><dd>{state ? signed(state.account.net_realized_pnl) : "—"}</dd></div><div><dt>Collected builder fees</dt><dd>{money(state?.account.builder_revenue)}</dd></div><div><dt>Buybacks / distributions</dt><dd>Not enabled</dd></div></dl><p className="empty-note">Deposits are separate from earnings. {state?.account.funding_included ? `Hourly funding: ${money(state.account.funding_net, 4)}. ${state.account.funding_scope || ""}` : "Funding accounting is disabled."} Fees on open trades are expensed when filled.</p></section><section className="treasury-panel"><div className="panel-heading"><h2>Fee revenue calculator</h2><Gauge size={17} /></div><p className="empty-note">Illustration only. Revenue is recorded only after actual received-fee reconciliation.</p><div className="calculator"><label>Executed entry volume (USD)<input type="number" min="0" max="1000000000000" value={volume} onChange={e => setVolume(e.target.value)} /></label><label>Builder fee (%)<input type="number" min="0" max="0.1" step="0.001" value={fee} onChange={e => setFee(e.target.value)} /></label><div className="calculator-result"><span>Hypothetical gross revenue</span><strong>{Number(volume) >= 0 && Number(fee) >= 0 && Number(fee) <= 0.1 ? money(Number(volume) * Number(fee) / 100) : "—"}</strong><small>Before models, infrastructure, support and other costs.</small></div></div></section><section className="treasury-roadmap"><h2>User-owned trading</h2><p>Connect a wallet in Testnet or Mainnet to review permissions and exact order consent. A separate armed runner is required. User funds and positions remain separate from the tank; mainnet signing and the separate runner are opt-in and default off.</p><span className="tag">OPT-IN · DEFAULT OFF</span></section></div>;
 }
 
 function Operator({ state, onDone }: { state: State | null; onDone: () => void }) {

@@ -9,16 +9,17 @@ import { UserOrderPreview } from "./user-order-preview";
 import { UserCapital } from "./user-capital";
 import { UserFinancial } from "./user-financial";
 
-const prefix = "/api/v1/users/testnet/auth/";
-async function revoke(token: string): Promise<boolean> {
+async function revoke(token: string, network: "testnet" | "mainnet"): Promise<boolean> {
   try {
-    const response = await fetch(prefix + "logout", { method: "POST", headers: { Authorization: "Bearer " + token },
+    const response = await fetch(`/api/v1/users/${network}/auth/logout`, { method: "POST", headers: { Authorization: "Bearer " + token },
       signal: AbortSignal.timeout(5000), cache: "no-store" });
     return response.ok || response.status === 401;
   } catch { return false; }
 }
 
-export function WalletAuth({ address, chainId, session, now, episodes }: { address: string; chainId: string; session: WalletSession; now: number; episodes: Episode[] }) {
+export function WalletAuth({ address, chainId, session, now, episodes, network = "testnet" }: { address: string; chainId: string; session: WalletSession; now: number; episodes: Episode[]; network?: "testnet" | "mainnet" }) {
+  const prefix = `/api/v1/users/${network}/auth/`;
+  const expectedChain = network === "testnet" ? 421614 : 42161;
   const [challenge, setChallenge] = useState<AuthChallenge | null>(null);
   const [result, setResult] = useState<AuthResult | null>(null);
   const [busy, setBusy] = useState("");
@@ -30,11 +31,11 @@ export function WalletAuth({ address, chainId, session, now, episodes }: { addre
     request.current?.abort();
     const token = credential.current?.access_token;
     credential.current = null;
-    if (token) void revoke(token);
-  }, []);
+    if (token) void revoke(token, network);
+  }, [network]);
   const ready = result && result.address === address && now < Date.parse(result.expires_at);
   const expired = challenge && now >= Date.parse(challenge.expires_at);
-  const chainOk = /^0x[0-9a-f]+$/i.test(chainId) && BigInt(chainId) === 421614n;
+  const chainOk = /^0x[0-9a-f]+$/i.test(chainId) && BigInt(chainId) === BigInt(expectedChain);
 
   async function post(path: string, body: unknown, current: AbortController) {
     const response = await fetch(prefix + path, { method: "POST", headers: { "Content-Type": "application/json" },
@@ -53,18 +54,18 @@ export function WalletAuth({ address, chainId, session, now, episodes }: { addre
         setChallenge(null);
         if (window.location.origin !== AUTH_ORIGIN || !chainOk) throw new Error();
         const value = await post("challenge", { address }, current);
-        const reviewed = validateAuthChallenge(value, address, window.location.origin, chainId);
+        const reviewed = validateAuthChallenge(value, address, window.location.origin, chainId, Date.now(), network);
         if (!current.signal.aborted) setChallenge(reviewed);
       } else {
         if (!challenge) throw new Error();
-        const signature = await session.signAuthentication(challenge, window.location.origin);
+        const signature = await (network === "testnet" ? session.signAuthentication(challenge, window.location.origin) : session.signMainnetAuthentication(challenge, window.location.origin));
         if (current.signal.aborted) return;
         const value = await post("verify", { challenge_id: challenge.challenge_id, signature }, current);
-        const verified = validateAuthResult(value, address);
-        if (current.signal.aborted) { void revoke(verified.access_token); return; }
+        const verified = validateAuthResult(value, address, Date.now(), network);
+        if (current.signal.aborted) { void revoke(verified.access_token, network); return; }
         // The wallet may change while the HTTP proof is being verified.
         if (session.snapshot().address !== address || session.snapshot().chainId !== chainId || session.snapshot().revision !== walletRevision) {
-          void revoke(verified.access_token); throw new Error();
+          void revoke(verified.access_token, network); throw new Error();
         }
         credential.current = verified; setResult(verified); setChallenge(null);
       }
@@ -72,7 +73,7 @@ export function WalletAuth({ address, chainId, session, now, episodes }: { addre
       if (!current.signal.aborted) {
         setChallenge(null);
         const code = failure && typeof failure === "object" ? (failure as { code?: number }).code : null;
-        setError(code === 4001 ? "Sign-in declined. No permission changed." : "Sign-in could not complete. Check the canonical local URL, wallet account, chain 421614 and message deadline, then prepare again.");
+        setError(code === 4001 ? "Sign-in declined. No permission changed." : "Sign-in could not complete. Check the canonical local URL, wallet account, the selected chain and message deadline, then prepare again.");
       }
     } finally { if (request.current === current && !current.signal.aborted) setBusy(""); }
   }
@@ -80,20 +81,20 @@ export function WalletAuth({ address, chainId, session, now, episodes }: { addre
   async function logout() {
     const token = credential.current?.access_token;
     credential.current = null; setResult(null); setChallenge(null); setError("");
-    if (token && !await revoke(token)) setNotice("Local credentials cleared. Server revocation could not be confirmed; the token expires within 15 minutes.");
+    if (token && !await revoke(token, network)) setNotice("Local credentials cleared. Server revocation could not be confirmed; the token expires within 15 minutes.");
     else setNotice("Local session cleared.");
   }
 
   return <section className="builder-consent wallet-auth" aria-labelledby="wallet-auth-title">
     <h3 id="wallet-auth-title">Verify this wallet for private previews</h3>
     <p className="small-note">Optional sign-in proves control of this wallet. It grants no trading, transfers or builder-fee permission. The session stays in this page&apos;s memory and expires within 15 minutes.</p>
-    {ready ? <><p className="positive user-connected"><Check size={16} />Verified for local previews</p><p className="small-note">Expires {new Date(result.expires_at).toLocaleTimeString("en-GB", { hour12: false })}. Scope: testnet previews only.</p>
+    {ready ? <><p className="positive user-connected"><Check size={16} />Verified for local previews</p><p className="small-note">Expires {new Date(result.expires_at).toLocaleTimeString("en-GB", { hour12: false })}. Scope: {network} previews only.</p>
       <button className="button button--secondary" onClick={() => { void logout(); }}><LogOut size={16} />Sign out</button>
-      <UserCapital address={address} token={result.access_token} now={now} onSessionInvalid={() => { credential.current = null; setResult(null); setError("The server session is no longer valid. Sign in again."); }} />
-      <UserFinancial address={address} token={result.access_token} session={session} now={now} onSessionInvalid={() => { credential.current = null; setResult(null); setError("The server session is no longer valid. Sign in again."); }} />
-      <UserOrderPreview address={address} token={result.access_token} episodes={episodes} now={now} session={session} onSessionInvalid={() => { credential.current = null; setResult(null); setError("The server session is no longer valid. Sign in again."); }} /></> : <>
+      <UserCapital network={network} address={address} token={result.access_token} now={now} onSessionInvalid={() => { credential.current = null; setResult(null); setError("The server session is no longer valid. Sign in again."); }} />
+      <UserFinancial network={network} address={address} token={result.access_token} session={session} now={now} onSessionInvalid={() => { credential.current = null; setResult(null); setError("The server session is no longer valid. Sign in again."); }} />
+      <UserOrderPreview network={network} address={address} token={result.access_token} episodes={episodes} now={now} session={session} onSessionInvalid={() => { credential.current = null; setResult(null); setError("The server session is no longer valid. Sign in again."); }} /></> : <>
       {result && <p className="notice">The local session expired. Sign in again for private previews.</p>}
-      {!chainOk && <p className="notice">Sign-in requires wallet chain 421614 (Arbitrum Sepolia). Select it manually, then reconnect. Public account viewing works without signing in.</p>}
+      {!chainOk && <p className="notice">Sign-in requires wallet chain {expectedChain} ({network === "testnet" ? "Arbitrum Sepolia" : "Arbitrum One"}). Select it manually, then reconnect. Public account viewing works without signing in.</p>}
       <button className="button button--secondary" disabled={!!busy || !chainOk} onClick={() => { void act(false); }}>{busy === "prepare" ? <LoaderCircle size={16} className="spinner" /> : <FileCheck2 size={16} />}Prepare sign-in message</button>
       {challenge && <SignInMessage challenge={challenge} expired={!!expired} busy={busy === "sign"} sign={() => { void act(true); }} />}
       {busy && <button className="text-button" onClick={cancel}>Cancel sign-in</button>}

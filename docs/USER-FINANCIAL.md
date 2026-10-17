@@ -1,6 +1,6 @@
 # Explicit user financial execution
 
-Stage 9.3a adds an executable **testnet** path separate from the locked offline rehearsal. It does not turn sign-in, downloaded plans or `Lobster Desk Local Intent` signatures into trading authority. The new trade signature uses the distinct EIP-712 domain **Lobster Desk Execution Consent**, binding owner, exact private plan hash, dedicated API wallet, builder, fee and a short queue deadline. The saved plan binds quantity, price, direction, leverage, protections and current reviews. The existing rehearsal remains unconditionally locked.
+Stages 9.3a–c add explicit **testnet and mainnet** paths separate from the locked offline rehearsal. It does not turn sign-in, downloaded plans or `Lobster Desk Local Intent` signatures into trading authority. The new trade signature uses the distinct EIP-712 domain **Lobster Desk Execution Consent**, binding owner, exact private plan hash, dedicated API wallet, builder, fee and a short queue deadline. The saved plan binds quantity, price, direction, leverage, protections and current reviews. The existing rehearsal remains unconditionally locked.
 
 ## Separation of responsibilities
 
@@ -28,4 +28,16 @@ The browser workbench now provides explicit review/sign buttons for the register
 
 The complete backend suite after these changes passes: **454 tests**. A legacy network-error wording assertion found during the full run was fixed to identify the required network explicitly; the full suite was then rerun successfully. No wallet or financial endpoint was exercised against a real external service.
 
-User-owned mainnet execution and funded acceptance remain separate open work; the autonomous project runner's mainnet support does not imply that the user testnet routes support mainnet. `.env.users` and its contents are ignored and excluded from source packaging; include all canonical journals in recovery inventory, then reconcile exchange state before resuming after a restore.
+User-owned mainnet code is implemented separately; funded acceptance remains open. Testnet routes and signatures cannot authorize mainnet execution. `.env.users` and its contents are ignored and excluded from source packaging; include all canonical journals in recovery inventory, then reconcile exchange state before resuming after a restore.
+
+## Mainnet configuration and domain isolation
+
+Mainnet uses `/api/v1/users/mainnet/…`, `USER_MAINNET_BUILDER_ADDRESS`, `USER_MAINNET_BUILDER_FEE_TENTHS_BPS=50`, `USER_MAINNET_FINANCIAL_ENABLED=false` and `USER_MAINNET_EXECUTION_ROOT=data/users-mainnet`. Both financial features default off. The operator registers a public profile at `POST /api/v1/operator/user-mainnet-profile` with `network: "mainnet"`. Mainnet requires a different dedicated API wallet from every registered testnet/user wallet; the same main public wallet can have separate profiles on both networks. Profiles are immutable.
+
+Copy `.env.users-mainnet.example` to ignored `.env.users-mainnet`. `npm run users:execution -- --config .env.users-mainnet` only inspects that configuration. Explicit `--run --arm`, runner enablement and matching mainnet market source (`MARKET_SOURCE=hyperliquid`) are required for new entries. The runner alone reads that key map. Testnet uses its own `.env.users` file/root and source. All new writers are registered in the central recovery catalog before dispatch.
+
+Sign-in uses a mainnet statement, chain 42161 (Arbitrum One) and `mainnet:preview` session. SDK permission actions use `Mainnet`/`0xa4b1`; trade consent uses `MainnetTradeIntent` and `mainnet-financial-consent-v1`. Explicit wallet methods validate those original domains before `eth_signTypedData_v4`; the default testnet methods still refuse them. Neither domain permits generic transfers. The browser has a distinct Mainnet tab and a real-funds notice. Public viewing requires no signature.
+
+SQLite profiles, private previews, capital references/receipts and financial jobs use network-separated storage identities. This preserves existing testnet records and separate project capital ledgers without relabelling them. Canonical financial journal roots must differ. User account/profile/network/fee/plan identity is checked again before execution and recovery; no configurable arbitrary exchange destination is accepted.
+
+Stage 9.3c verification: **495 Python tests and 69 client tests pass**, with TypeScript/production build, four responsive widths and eight labelled offline Mainnet review states. A real public mainnet `/info` lookup passed without wallet connection; it is read-only evidence, not execution acceptance. Real extension prompts, permissions, funded orders, builder receipts and recovery against the live exchange remain unobserved. Default execution remains paper.
