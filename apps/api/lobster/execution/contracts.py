@@ -4,7 +4,7 @@ from hashlib import sha256
 import json
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, model_validator, model_serializer
 
 from ..domain import Capital, Contract, PitchInput, Review, RiskPolicy, Snapshot
 from ..risk import assess
@@ -53,6 +53,13 @@ class ExchangeAccount(Contract):
     btc_is_cross: bool | None = None
 
 
+class StrategyAttribution(Contract):
+    strategy_id: str = Field(pattern=r"^[a-f0-9]{32}$")
+    strategy_hash: str = Field(pattern=r"^[a-f0-9]{64}$")
+    owner_commitment: str = Field(pattern=r"^[a-f0-9]{64}$")
+    network: Literal["testnet", "mainnet"]
+
+
 class ReviewedSetup(Contract):
     episode_id: str = Field(min_length=1, max_length=64)
     pitch: PitchInput
@@ -63,14 +70,24 @@ class ReviewedSetup(Contract):
     approval_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     policy_version: str
     network: Literal["testnet", "mainnet"] = "testnet"
+    strategy_attribution: StrategyAttribution | None = None
 
     @model_validator(mode="after")
     def eligible(self):
+        if self.strategy_attribution and (self.strategy_attribution.network != self.network
+                or self.strategy_attribution.strategy_hash != fingerprint(self.pitch.model_dump(mode="json"))):
+            raise ValueError("Strategy attribution must match the exact signed-in pitch and execution network.")
         if self.analyst.verdict != "approve" or self.risk.verdict != "approve":
             raise ValueError("Both reviewers must approve the setup.")
         if self.expires_at.tzinfo is None:
             raise ValueError("Approval expiry requires a timezone.")
         return self
+
+    @model_serializer(mode="wrap")
+    def compatible_dump(self, handler):
+        value = handler(self)
+        if self.strategy_attribution is None: value.pop("strategy_attribution", None)
+        return value
 
     @classmethod
     def from_episode(cls, episode: dict, policy: RiskPolicy, *, network: Literal["testnet", "mainnet"] = "testnet"):
@@ -86,7 +103,8 @@ class ReviewedSetup(Contract):
                    for role in ("analyst", "risk")}
         return cls(episode_id=episode["id"], pitch=episode["pitch"], analyst=reviews["analyst"], risk=reviews["risk"],
             expires_at=episode["expires_at"], approved_quantity=episode["risk"]["quantity"],
-            approval_hash=episode["approval_hash"], policy_version=policy.version, network=network)
+            approval_hash=episode["approval_hash"], policy_version=policy.version, network=network,
+            strategy_attribution=episode.get("strategy_attribution"))
 
 
 class OrderSpec(Contract):

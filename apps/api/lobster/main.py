@@ -42,7 +42,6 @@ from .research.service import Research
 from .economics.distribution import DistributionPolicy, distribution
 from .economics.book import TreasuryBook
 from .economics.solana_treasury import public_solana_report
-from .economics.charity import public_charity_report
 from .economics.revenue_watcher import public_revenue_report
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -331,7 +330,7 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
     def economics(request: Request):
         try:
             book = TreasuryBook(Path(config.treasury_path))
-            return distribution(book, DistributionPolicy()) | {"solana": public_solana_report(book), "charity": public_charity_report(book), "revenue_observer": public_revenue_report(book)}
+            return distribution(book, DistributionPolicy()) | {"solana": public_solana_report(book), "revenue_observer": public_revenue_report(book)}
         except Exception:
             raise HTTPException(503, "Treasury receipt arithmetic is unavailable. No transfers were authorized.") from None
 
@@ -596,5 +595,7 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
 
     from .users.mainnet_http import install
     install(app, mainnet_user_config, require_operator)
+    from .users.strategy_http import install as install_strategies
+    install_strategies(app, config, require_operator)
     return app
 

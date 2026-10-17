@@ -6,13 +6,13 @@ from pathlib import Path
 import sqlite3
 from typing import Annotated, Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, model_validator, field_validator
 
 from ..domain import Contract, utcnow
 from ..execution.contracts import fingerprint
 from ..ops.pilot import Money
 
-KINDS = ("capital_in", "capital_out", "builder_receipt", "trading_profit", "trading_loss", "expense", "buyback_spend", "refund", "charity_payout", "team_payout")
+KINDS = ("capital_in", "capital_out", "builder_receipt", "trading_profit", "trading_loss", "expense", "buyback_spend", "refund", "charity_payout", "team_payout", "strategy_checkpoint", "author_payout")
 CREDITS = {"capital_in", "builder_receipt", "trading_profit"}
 
 
@@ -37,20 +37,46 @@ class EconomicPolicy(Contract):
         return self
 
 
+class StrategyAllocation(Contract):
+    execution_id: str = Field(pattern=r"^[a-f0-9]{64}$")
+    strategy_id: str = Field(pattern=r"^[a-f0-9]{32}$")
+    owner: str = Field(pattern=r"^0x[0-9a-f]{40}$")
+    net_profit: D = Field(allow_inf_nan=False, max_digits=24, decimal_places=6)
+    evidence_hash: str = Field(pattern=r"^[a-f0-9]{64}$")
+
+    @field_validator("net_profit", mode="before")
+    @classmethod
+    def exact_profit(cls, value):
+        if not isinstance(value, str): raise ValueError("Strategy net profit must be an exact decimal string.")
+        return value
+
+    @model_validator(mode="after")
+    def valid_owner(self):
+        if int(self.owner, 16) == 0: raise ValueError("A verified nonzero strategy owner is required.")
+        return self
+
+
 class TreasuryEntry(Contract):
     id: str = Field(pattern=r"^[a-zA-Z0-9_-]{8,64}$")
     receipt_ref: str = Field(min_length=8, max_length=200)
     evidence_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
-    kind: Literal["capital_in", "capital_out", "builder_receipt", "trading_profit", "trading_loss", "expense", "buyback_spend", "refund", "charity_payout", "team_payout"]
+    kind: Literal["capital_in", "capital_out", "builder_receipt", "trading_profit", "trading_loss", "expense", "buyback_spend", "refund", "charity_payout", "team_payout", "strategy_checkpoint", "author_payout"]
     amount: Money
     currency: Literal["USDC"] = "USDC"
     occurred_at: datetime
     provenance: Literal["offline_fixture", "owner_supplied_unverified"]
+    strategy_allocations: list[StrategyAllocation] = Field(default_factory=list, max_length=1000)
+    beneficiary: str | None = Field(default=None, pattern=r"^0x[0-9a-f]{40}$")
 
     @model_validator(mode="after")
     def valid(self):
-        if self.amount <= 0 or self.amount > D("1000000000000") or self.amount != self.amount.quantize(D("0.000001")):
+        if ((self.amount != 0 if self.kind == "strategy_checkpoint" else self.amount <= 0)
+                or self.amount > D("1000000000000") or self.amount != self.amount.quantize(D("0.000001"))):
             raise ValueError("Amounts must be positive exact USDC values with at most six decimal places.")
+        if self.strategy_allocations and self.kind not in {"trading_profit", "trading_loss", "strategy_checkpoint"}:
+            raise ValueError("Strategy allocations require a realized project settlement.")
+        if self.kind == "strategy_checkpoint" and not self.strategy_allocations: raise ValueError("An allocation checkpoint must contain settlements.")
+        if (self.kind == "author_payout") != bool(self.beneficiary): raise ValueError("Author payout requires its exact beneficiary.")
         if self.occurred_at.tzinfo is None or self.occurred_at > utcnow():
             raise ValueError("A non-future timestamp with timezone is required.")
         return self
@@ -103,8 +129,17 @@ class TreasuryBook:
         rows = self.read(db)
         for row in rows:
             if row["entry"]["id"] == entry.id or row["entry"]["receipt_ref"] == entry.receipt_ref:
-                if row["entry"] != payload: raise ValueError("Receipt identity conflicts with an existing entry.")
+                if TreasuryEntry.model_validate(row["entry"]).model_dump(mode="json") != payload: raise ValueError("Receipt identity conflicts with an existing entry.")
                 return row
+        if entry.kind == "charity_payout": raise ValueError("Donation payments have been retired; historical receipts remain readable.")
+        executions = {a["execution_id"] for row in rows for a in row["entry"].get("strategy_allocations", [])}
+        for allocation in entry.strategy_allocations:
+            if allocation.execution_id in executions: raise ValueError("A strategy execution can be allocated only once.")
+            executions.add(allocation.execution_id)
+        if entry.kind == "author_payout":
+            from .sharing import author_balances
+            balance = author_balances(rows).get(entry.beneficiary)
+            if not balance or entry.amount > D(balance["outstanding"]): raise ValueError("Author payout exceeds earned, unpaid strategy profit.")
         if rows and rows[0]["entry"]["provenance"] != entry.provenance:
             raise ValueError("Use a separate book for offline fixtures.")
         cash = sum((D(row["entry"]["amount"]) * (1 if row["entry"]["kind"] in CREDITS else -1) for row in rows), D("0"))
@@ -129,6 +164,10 @@ class TreasuryBook:
             tax = max(D("0"), net_earned) * policy.tax_reserve_fraction
             available = max(D("0"), cash - policy.operating_reserve_target - policy.liability_reserve - tax)
             allocation = (min(unspent_earned, available) * policy.buyback_fraction).quantize(D("0.000001"), rounding=ROUND_DOWN)
+            from .distribution import DistributionPolicy, distribution_rows
+            current = distribution_rows(rows, DistributionPolicy(operating_reserve=str(policy.operating_reserve_target),
+                liability_reserve=str(policy.liability_reserve), tax_reserve=str(tax)))
+            allocation = min(allocation, D(current["reserve_bounded_buyback_budget"])).quantize(D("0.000001"))
         report = {"schema": "lobster-treasury-report-v1", "created_at": utcnow().isoformat(), "currency": "USDC",
             "record_count": len(rows), "provenance": rows[0]["entry"]["provenance"] if rows else None,
             "receipts_authenticated": False, "chain_head": rows[-1]["record_hash"] if rows else None,

@@ -58,6 +58,8 @@ def digest(episode: dict) -> str:
     binding = {key: episode.get(key) for key in ("pitch", "snapshot", "risk", "policy", "expires_at", "reviews")}
     if episode.get("research") is not None:
         binding["research"] = episode["research"]
+    if episode.get("strategy_attribution") is not None:
+        binding["strategy_attribution"] = episode["strategy_attribution"]
     return sha256(json.dumps(binding, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
@@ -187,10 +189,10 @@ class Store:
         with self.transaction() as session:
             return self.submit_in_transaction(session, pitch, request_id)
 
-    def submit_in_transaction(self, session: Session, pitch: PitchInput, request_id: str, research: dict | None = None) -> dict:
+    def submit_in_transaction(self, session: Session, pitch: PitchInput, request_id: str, research: dict | None = None, attribution: dict | None = None) -> dict:
         existing = session.scalar(select(Episode).where(Episode.request_id == request_id))
         if existing:
-            if existing.payload["pitch"] != pitch.model_dump(mode="json"):
+            if existing.payload["pitch"] != pitch.model_dump(mode="json") or existing.payload.get("strategy_attribution") != attribution:
                 raise ValueError("This request ID belongs to a different pitch.")
             return existing.payload
         pending = session.scalar(select(func.count()).select_from(Episode).where(
@@ -204,6 +206,7 @@ class Store:
             "snapshot": None, "reviews": {}, "risk": None, "policy": self.policy.model_dump(mode="json"),
             "approval_hash": None, "position_id": None, "reason": "Waiting for the analyst."}
         if research is not None: ep["research"] = research
+        if attribution is not None: ep["strategy_attribution"] = attribution
         session.add(Episode(id=ep["id"], request_id=request_id, payload=ep))
         self.event(session, "user", "pitch_submitted", f"{pitch.author} pitched a BTC {pitch.direction} setup.", ep["id"])
         return ep

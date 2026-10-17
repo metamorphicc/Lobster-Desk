@@ -114,6 +114,8 @@ async def sync_project_settlement(book, runner):
     source_id = "project:" + runner.settings.account
     evidence = {"account": state, "reference": reference, "fills": snapshot["fills"],
         "trades": snapshot["trades"], "network": "mainnet"}
+    from .strategy_settlement import allocations
+    strategy_allocations = allocations(runner, snapshot, reference)
     with book.transaction() as db:
         db.execute("CREATE TABLE IF NOT EXISTS revenue_sources (id TEXT PRIMARY KEY, payload TEXT NOT NULL)")
         old = db.execute("SELECT payload FROM revenue_sources WHERE id=?", (source_id,)).fetchone()
@@ -124,12 +126,19 @@ async def sync_project_settlement(book, runner):
         if old and reference["cursor_ms"] == old["cursor_ms"] and performance != previous:
             raise ValueError("Conflicting settlement at one observation timestamp.")
         change = performance - previous
+        prior_allocations = {a["execution_id"]: a for row in book.read(db) for a in row["entry"].get("strategy_allocations", [])}
+        new_allocations = []
+        for item in strategy_allocations:
+            prior = prior_allocations.get(item["execution_id"])
+            if prior:
+                if prior != item: raise ValueError("A settled strategy execution changed; owner reconciliation required.")
+            else: new_allocations.append(item)
         identity = fingerprint({"source": source_id, "baseline": reference["baseline_ms"], "cursor": reference["cursor_ms"]})
-        if change:
+        if change or new_allocations:
             book.append_in_transaction(db, TreasuryEntry(id=identity, receipt_ref="hl-mainnet-settlement:" + identity,
-                evidence_sha256=fingerprint(evidence), kind="trading_profit" if change > 0 else "trading_loss",
+                evidence_sha256=fingerprint(evidence), kind="trading_profit" if change > 0 else "trading_loss" if change < 0 else "strategy_checkpoint",
                 amount=str(abs(change)), occurred_at=datetime.fromtimestamp(reference["cursor_ms"]/1000, timezone.utc),
-                provenance="owner_supplied_unverified"))
+                provenance="owner_supplied_unverified", strategy_allocations=new_allocations))
         db.execute("INSERT OR REPLACE INTO revenue_sources VALUES (?,?)", (source_id, json.dumps({"baseline_ms": reference["baseline_ms"],
             "cursor_ms": reference["cursor_ms"], "net_settled": str(performance), "evidence_hash": fingerprint(evidence)})))
         return {"source": source_id, "net_settled": str(performance), "new_settlement": str(change),

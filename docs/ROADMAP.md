@@ -113,9 +113,15 @@ These are code deliverables, not documentation substitutes. Default operation re
 
   - [x] **9.9c Integrated handoff and verification.** Updated current setup/capability map, explicit remaining capital-routing boundary and historical-record labelling. Full backend: 511 passed; client: 69 passed; TypeScript/build and live Journal/Treasury mobile views pass. No push or financial activation.
 
+## Stage 10 — Revised fees and strategy-author profit sharing
+
+- [x] **10.1 Financial backend and donation removal.** Donation provider/payment code, runner/config/command and active API integration removed. Received fees allocate 60% bot / 40% team. Authenticated pre-review attribution follows approved project execution into exact closed-fill/funding settlement; 50% author liabilities reserve cash and cannot fund buybacks or new entries. Private accruals and operator-only verification of already completed source/recipient transfers are connected. Historical receipts stay readable; new donation receipts are refused.
+- [ ] **10.2 Revised product interface.** Remove donation panels, show the new split, add verified strategy submission/private earnings and update mechanics copy. Verify production build and responsive states.
+- [ ] **10.3 Integrated verification/handoff.** Current policy/configuration documentation, full financial regression checks and local preview; no push or financial activation.
+
 ## Financial policy
 
-Pending owner-directed economics revision: [NEXT-ECONOMICS.md](NEXT-ECONOMICS.md). Retire donations, allocate received fees 40% team / 60% bot, and implement author/bot profit sharing for attributable user-strategy trades. Recorded only; implementation deferred at the owner's request. Existing Stage 9 checks do not cover this new policy.
+The owner-directed economics revision is implemented in Stage 10: received fees allocate 40% team / 60% bot; verified user-strategy net profits allocate 50% author / 50% bot. Donation execution is retired. See `STRATEGY-SHARING.md` for accounting, authorship and observed payment boundaries. Historical Stage 8–9 descriptions below/above record the superseded implementation.
 
 - BTC only; one open position, including outstanding reservations.
 - Up to 2x leverage; isolated account assumptions for the future exchange adapter.

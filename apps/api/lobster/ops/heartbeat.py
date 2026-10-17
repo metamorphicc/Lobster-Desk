@@ -9,7 +9,7 @@ from ..domain import utcnow
 
 def ping(path, service, *, ok=True, state="idle"):
     path = Path(path)
-    if service not in {"project", "user", "testnet", "solana", "charity"} or not path.is_file(): return False
+    if service not in {"project", "user", "testnet", "solana"} or not path.is_file(): return False
     try:
         with closing(sqlite3.connect(path, timeout=1)) as db:
             db.execute("BEGIN IMMEDIATE")

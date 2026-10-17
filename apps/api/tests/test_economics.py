@@ -39,7 +39,7 @@ def test_losses_expenses_reserves_tax_and_past_buybacks_are_applied_once(tmp_pat
             assert D(report["provisional_buyback_allocation"]) == 0
     assert report["net_recorded_earnings"] == "40"
     assert report["unspent_earnings"] == "30"
-    assert D(report["provisional_buyback_allocation"]) == D("15")
+    assert D(report["provisional_buyback_allocation"]) == 0  # Fee income cannot fund profit-only buybacks.
     assert not report["transfers_authorized"]
     assert not report["receipts_authenticated"]
     assert report["totals"]["buyback_spend"] == "10"

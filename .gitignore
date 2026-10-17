@@ -16,7 +16,6 @@ htmlcov/
 !.env.agents.example
 !.env.execution.example
 !.env.treasury.example
-!.env.charity.example
 !.env.users.example
 !.env.users-mainnet.example
 !.env.revenue.example

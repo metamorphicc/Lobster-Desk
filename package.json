@@ -9,7 +9,6 @@
     "agents": "node scripts/agents.mjs",
     "execution": "node scripts/execution.mjs",
     "treasury": "node scripts/python.mjs scripts/treasury-runner.py",
-    "charity": "node scripts/python.mjs scripts/charity-runner.py",
     "users:execution": "node scripts/python.mjs scripts/user-runner.py",
     "revenue": "node scripts/python.mjs scripts/revenue-runner.py",
     "ops": "node scripts/python.mjs scripts/ops-runner.py",

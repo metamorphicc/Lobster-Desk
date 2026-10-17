@@ -21,9 +21,9 @@ SAFE_CODES = {"revenue_observation_unavailable", "database_unavailable", "worker
     "decision_error", "research_unavailable", "paper_paused", "paper_halted", "paper_funding_pending", "review_budget_exhausted",
     "testnet_reconciliation", "testnet_halted", "testnet_ledger_unavailable", "financial_runner_unavailable", "user_permission_uncertain",
     "user_consent_handoff", "exchange_command_uncertain", "exchange_exposure_review", "financial_journal_unavailable",
-    "application_inventory_unavailable", "solana_transaction_uncertain", "charity_transaction_uncertain", "charity_pledge_uncertain",
+    "application_inventory_unavailable", "solana_transaction_uncertain",
     "treasury_journal_unavailable", "api_runtime_unavailable", "monitor_scope_mismatch"}
-SAFE_SCOPES = {"service", "paper", "research", "testnet", "project", "user", "execution", "solana", "charity", "treasury"}
+SAFE_SCOPES = {"service", "paper", "research", "testnet", "project", "user", "execution", "solana", "treasury"}
 
 
 class AlertSettings(BaseSettings):
@@ -73,7 +73,7 @@ def financial_observations(application_path, treasury_path):
         state = states.get(service)
         try:
             age = (utcnow() - datetime.fromisoformat(state["last_success_at"])).total_seconds() if state and state.get("last_success_at") else None
-            healthy = state and state["ok"] and age is not None and -2 <= age <= (180 if service == "charity" else 30)
+            healthy = state and state["ok"] and age is not None and -2 <= age <= 30
         except Exception: healthy = False
         if not healthy: alert("financial_runner_unavailable", "critical", service)
     try:
@@ -100,12 +100,9 @@ def financial_observations(application_path, treasury_path):
     if Path(treasury_path).exists():
         try:
             with closing(read_only(Path(treasury_path))) as db:
-                solana, charity = rows(db, "solana_operations"), rows(db, "charity_payments")
+                solana = rows(db, "solana_operations")
                 alert("solana_transaction_uncertain", "critical", "solana", sum(r["status"] in {"sending", "unknown"} for r in solana))
-                alert("charity_transaction_uncertain", "critical", "charity", sum(r["status"] in {"sending", "unknown"} for r in charity))
-                alert("charity_pledge_uncertain", "warning", "charity", sum(r["status"] in {"creating_pledge", "pledge_unknown"} for r in charity))
                 stale_heartbeat(db, "solana", any(r["status"] in {"sending", "submitted", "unknown"} for r in solana))
-                stale_heartbeat(db, "charity", any(r["status"] in {"sending", "submitted", "unknown"} for r in charity))
                 for state in rows(db, "revenue_watches"):
                     if not state["active"]: continue
                     try:

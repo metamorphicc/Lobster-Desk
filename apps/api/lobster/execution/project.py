@@ -59,9 +59,10 @@ class ProjectLedger(ExecutionLedger):
         reference = self.capital.get(self.owner)
         if not reference: raise ValueError("Project loss references required.")
         flows = D(reference["cashflows"])
-        return Capital(equity=account.equity, available_cash=max(D(0), account.withdrawable - self.reserve_floor),
-            day_start_equity=max(D(0), D(reference["day_reference"]) + flows),
-            high_water_equity=max(D(0), D(reference["high_water"]) + flows),
+        reserved = getattr(self, "entry_liability_reserve", D(0)) if not account.btc_size else D(0)
+        return Capital(equity=max(D(0), account.equity-reserved), available_cash=max(D(0), account.withdrawable - self.reserve_floor-reserved),
+            day_start_equity=max(D(0), D(reference["day_reference"]) + flows-reserved),
+            high_water_equity=max(D(0), D(reference["high_water"]) + flows-reserved),
             paused=bool(reference["stale"] or reference["halt_reason"] or self.snapshot()["control"]["halt_reason"]),
             occupied=bool(account.btc_size or account.other_positions or account.open_order_count))
 
@@ -108,6 +109,12 @@ class ProjectRunner:
         if initial - performance >= self.settings.absolute_loss_budget or account.equity <= self.settings.reserve_floor or reference["halt_reason"]:
             self.ledger.halt("Project absolute loss, reserve or observed risk limit reached.")
             raise ValueError("Project capital limit reached.")
+        if self.settings.network == "mainnet" and self.settings.treasury_path:
+            from ..economics.book import TreasuryBook
+            from ..economics.distribution import distribution
+            if not self.settings.treasury_path.is_file(): raise ValueError("The shared treasury book is unavailable.")
+            report = distribution(TreasuryBook(self.settings.treasury_path))
+            self.ledger.entry_liability_reserve = sum((D(v) for v in report["outstanding_earmarks"].values()), D(0))
         with self.store.transaction() as session:
             app = session.get(Account, 1).payload
             if app["paused"] or app["halt_reason"]: raise ValueError("Application entry pause/halt is active.")
@@ -134,18 +141,32 @@ class ProjectRunner:
                 return await self.broker.reconcile(trade["id"])
         if not self.armed: return None
         state, reference = await self.observe()
+        if self.settings.network == "mainnet" and self.settings.treasury_path:
+            from ..economics.book import TreasuryBook
+            from ..economics.ingestion import sync_project_settlement
+            # Settle prior closed trades before admitting another entry, so
+            # author liabilities are reserved before their capital can be reused.
+            await sync_project_settlement(TreasuryBook(self.settings.treasury_path), self)
         with self.store.transaction() as session:
             candidates = [row.payload for row in session.scalars(select(Episode).where(
                 Episode.payload["status"].as_string().in_(("approved", "filled"))).order_by(Episode.payload["created_at"].as_string()))
-                if row.payload.get("research")]
+                if row.payload.get("research") or row.payload.get("strategy_attribution", {}).get("network") == self.settings.network]
         seen = {trade["id"] for trade in self.ledger.snapshot()["trades"]}
         for episode in candidates:
             if episode["id"] in seen or utcnow() >= datetime.fromisoformat(episode["expires_at"]): continue
             setup = ReviewedSetup.from_episode(episode, self.store.policy, network=self.settings.network)
-            origin = episode["research"]
-            await self.broker.stage(setup, audit_binding={"origin": "autonomous-project",
-                "campaign_id": origin["campaign_id"], "strategy_hash": origin["strategy_hash"],
-                "max_holding_seconds": origin["max_holding_seconds"]})
+            if setup.strategy_attribution:
+                if self.settings.network == "mainnet" and not self.settings.treasury_path:
+                    raise ValueError("User-strategy execution requires the shared realized-profit treasury book.")
+                from ..users.strategies import UserStrategies
+                attribution = setup.strategy_attribution.model_dump()
+                owner = UserStrategies(self.store, self.settings.network).resolve(attribution, episode["id"])
+                binding = {"origin": "user-strategy", "strategy_owner": owner, **attribution}
+            else:
+                origin = episode["research"]
+                binding = {"origin": "autonomous-project", "campaign_id": origin["campaign_id"],
+                    "strategy_hash": origin["strategy_hash"], "max_holding_seconds": origin["max_holding_seconds"]}
+            await self.broker.stage(setup, audit_binding=binding)
             return await self.broker.dispatch(setup.episode_id)
         return None
 

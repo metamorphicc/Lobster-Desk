@@ -15,7 +15,7 @@ def test_exact_fee_waterfall_and_no_deposit_or_fee_profit(tmp_path):
     book.append(entry(1, "capital_in", "1000"))
     book.append(entry(2, "builder_receipt", "500"))
     report = distribution(book, ready())
-    assert report["fee_allocation"] == {"agents": "200.000000", "team": "100.000000", "charity": "200.000000"}
+    assert report["fee_allocation"] == {"agents": "300.000000", "team": "200.000000"}
     assert D(report["lifetime_buyback_entitlement"]) == 0
     assert UserTestnetSettings(_env_file=None).builder_fee_tenths_bps == 50
 
@@ -35,15 +35,15 @@ def test_loss_recovery_costs_and_spend_do_not_reallocate_previous_half(tmp_path)
     assert distribution(book, ready())["loss_carryforward"] == "10"
 
 
-def test_charity_team_earmarks_and_reserves_cannot_fund_buybacks(tmp_path):
+def test_team_earmarks_and_reserves_cannot_fund_buybacks(tmp_path):
     book = TreasuryBook(tmp_path / "reserve.db")
     for i, (kind, amount) in enumerate([("builder_receipt", "500"), ("trading_profit", "100"),
-        ("capital_out", "300")]): book.append(entry(i, kind, amount))
+        ("capital_out", "400")]): book.append(entry(i, kind, amount))
     assert D(distribution(book, ready())["reserve_bounded_buyback_budget"]) == 0
     assert distribution(book)["reserve_bounded_buyback_budget"] is None
-    book.append(entry(4, "charity_payout", "100"))
+    book.append(entry(4, "team_payout", "100"))
     report = distribution(book, ready())
-    assert D(report["outstanding_earmarks"]["charity"]) == 100
+    assert D(report["outstanding_earmarks"]["team"]) == 100
     assert D(report["reserve_bounded_buyback_budget"]) == 0
 
 
