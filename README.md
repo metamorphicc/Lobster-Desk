@@ -6,6 +6,7 @@ A public trading tank: pitch a BTC setup, watch three crustacean agents challeng
 
 ## Structure
 
+- `docs/FEATURES.md`: agreed product features, fee distribution, profit-funded buyback/burn rule and honest implementation status.
 - `apps/api`: FastAPI, deterministic risk/capital controls, paper broker, market feeds, agent adapters, persistent audit journal.
 - `apps/web`: Next.js trading tank and pitch interface.
 - `docs/ROADMAP.md`: stages, substages, acceptance criteria, and completion status.
