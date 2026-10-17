@@ -1,5 +1,7 @@
 /** Explicit wallet connection and tightly scoped authentication. No exchange signing. */
 import { messageHex, validateAuthChallenge } from "./wallet-auth.ts";
+import { validateFinancialJob, type FinancialKind, type BoundPlan } from "./user-financial.ts";
+import type { ExecutionProfile } from "./user-consent.ts";
 
 export type Provider = {
   request(args: { method: string; params?: unknown[] }): Promise<unknown>;
@@ -118,6 +120,27 @@ export class WalletSession {
     const signature = await provider.request({ method: "personal_sign", params: [messageHex(challenge.message), state.address] });
     current();
     if (typeof signature !== "string" || !/^0x[0-9a-fA-F]{130}$/.test(signature)) throw new Error("The wallet returned an invalid authentication signature.");
+    await checkProvider(); current();
+    return signature;
+  }
+
+  async signFinancial(value: unknown, profile: ExecutionProfile, kind: FinancialKind, origin: string, plan?: BoundPlan): Promise<string> {
+    const provider = this.provider, generation = this.generation, state = this.snapshot();
+    if (!provider || state.status !== "connected" || state.address !== profile.address || !state.chainId) throw new Error("Connect the exact wallet before financial signing.");
+    const job = structuredClone(validateFinancialJob(value, profile, kind, origin, state.chainId, plan));
+    const current = () => {
+      if (generation !== this.generation || provider !== this.provider || state.revision !== this.state.revision) throw new Error("Wallet changed during financial signing.");
+      validateFinancialJob(job, profile, kind, origin, state.chainId!, plan);
+    };
+    const checkProvider = async () => {
+      const accounts = await provider.request({ method: "eth_accounts" }); current();
+      const network = await provider.request({ method: "eth_chainId" }); current();
+      if (account(accounts) !== state.address || chain(network) !== state.chainId) { this.disconnect(); throw new Error("Wallet changed before financial proof submission."); }
+    };
+    await checkProvider(); current();
+    const signature = await provider.request({ method: "eth_signTypedData_v4", params: [state.address, JSON.stringify(job.typed_data)] });
+    current();
+    if (typeof signature !== "string" || !/^0x[0-9a-fA-F]{130}$/.test(signature)) throw new Error("Invalid financial wallet signature.");
     await checkProvider(); current();
     return signature;
   }

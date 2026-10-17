@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { Download, FileCheck2, LoaderCircle } from "lucide-react";
 import { money, number, type Episode } from "@/lib/types";
 import { UserConsent } from "./user-consent";
+import { UserFinancial } from "./user-financial";
+import type { WalletSession } from "@/lib/wallet";
 
 type Preview = {
   id: string; schema: string; address: string; episode_id: string; expires_at: string; expired: boolean; plan_hash: string;
@@ -14,8 +16,8 @@ type Preview = {
   protection_templates: { stop_trigger: string; target_trigger: string }; execution_blockers: string[]; assumptions: string;
 };
 
-export function UserOrderPreview({ address, token, episodes, now, onSessionInvalid }: {
-  address: string; token: string; episodes: Episode[]; now: number; onSessionInvalid: () => void;
+export function UserOrderPreview({ address, token, episodes, now, session, onSessionInvalid }: {
+  address: string; token: string; episodes: Episode[]; now: number; session: WalletSession; onSessionInvalid: () => void;
 }) {
   const [selected, setSelected] = useState("");
   const [plan, setPlan] = useState<Preview | null>(null);
@@ -61,6 +63,7 @@ export function UserOrderPreview({ address, token, episodes, now, onSessionInval
     {error && <p className="form-error" role="alert">{error}</p>}
     {plan && <><UserOrderReport plan={plan} expired={!!expired} busy={busy} download={download} />
       <UserConsent key={plan.id} address={address} token={token} plan={plan} now={now} onSessionInvalid={onSessionInvalid} /></>}
+    {plan && <UserFinancial key={"financial-" + plan.id} address={address} token={token} session={session} now={now} plan={plan} onSessionInvalid={onSessionInvalid} />}
   </section>;
 }
 

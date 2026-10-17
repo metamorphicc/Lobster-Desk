@@ -22,7 +22,7 @@ function profile(value: unknown, owner: string): ExecutionProfile {
   check(new Set([owner, address(p.agent), address(p.builder)]).size === 3 && integer(p.fee_tenths_bps) && p.fee_tenths_bps <= 100);
   return value as ExecutionProfile;
 }
-function typed(value: unknown, name: string, primary: string, fields: { name: string; type: string }[]): TypedData {
+export function typed(value: unknown, name: string, primary: string, fields: { name: string; type: string }[]): TypedData {
   const data = object(value), domain = object(data.domain), types = object(data.types); object(data.message);
   keys(data, ["domain", "types", "primaryType", "message"]); keys(domain, ["name", "version", "chainId", "verifyingContract"]);
   keys(types, [primary, "EIP712Domain"]);

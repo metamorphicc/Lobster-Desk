@@ -1,0 +1,710 @@
+{
+  "fixture": "Synthetic unfunded Python/SDK contracts. No signatures or financial HTTP.",
+  "profile": {
+    "address": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+    "agent": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+    "builder": "0x4444444444444444444444444444444444444444",
+    "fee_tenths_bps": 20,
+    "network": "testnet"
+  },
+  "plan": {
+    "id": "11111111111111111111111111111111",
+    "address": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+    "network": "testnet",
+    "episode_id": "public-fixture-episode",
+    "expires_at": "2026-10-17T00:00:30+00:00",
+    "fees": {
+      "builder_address": "0x4444444444444444444444444444444444444444",
+      "builder_fee_tenths_bps": 20
+    },
+    "executable": false,
+    "submitted": false,
+    "signed": false,
+    "nonce_reserved": false,
+    "order_submission_enabled": false,
+    "fee_collection_enabled": false,
+    "plan_hash": "e7021d5118054465b196567e4df539cb3b8a39dc50f8c6dd2fd431f1df7940ed"
+  },
+  "jobs": {
+    "agent": {
+      "id": "4e6a251a0a23cc68b9e48cb796c78657",
+      "owner": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+      "kind": "agent",
+      "plan_id": null,
+      "nonce": 1792195200000,
+      "expires_ms": 1792195230000,
+      "profile_hash": "65595f583acdb9ecec902a69b3a03bdeb1841bb74510fc070028eaf3b2e2ffa6",
+      "status": "unsigned",
+      "network": "testnet",
+      "scope": "testnet-financial-consent-v1",
+      "action": {
+        "type": "approveAgent",
+        "hyperliquidChain": "Testnet",
+        "signatureChainId": "0x66eee",
+        "nonce": 1792195200000,
+        "agentAddress": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+        "agentName": "Lobster Desk testnet"
+      },
+      "typed_data": {
+        "domain": {
+          "name": "HyperliquidSignTransaction",
+          "version": "1",
+          "chainId": 421614,
+          "verifyingContract": "0x0000000000000000000000000000000000000000"
+        },
+        "types": {
+          "HyperliquidTransaction:ApproveAgent": [
+            {
+              "name": "hyperliquidChain",
+              "type": "string"
+            },
+            {
+              "name": "agentAddress",
+              "type": "address"
+            },
+            {
+              "name": "agentName",
+              "type": "string"
+            },
+            {
+              "name": "nonce",
+              "type": "uint64"
+            }
+          ],
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ]
+        },
+        "primaryType": "HyperliquidTransaction:ApproveAgent",
+        "message": {
+          "type": "approveAgent",
+          "hyperliquidChain": "Testnet",
+          "signatureChainId": "0x66eee",
+          "nonce": 1792195200000,
+          "agentAddress": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+          "agentName": "Lobster Desk testnet"
+        }
+      },
+      "binding_hash": "f762ae976231a527d04ffc47f6afac673cc36c4fef16840231c63575f9eed897",
+      "proof": null,
+      "expired": false,
+      "wallet_signing_enabled": true,
+      "submission_from_api": false,
+      "note": "Explicit TESTNET financial consent. Sign-in and offline local intent proofs cannot authorize this job. A separate armed runner submits queued permissions/orders. SDK permissions persist until revoked; the local queue deadline is not on-chain expiry."
+    },
+    "builder": {
+      "id": "f184a1faa1e43b9873fa233dbeb44ea8",
+      "owner": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+      "kind": "builder",
+      "plan_id": null,
+      "nonce": 1792195200001,
+      "expires_ms": 1792195230000,
+      "profile_hash": "65595f583acdb9ecec902a69b3a03bdeb1841bb74510fc070028eaf3b2e2ffa6",
+      "status": "unsigned",
+      "network": "testnet",
+      "scope": "testnet-financial-consent-v1",
+      "action": {
+        "type": "approveBuilderFee",
+        "hyperliquidChain": "Testnet",
+        "signatureChainId": "0x66eee",
+        "nonce": 1792195200001,
+        "builder": "0x4444444444444444444444444444444444444444",
+        "maxFeeRate": "0.02%"
+      },
+      "typed_data": {
+        "domain": {
+          "name": "HyperliquidSignTransaction",
+          "version": "1",
+          "chainId": 421614,
+          "verifyingContract": "0x0000000000000000000000000000000000000000"
+        },
+        "types": {
+          "HyperliquidTransaction:ApproveBuilderFee": [
+            {
+              "name": "hyperliquidChain",
+              "type": "string"
+            },
+            {
+              "name": "maxFeeRate",
+              "type": "string"
+            },
+            {
+              "name": "builder",
+              "type": "address"
+            },
+            {
+              "name": "nonce",
+              "type": "uint64"
+            }
+          ],
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ]
+        },
+        "primaryType": "HyperliquidTransaction:ApproveBuilderFee",
+        "message": {
+          "type": "approveBuilderFee",
+          "hyperliquidChain": "Testnet",
+          "signatureChainId": "0x66eee",
+          "nonce": 1792195200001,
+          "builder": "0x4444444444444444444444444444444444444444",
+          "maxFeeRate": "0.02%"
+        }
+      },
+      "binding_hash": "b01cd1f72dfb8240a1daaf12b2cc1cf85b0097e69764ecc0fa20c2d4ca176776",
+      "proof": null,
+      "expired": false,
+      "wallet_signing_enabled": true,
+      "submission_from_api": false,
+      "note": "Explicit TESTNET financial consent. Sign-in and offline local intent proofs cannot authorize this job. A separate armed runner submits queued permissions/orders. SDK permissions persist until revoked; the local queue deadline is not on-chain expiry."
+    },
+    "revoke_builder": {
+      "id": "a13cb52a1d9858ba1ec34df8eda61530",
+      "owner": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+      "kind": "revoke_builder",
+      "plan_id": null,
+      "nonce": 1792195200002,
+      "expires_ms": 1792195230000,
+      "profile_hash": "65595f583acdb9ecec902a69b3a03bdeb1841bb74510fc070028eaf3b2e2ffa6",
+      "status": "unsigned",
+      "network": "testnet",
+      "scope": "testnet-financial-consent-v1",
+      "action": {
+        "type": "approveBuilderFee",
+        "hyperliquidChain": "Testnet",
+        "signatureChainId": "0x66eee",
+        "nonce": 1792195200002,
+        "builder": "0x4444444444444444444444444444444444444444",
+        "maxFeeRate": "0%"
+      },
+      "typed_data": {
+        "domain": {
+          "name": "HyperliquidSignTransaction",
+          "version": "1",
+          "chainId": 421614,
+          "verifyingContract": "0x0000000000000000000000000000000000000000"
+        },
+        "types": {
+          "HyperliquidTransaction:ApproveBuilderFee": [
+            {
+              "name": "hyperliquidChain",
+              "type": "string"
+            },
+            {
+              "name": "maxFeeRate",
+              "type": "string"
+            },
+            {
+              "name": "builder",
+              "type": "address"
+            },
+            {
+              "name": "nonce",
+              "type": "uint64"
+            }
+          ],
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ]
+        },
+        "primaryType": "HyperliquidTransaction:ApproveBuilderFee",
+        "message": {
+          "type": "approveBuilderFee",
+          "hyperliquidChain": "Testnet",
+          "signatureChainId": "0x66eee",
+          "nonce": 1792195200002,
+          "builder": "0x4444444444444444444444444444444444444444",
+          "maxFeeRate": "0%"
+        }
+      },
+      "binding_hash": "5158278740e02d91c5cf45713b9a4369d5a5afc4f811ee6894d35935dbcff961",
+      "proof": null,
+      "expired": false,
+      "wallet_signing_enabled": true,
+      "submission_from_api": false,
+      "note": "Explicit TESTNET financial consent. Sign-in and offline local intent proofs cannot authorize this job. A separate armed runner submits queued permissions/orders. SDK permissions persist until revoked; the local queue deadline is not on-chain expiry."
+    },
+    "trade": {
+      "id": "611acd3201b8d970717a9f4303a92ae8",
+      "owner": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+      "kind": "trade",
+      "plan_id": "11111111111111111111111111111111",
+      "nonce": 1792195200003,
+      "expires_ms": 1792195230000,
+      "profile_hash": "65595f583acdb9ecec902a69b3a03bdeb1841bb74510fc070028eaf3b2e2ffa6",
+      "status": "unsigned",
+      "network": "testnet",
+      "scope": "testnet-financial-consent-v1",
+      "plan_hash": "e7021d5118054465b196567e4df539cb3b8a39dc50f8c6dd2fd431f1df7940ed",
+      "episode_id": "public-fixture-episode",
+      "typed_data": {
+        "domain": {
+          "name": "Lobster Desk Execution Consent",
+          "version": "1",
+          "chainId": 421614,
+          "verifyingContract": "0x0000000000000000000000000000000000000000"
+        },
+        "primaryType": "TestnetTradeIntent",
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "TestnetTradeIntent": [
+            {
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "name": "planHash",
+              "type": "bytes32"
+            },
+            {
+              "name": "agent",
+              "type": "address"
+            },
+            {
+              "name": "builder",
+              "type": "address"
+            },
+            {
+              "name": "builderFeeTenthsBps",
+              "type": "uint256"
+            },
+            {
+              "name": "nonce",
+              "type": "uint64"
+            },
+            {
+              "name": "validUntil",
+              "type": "uint64"
+            }
+          ]
+        },
+        "message": {
+          "owner": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+          "planHash": "0xe7021d5118054465b196567e4df539cb3b8a39dc50f8c6dd2fd431f1df7940ed",
+          "agent": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+          "builder": "0x4444444444444444444444444444444444444444",
+          "builderFeeTenthsBps": 20,
+          "nonce": 1792195200003,
+          "validUntil": 1792195230000
+        }
+      },
+      "binding_hash": "d94a405695345b7a47c366479b81e826c80bbdd6193d956d189cc31188bf7773",
+      "proof": null,
+      "expired": false,
+      "wallet_signing_enabled": true,
+      "submission_from_api": false,
+      "note": "Explicit TESTNET financial consent. Sign-in and offline local intent proofs cannot authorize this job. A separate armed runner submits queued permissions/orders. SDK permissions persist until revoked; the local queue deadline is not on-chain expiry."
+    }
+  },
+  "context": {
+    "schema": "lobster-user-financial-context-v1",
+    "owner": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+    "network": "testnet",
+    "enabled": true,
+    "profile": {
+      "address": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+      "agent": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+      "builder": "0x4444444444444444444444444444444444444444",
+      "fee_tenths_bps": 20,
+      "network": "testnet"
+    },
+    "jobs": [
+      {
+        "id": "4e6a251a0a23cc68b9e48cb796c78657",
+        "owner": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+        "kind": "agent",
+        "plan_id": null,
+        "nonce": 1792195200000,
+        "expires_ms": 1792195230000,
+        "profile_hash": "65595f583acdb9ecec902a69b3a03bdeb1841bb74510fc070028eaf3b2e2ffa6",
+        "status": "unsigned",
+        "network": "testnet",
+        "scope": "testnet-financial-consent-v1",
+        "action": {
+          "type": "approveAgent",
+          "hyperliquidChain": "Testnet",
+          "signatureChainId": "0x66eee",
+          "nonce": 1792195200000,
+          "agentAddress": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+          "agentName": "Lobster Desk testnet"
+        },
+        "typed_data": {
+          "domain": {
+            "name": "HyperliquidSignTransaction",
+            "version": "1",
+            "chainId": 421614,
+            "verifyingContract": "0x0000000000000000000000000000000000000000"
+          },
+          "types": {
+            "HyperliquidTransaction:ApproveAgent": [
+              {
+                "name": "hyperliquidChain",
+                "type": "string"
+              },
+              {
+                "name": "agentAddress",
+                "type": "address"
+              },
+              {
+                "name": "agentName",
+                "type": "string"
+              },
+              {
+                "name": "nonce",
+                "type": "uint64"
+              }
+            ],
+            "EIP712Domain": [
+              {
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "name": "version",
+                "type": "string"
+              },
+              {
+                "name": "chainId",
+                "type": "uint256"
+              },
+              {
+                "name": "verifyingContract",
+                "type": "address"
+              }
+            ]
+          },
+          "primaryType": "HyperliquidTransaction:ApproveAgent",
+          "message": {
+            "type": "approveAgent",
+            "hyperliquidChain": "Testnet",
+            "signatureChainId": "0x66eee",
+            "nonce": 1792195200000,
+            "agentAddress": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+            "agentName": "Lobster Desk testnet"
+          }
+        },
+        "binding_hash": "f762ae976231a527d04ffc47f6afac673cc36c4fef16840231c63575f9eed897",
+        "proof": null,
+        "expired": false,
+        "wallet_signing_enabled": true,
+        "submission_from_api": false,
+        "note": "Explicit TESTNET financial consent. Sign-in and offline local intent proofs cannot authorize this job. A separate armed runner submits queued permissions/orders. SDK permissions persist until revoked; the local queue deadline is not on-chain expiry."
+      },
+      {
+        "id": "f184a1faa1e43b9873fa233dbeb44ea8",
+        "owner": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+        "kind": "builder",
+        "plan_id": null,
+        "nonce": 1792195200001,
+        "expires_ms": 1792195230000,
+        "profile_hash": "65595f583acdb9ecec902a69b3a03bdeb1841bb74510fc070028eaf3b2e2ffa6",
+        "status": "unsigned",
+        "network": "testnet",
+        "scope": "testnet-financial-consent-v1",
+        "action": {
+          "type": "approveBuilderFee",
+          "hyperliquidChain": "Testnet",
+          "signatureChainId": "0x66eee",
+          "nonce": 1792195200001,
+          "builder": "0x4444444444444444444444444444444444444444",
+          "maxFeeRate": "0.02%"
+        },
+        "typed_data": {
+          "domain": {
+            "name": "HyperliquidSignTransaction",
+            "version": "1",
+            "chainId": 421614,
+            "verifyingContract": "0x0000000000000000000000000000000000000000"
+          },
+          "types": {
+            "HyperliquidTransaction:ApproveBuilderFee": [
+              {
+                "name": "hyperliquidChain",
+                "type": "string"
+              },
+              {
+                "name": "maxFeeRate",
+                "type": "string"
+              },
+              {
+                "name": "builder",
+                "type": "address"
+              },
+              {
+                "name": "nonce",
+                "type": "uint64"
+              }
+            ],
+            "EIP712Domain": [
+              {
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "name": "version",
+                "type": "string"
+              },
+              {
+                "name": "chainId",
+                "type": "uint256"
+              },
+              {
+                "name": "verifyingContract",
+                "type": "address"
+              }
+            ]
+          },
+          "primaryType": "HyperliquidTransaction:ApproveBuilderFee",
+          "message": {
+            "type": "approveBuilderFee",
+            "hyperliquidChain": "Testnet",
+            "signatureChainId": "0x66eee",
+            "nonce": 1792195200001,
+            "builder": "0x4444444444444444444444444444444444444444",
+            "maxFeeRate": "0.02%"
+          }
+        },
+        "binding_hash": "b01cd1f72dfb8240a1daaf12b2cc1cf85b0097e69764ecc0fa20c2d4ca176776",
+        "proof": null,
+        "expired": false,
+        "wallet_signing_enabled": true,
+        "submission_from_api": false,
+        "note": "Explicit TESTNET financial consent. Sign-in and offline local intent proofs cannot authorize this job. A separate armed runner submits queued permissions/orders. SDK permissions persist until revoked; the local queue deadline is not on-chain expiry."
+      },
+      {
+        "id": "a13cb52a1d9858ba1ec34df8eda61530",
+        "owner": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+        "kind": "revoke_builder",
+        "plan_id": null,
+        "nonce": 1792195200002,
+        "expires_ms": 1792195230000,
+        "profile_hash": "65595f583acdb9ecec902a69b3a03bdeb1841bb74510fc070028eaf3b2e2ffa6",
+        "status": "unsigned",
+        "network": "testnet",
+        "scope": "testnet-financial-consent-v1",
+        "action": {
+          "type": "approveBuilderFee",
+          "hyperliquidChain": "Testnet",
+          "signatureChainId": "0x66eee",
+          "nonce": 1792195200002,
+          "builder": "0x4444444444444444444444444444444444444444",
+          "maxFeeRate": "0%"
+        },
+        "typed_data": {
+          "domain": {
+            "name": "HyperliquidSignTransaction",
+            "version": "1",
+            "chainId": 421614,
+            "verifyingContract": "0x0000000000000000000000000000000000000000"
+          },
+          "types": {
+            "HyperliquidTransaction:ApproveBuilderFee": [
+              {
+                "name": "hyperliquidChain",
+                "type": "string"
+              },
+              {
+                "name": "maxFeeRate",
+                "type": "string"
+              },
+              {
+                "name": "builder",
+                "type": "address"
+              },
+              {
+                "name": "nonce",
+                "type": "uint64"
+              }
+            ],
+            "EIP712Domain": [
+              {
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "name": "version",
+                "type": "string"
+              },
+              {
+                "name": "chainId",
+                "type": "uint256"
+              },
+              {
+                "name": "verifyingContract",
+                "type": "address"
+              }
+            ]
+          },
+          "primaryType": "HyperliquidTransaction:ApproveBuilderFee",
+          "message": {
+            "type": "approveBuilderFee",
+            "hyperliquidChain": "Testnet",
+            "signatureChainId": "0x66eee",
+            "nonce": 1792195200002,
+            "builder": "0x4444444444444444444444444444444444444444",
+            "maxFeeRate": "0%"
+          }
+        },
+        "binding_hash": "5158278740e02d91c5cf45713b9a4369d5a5afc4f811ee6894d35935dbcff961",
+        "proof": null,
+        "expired": false,
+        "wallet_signing_enabled": true,
+        "submission_from_api": false,
+        "note": "Explicit TESTNET financial consent. Sign-in and offline local intent proofs cannot authorize this job. A separate armed runner submits queued permissions/orders. SDK permissions persist until revoked; the local queue deadline is not on-chain expiry."
+      },
+      {
+        "id": "611acd3201b8d970717a9f4303a92ae8",
+        "owner": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+        "kind": "trade",
+        "plan_id": "11111111111111111111111111111111",
+        "nonce": 1792195200003,
+        "expires_ms": 1792195230000,
+        "profile_hash": "65595f583acdb9ecec902a69b3a03bdeb1841bb74510fc070028eaf3b2e2ffa6",
+        "status": "unsigned",
+        "network": "testnet",
+        "scope": "testnet-financial-consent-v1",
+        "plan_hash": "e7021d5118054465b196567e4df539cb3b8a39dc50f8c6dd2fd431f1df7940ed",
+        "episode_id": "public-fixture-episode",
+        "typed_data": {
+          "domain": {
+            "name": "Lobster Desk Execution Consent",
+            "version": "1",
+            "chainId": 421614,
+            "verifyingContract": "0x0000000000000000000000000000000000000000"
+          },
+          "primaryType": "TestnetTradeIntent",
+          "types": {
+            "EIP712Domain": [
+              {
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "name": "version",
+                "type": "string"
+              },
+              {
+                "name": "chainId",
+                "type": "uint256"
+              },
+              {
+                "name": "verifyingContract",
+                "type": "address"
+              }
+            ],
+            "TestnetTradeIntent": [
+              {
+                "name": "owner",
+                "type": "address"
+              },
+              {
+                "name": "planHash",
+                "type": "bytes32"
+              },
+              {
+                "name": "agent",
+                "type": "address"
+              },
+              {
+                "name": "builder",
+                "type": "address"
+              },
+              {
+                "name": "builderFeeTenthsBps",
+                "type": "uint256"
+              },
+              {
+                "name": "nonce",
+                "type": "uint64"
+              },
+              {
+                "name": "validUntil",
+                "type": "uint64"
+              }
+            ]
+          },
+          "message": {
+            "owner": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+            "planHash": "0xe7021d5118054465b196567e4df539cb3b8a39dc50f8c6dd2fd431f1df7940ed",
+            "agent": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+            "builder": "0x4444444444444444444444444444444444444444",
+            "builderFeeTenthsBps": 20,
+            "nonce": 1792195200003,
+            "validUntil": 1792195230000
+          }
+        },
+        "binding_hash": "d94a405695345b7a47c366479b81e826c80bbdd6193d956d189cc31188bf7773",
+        "proof": null,
+        "expired": false,
+        "wallet_signing_enabled": true,
+        "submission_from_api": false,
+        "note": "Explicit TESTNET financial consent. Sign-in and offline local intent proofs cannot authorize this job. A separate armed runner submits queued permissions/orders. SDK permissions persist until revoked; the local queue deadline is not on-chain expiry."
+      }
+    ],
+    "execution": null,
+    "submission_from_api": false,
+    "note": "Financial TESTNET signing is separate from read-only previews. The owner-run process holds only dedicated API keys."
+  }
+}

@@ -530,3 +530,17 @@ input[aria-invalid=true] + .field-helper, textarea[aria-invalid=true] + .field-h
   .research-workbench .panel-heading, .economics-policy .panel-heading { flex-direction: row; align-items: center; gap: var(--space-md); }
   .research-statistics, .research-results { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
+/* Financial consent extends the existing Midnight component states. */
+.financial-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.financial-workbench { min-width: 0; }
+.financial-workbench h3, .financial-workbench h4 { min-width: 0; overflow-wrap: anywhere; }
+.financial-identities code, .financial-jobs code { overflow-wrap: anywhere; font-size: 11px; }
+.financial-identities dd { min-width: 0; display: grid; gap: 5px; }
+.financial-review .auth-message { max-height: 280px; overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.financial-jobs { margin-top: 18px; }
+.financial-jobs li { display: grid; gap: 5px; min-width: 0; }
+.financial-workbench .positive { display: flex; align-items: flex-start; gap: 7px; }
+.financial-workbench .positive svg { flex-shrink: 0; margin-top: 2px; }
+.financial-workbench .button:hover:not(:disabled), .financial-workbench .button.is-hover { border-color: var(--color-accent); }
+.financial-workbench .button:focus-visible, .financial-workbench .button.is-focus { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+.financial-workbench .button.is-active { transform: translateY(1px); }
