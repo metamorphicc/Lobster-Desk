@@ -26,7 +26,7 @@ class DistributionPolicy(Contract):
     operating_reserve: Money | None = None
     liability_reserve: Money | None = None
     tax_reserve: Money | None = None
-    token_network: str | None = None
+    token_network: Literal["solana"] = "solana"
     token_contract: str | None = None
     transfers_enabled: Literal[False] = False
     holder_payouts_enabled: Literal[False] = False

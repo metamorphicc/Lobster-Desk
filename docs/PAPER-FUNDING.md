@@ -8,4 +8,4 @@ The hourly candle close is a notional-price proxy, matching the historical labor
 
 Missing/out-of-range history rolls back settlement and blocks new entries. Pending owed funding also blocks admission before its worker completes. Market stop/target/time/risk protection remains independently callable, and no funding data failure prevents an existing position from closing. Settlements feed the existing daily-loss/drawdown checks on the next market tick. Funding differences never become real treasury revenue.
 
-The API/UI expose funding amounts and legacy scope; runtime diagnostics report pending/failed reconciliation. Seven focused invariant cases cover signed costs/credits, closed-position recovery, restart/concurrency, rollback and legacy scope. No exchange write is part of paper funding.
+The API/UI expose funding amounts and legacy scope; runtime diagnostics report pending/failed reconciliation. Six focused invariant cases cover signed costs/credits, closed-position recovery, restart/concurrency, rollback and legacy scope. No exchange write is part of paper funding.

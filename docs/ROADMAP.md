@@ -96,7 +96,7 @@ These are code deliverables, not documentation substitutes. Default operation re
 - [x] **9.2 Autonomous project execution runner.** Separate opt-in owner process bridges reviewed research signals to network-bound dispatch, with OS lease, exact observed cash-flow/loss references, explicit budgets, strategy time exits and restart recovery. Five focused runner tests use an in-memory exchange; no financial command run. Web paper state remains separate; see `PROJECT-EXECUTION.md`.
 - [ ] **9.3 User financial signing and runner.** Explicit permission/intent signing, verified submission endpoints, per-user execution ownership and full journal recovery.
 - [x] **9.4 Forward paper funding.** Signed historical hourly settlements update cash/position PnL atomically and exactly once, including closed-position recovery/restart/concurrency. Missing coverage blocks new entries while protection remains independent. API/UI label tracked versus legacy unmodeled scope; see `PAPER-FUNDING.md`.
-- [ ] **9.5 Received revenue reconciliation.** Observed builder proceeds and trading settlements, idempotent ingestion and separation from estimates/paper PnL.
+- [x] **9.5 Received revenue reconciliation.** Fixed-mainnet received-claim ingestion and flat-account net settlement, atomic cursors/receipts, dedicated-builder attribution and fill/funding/equity checks. 36 focused offline cases pass; actual account reconciliation remains unobserved. No reward claim or transfer; see `REVENUE-INGESTION.md`.
 - [ ] **9.6 Solana treasury execution.** Network/mint-bound purchase, SPL burn, durable transaction state and authenticated finalized evidence. Solana selected by owner; mint remains unspecified.
 - [ ] **9.7 Charity integration.** Verified-provider/recipient directory, earmark-bound payment flow, receipts and retry/reconciliation. Provider research authorized; no recipient or payment invented.
 - [ ] **9.8 Public operation code.** Configurable public identity boundary, server packaging, external alerts, encrypted backup integration and operational checks. No deployment during implementation.
@@ -110,6 +110,6 @@ These are code deliverables, not documentation substitutes. Default operation re
 - Maximum drawdown: 5% from the equity high-water mark.
 - Minimum notional: $10; maximum notional: 25% of equity in the initial paper policy.
 - Stale or missing market data, expired proposals, invalid model output, or failed controls prevent entry.
-- Paper PnL includes modeled taker fees and slippage; funding is explicitly excluded until implemented.
+- New paper positions include modeled taker fees/slippage and reconciled hourly funding; older positions retain an explicit unmodeled-funding label.
 - Cash deposits, trading profit and hypothetical builder revenue are reported separately.
 

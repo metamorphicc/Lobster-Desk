@@ -36,6 +36,7 @@ class ProjectSettings(BaseSettings):
     absolute_loss_budget: D | None = Field(default=None, gt=0, allow_inf_nan=False)
     reserve_floor: D | None = Field(default=None, ge=0, allow_inf_nan=False)
     max_entry_notional: D = Field(default=D("50"), ge=10, le=50, allow_inf_nan=False)
+    treasury_path: Path | None = None
 
     @model_validator(mode="after")
     def budgets(self):

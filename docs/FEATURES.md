@@ -46,7 +46,7 @@ Buybacks and burning are not a price floor or a guarantee of token appreciation.
 ## Current boundaries and choices still open
 
 - Local research/paper mode is the usable release. Real trading, fee collection, donations and token transactions are not enabled by adding a model API key.
-- The token network, contract, ticker, supply, issuance/allocation and administrative permissions are not selected or implemented. No token has been launched.
+- The owner selected Solana. The mint address, ticker, supply, issuance/allocation and administrative permissions remain unspecified. No token has been launched.
 - Charity recipients and the payment/receipt mechanism are not selected. An earmarked balance is not a completed donation and is not available to fund buybacks.
 - No agreed payout to strategy authors, holder revenue share, staking/backing pool, paid pitch, voting feature or user capital pool is part of this baseline. These were discussed as possibilities and need a separate decision before implementation.
 - More markets, arbitrary generated strategy code, historical liquidation/OI/news research and a guaranteed profitable strategy are not current capabilities.

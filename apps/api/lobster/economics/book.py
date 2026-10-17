@@ -94,23 +94,26 @@ class TreasuryBook:
         return rows
 
     def append(self, entry: TreasuryEntry):
+        with self.transaction() as db:
+            return self.append_in_transaction(db, entry)
+
+    def append_in_transaction(self, db, entry: TreasuryEntry):
         entry = TreasuryEntry.model_validate(entry.model_dump(mode="json"))
         payload = entry.model_dump(mode="json")
-        with self.transaction() as db:
-            rows = self.read(db)
-            for row in rows:
-                if row["entry"]["id"] == entry.id or row["entry"]["receipt_ref"] == entry.receipt_ref:
-                    if row["entry"] != payload: raise ValueError("Receipt identity conflicts with an existing entry.")
-                    return row
-            if rows and rows[0]["entry"]["provenance"] != entry.provenance:
-                raise ValueError("Use a separate book for offline fixtures.")
-            cash = sum((D(row["entry"]["amount"]) * (1 if row["entry"]["kind"] in CREDITS else -1) for row in rows), D("0"))
-            if entry.kind not in CREDITS and entry.amount > cash:
-                raise ValueError("The receipt would make recorded treasury cash negative. Reconcile missing funding first.")
-            row = {"entry": payload, "recorded_at": utcnow().isoformat(), "previous_hash": rows[-1]["record_hash"] if rows else "0" * 64}
-            row["record_hash"] = fingerprint(row)
-            db.execute("INSERT INTO treasury_receipts (id,receipt_ref,payload) VALUES (?,?,?)", (entry.id, entry.receipt_ref, json.dumps(row)))
-            return row
+        rows = self.read(db)
+        for row in rows:
+            if row["entry"]["id"] == entry.id or row["entry"]["receipt_ref"] == entry.receipt_ref:
+                if row["entry"] != payload: raise ValueError("Receipt identity conflicts with an existing entry.")
+                return row
+        if rows and rows[0]["entry"]["provenance"] != entry.provenance:
+            raise ValueError("Use a separate book for offline fixtures.")
+        cash = sum((D(row["entry"]["amount"]) * (1 if row["entry"]["kind"] in CREDITS else -1) for row in rows), D("0"))
+        if entry.kind not in CREDITS and entry.amount > cash:
+            raise ValueError("The receipt would make recorded treasury cash negative. Reconcile missing funding first.")
+        row = {"entry": payload, "recorded_at": utcnow().isoformat(), "previous_hash": rows[-1]["record_hash"] if rows else "0" * 64}
+        row["record_hash"] = fingerprint(row)
+        db.execute("INSERT INTO treasury_receipts (id,receipt_ref,payload) VALUES (?,?,?)", (entry.id, entry.receipt_ref, json.dumps(row)))
+        return row
 
     def report(self, policy: EconomicPolicy):
         with self.transaction() as db: rows = self.read(db)

@@ -10,6 +10,8 @@ from sqlalchemy.engine import make_url
 from lobster.config import Settings
 from lobster.execution.lease import RunnerLease
 from lobster.execution.project import ProjectSettings, create_runner
+from lobster.economics.book import TreasuryBook
+from lobster.economics.ingestion import sync_project_settlement
 from lobster.store import Store
 
 
@@ -37,6 +39,12 @@ async def main(args):
                         result = await runner.tick()
                         print(json.dumps({"network": config.network, "trade_id": result["id"] if result else None,
                             "status": result["status"] if result else "idle"}))
+                        if config.network == "mainnet" and config.treasury_path:
+                            try:
+                                settlement = await sync_project_settlement(TreasuryBook(config.treasury_path), runner)
+                                print(json.dumps({"settlement": settlement}))
+                            except Exception:
+                                print("Treasury settlement awaits flat-account reconciliation. No treasury transfer attempted.")
                     except Exception:
                         print("Project tick requires reconciliation or a fresh eligible signal. No uncertain entry is replayed.")
                     if args.once: break
