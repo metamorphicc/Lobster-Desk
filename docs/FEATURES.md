@@ -17,7 +17,7 @@ Lobster Desk is a public-facing trading tank with lobster, crab and crayfish cha
 | F07 | User-owned Hyperliquid trading | Eligible user fills routed through the product can generate a disclosed builder fee; user funds remain separate from project capital. | Wallet sign-in, account observation and unsigned consent/order previews exist. Financial signing/submission, live operation and fee collection remain unfinished/disabled. |
 | F08 | Fee-funded project economy | Received builder fees fund agent capital, the team and charity according to the fixed split below. | Exact accounting/display, received mainnet claim importer and flat project settlement reconciliation implemented. Reward claiming, capital routing and actual received-account acceptance remain separate. |
 | F09 | Profit-funded token buyback and burn | Half of eligible net realized agent trading profit funds token purchases followed by burning; the other half remains with the agents. | Opt-in Solana Jupiter purchase/BurnChecked runner and finalized signed-transaction checks implemented for bounded classic direct routes; offline verified including SPL VM supply reduction. Mint/funded acceptance are missing; automatic Hyperliquid-to-Solana bridging is not implemented. |
-| F10 | Transparent charity allocation | Earmark the charity share separately; report allocated amounts separately from completed payments and their evidence. | Earmark/payout accounting and display exist. Recipients, payment integration and authenticated settlement evidence are pending. |
+| F10 | Transparent charity allocation | Earmark the charity share separately; report allocated amounts separately from completed payments and their evidence. | The Giving Block directory/pledge and opt-in USDC/Ethereum payment/reconciliation runner implemented. Save the Children and Best Friends are curated defaults. Gross transfer, provider record and net proceeds are separate. Partner credentials/funded acceptance remain missing. |
 
 ## Fixed fee distribution
 
@@ -47,7 +47,7 @@ Buybacks and burning are not a price floor or a guarantee of token appreciation.
 
 - Local research/paper mode is the usable release. Real trading, fee collection, donations and token transactions are not enabled by adding a model API key.
 - The owner selected Solana. The mint address, ticker, supply, issuance/allocation and administrative permissions remain unspecified. No token has been launched.
-- Charity recipients and the payment/receipt mechanism are not selected. An earmarked balance is not a completed donation and is not available to fund buybacks.
+- Charity uses the selected The Giving Block path and two curated recipients, subject to live directory/network checks and actual partner access. An earmarked balance is not a completed donation and is not available to fund buybacks.
 - No agreed payout to strategy authors, holder revenue share, staking/backing pool, paid pitch, voting feature or user capital pool is part of this baseline. These were discussed as possibilities and need a separate decision before implementation.
 - More markets, arbitrary generated strategy code, historical liquidation/OI/news research and a guaranteed profitable strategy are not current capabilities.
 
