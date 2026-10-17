@@ -1,70 +1,52 @@
 # Delivery handoff — 2026-10-17
 
-All completed local substages are committed on `lobster-desk` (renamed from `codex/mvp-foundation` at the owner's request). The remote is `https://github.com/metamorphicc/Lobster-Desk.git`. No push, deployment, real order, transfer or token launch was performed. See `ROADMAP.md` for separate software and external acceptance checkboxes.
+Completed substages are committed locally on `lobster-desk`, the branch name requested by the owner. GitHub remote: `https://github.com/metamorphicc/Lobster-Desk.git`. No push, deployment, real financial order/transfer, token issuance or external message was performed. `ROADMAP.md` separates implemented software from observed external acceptance; `FEATURES.md` is the agreed product baseline.
 
-## Usable now
+## Run locally
 
-Run `npm run dev` and open `http://127.0.0.1:3000`. Stages 0–4 deliver the local paper tank: BTC pitches, analyst/risk/capital decisions, deterministic limits, simulated execution/protection and a public decision/trade journal. Demo model/data sources are labelled. Optional public market data never changes paper execution into real trading.
+Open `http://127.0.0.1:3000`. The current demonstration uses synthetic data/scripted reviews, autonomous research and the preserved `data/tryout.db`; paper positions and fees are labelled as simulations. `npm run dev` starts the default local application. For paid-model research with public market history, use `npm run setup:agents`, enter the model key in ignored `.env.agents`, then `npm run agents:check` and `npm run agents`. That preset is paper-only and uses a separate database. See `AGENT-SETUP.md`.
 
-The Testnet tab supports public wallet/address observation, exact fee illustrations, unsigned permission previews, optional scoped EOA sign-in, private order illustrations and private observed loss references. Signing in grants preview access only. Actual extension financial signing and user execution are not enabled.
+The tank accepts BTC pitches and can generate its own bounded trend/breakout/mean-reversion hypotheses. Code tests chronological history and stressed costs, applies critic/analyst/risk vetoes and deterministic capital limits, and records accepted, rejected and skipped decisions. Forward paper funding is reconciled hourly for tracked positions; legacy unmodeled positions retain their label. Models never run arbitrary generated code, hold wallets or enlarge risk limits.
 
-The local user execution core binds exact consent, unique API-wallet roles, private user capital and canonical separate journals to the broker. Tests substitute an in-memory exchange. Its writer is locked independently of arming flags; there is no HTTP financial-proof/order route or unlock setting. Unknown prehistory/account modes, incomplete history, revoked approvals, changing costs and expired/changed consent fail closed. Entry-only fee/permission checks do not block risk-reducing reconciliation; user protection/recovery omits builder fees.
+## Implemented financial integrations
 
-## Remaining-stage local deliverables
-
-| Stage | Delivered locally | Still open |
+| Area | Implemented software | Activation/acceptance still needed |
 | --- | --- | --- |
-| 5.2d.4–5c | Per-user loss references, consent/profile/signature contracts, restricted signing bounds, locked orchestration, fill/fee observations and atomic audit links. | Real financial wallet RPC/runner activation integration, per-user runner leadership and complete journal recovery inventory; funded exchange acceptance. |
-| 5.2d.6a | Private acceptance case template and contained evidence-file inventory. | Actual extension prompts, orders, stops, revocation, fee/funding receipts and owner review. |
-| 6.1c.6–7 | Clean committed-source ZIP/manifests, local-only configuration, structured healthy/blocked/unavailable monitor output and external-integration/review handoff. | Public identity/security/hosting implementation, selected domain/topology, external monitoring delivery, off-machine recovery and independent security review. |
-| 6.2a | Disabled pilot plan and exact budget/loss/recovery rehearsal. | Owner capital/loss/reserve choices, reviewed mainnet implementation, production gates and actual pilot mandate/observations. |
-| 7.1a | Independent receipt book, loss carry-forward, capital/revenue separation and provisional reserve/allocation policy. | Jurisdiction, entity, token network/contract, reserve amounts, expenses/tax policy and legal/product review. |
-| 7.2a | Private spend/purchase/disposal links, exact quantities, duplicate/excess checks and treasury restore coverage. | Real approved transactions, chain-specific receipt authentication/finality, token implementation and reviewed public reporting. |
+| Project trading | Separate opt-in mainnet/testnet runner, restricted official-SDK signing, exact loss/capital budgets, non-replayed command journal, confirmed-fill stops, independent recovery/time exits. Public Journal block reads registered project activity separately from paper performance. | Dedicated funded account/API wallet, budgets, delegation, actual exchange/restart evidence. |
+| User trading | Separate Testnet/Mainnet account views and sign-in domains, immutable dedicated profiles, exact private trade previews, explicit SDK/EIP-712 consent/proof queues, owner-bound runners/journals/leases and recovery. Legacy local rehearsal stays locked. | Builder/account eligibility, separate API wallets, owner-reviewed real extension/permission/order/fill/fee/revocation acceptance. |
+| Received revenue | Fixed-mainnet actual claim importer, continuous durable cursor observer, exact 40/20/40 allocation, flat project net-PnL reconciliation including fees/funding. Observer status appears in Treasury. | Actual fee-bearing user volume, received claims, explicit history baseline and account reconciliation. Reward claiming/capital transfers remain owner operations. |
+| Buyback and burn | Bounded Solana Jupiter classic direct-route purchase, exact received lot, SPL BurnChecked, finalized transaction/balance checks, durable uncertain-state recovery. | Actual classic SPL mint and liquidity, Jupiter access, separately funded USDC/SOL treasury, reserve policy and funded acceptance. |
+| Charity | The Giving Block authenticated EIN-matched recipient/pledge integration, bounded Ethereum USDC transfer and finalized-chain/provider-record reconciliation. Curated defaults: Save the Children and Best Friends Animal Society. | Provider partner credentials, actual supported live recipient/currency checks, separately funded USDC/ETH wallet and acceptance. |
+| Public operation | Single-host HTTPS/proxy identity boundary, standalone Docker/Caddy packaging, complete financial-journal inventory, AES-256-GCM/S3 backup transport, isolated restore, durable redacted alert outbox/runner observations. | Domain/hosting, working container runtime, cloud/receiver credentials, off-machine drill, independent review and external runtime acceptance. |
 
-The owner postponed funded testnet acceptance and left jurisdiction, domain and hosting blank. Fee allocation is now 40/20/40 agent/team/charity at 0.05% entry builder fee; 50% of eligible net trading profit is budgeted for buyback followed by burning. Token network/contract, recipient identities and reserve amounts remain unset; no holder payout/staking entitlement is granted. Main stages 5–7 remain unchecked where external work or a deliberately closed integration is still required.
+Default execution remains paper. The API never loads financial private-key maps; financial runners are separate opt-in owner processes. Neither sign-in nor viewing/downloading a plan authorizes trading. Testnet consent cannot authorize mainnet. No real wallet permission or financial command was submitted during development.
 
-## Local operator commands
+## Configuration entry points
 
-All outputs below are ignored local artifacts. Use a **new** output path for each capture.
-
-```powershell
-node scripts/python.mjs scripts/user-acceptance.py template --output artifacts/user-acceptance/record.json
-node scripts/python.mjs scripts/user-acceptance.py inventory --record artifacts/user-acceptance/record.json --output artifacts/user-acceptance/inventory.json
-node scripts/python.mjs scripts/check-health.py --json
-node scripts/python.mjs scripts/pilot-report.py --output artifacts/pilot/report.json
-node scripts/python.mjs scripts/treasury-report.py --output artifacts/economics/treasury.json
-node scripts/python.mjs scripts/buyback-report.py --output artifacts/economics/buybacks.json
-node scripts/python.mjs scripts/release-bundle.py --output artifacts/releases/new-candidate
-```
-
-The monitor reads only the local API; stopped services produce an unavailable report/exit 2. Evidence inventory, pilot/economics calculations and source packaging never sign or contact an exchange. Receipt reports are owner-supplied/unverified even when arithmetic passes. A missing token/reserve policy produces no allocation, not a guessed budget.
-
-`scripts/backup.py` captures the local paper database, the configured owner testnet ledger when present, and `data/treasury.sqlite3` when present. It does not enumerate all future user execution journals. Restore only into a new directory and reconcile financial state separately; never reset a live nonce/receipt journal from an old snapshot to resume execution.
-
-## Verification
-
-The latest local checks are recorded in `VERIFICATION.md`: **388 Python tests**, **46 Node wallet/consent tests**, TypeScript and the web production build pass. Relevant tests cover exact money, signature domains/replay/clock/expiry, concurrent claims/receipts, strict role/account isolation, guard failure after leverage, actual fixture partial fills and stop recovery, revenue/loss/reserve arithmetic, duplicate purchase/disposal prevention, research recovery and isolated restore. One upstream Starlette/httpx test-client deprecation warning remains; tests do not require changing the locked runtime to silence it.
-
-A real local paper-plus-empty-treasury snapshot was created and restored into an isolated directory. Default acceptance/pilot/economic reports were generated with unverified/disabled flags. No fabricated production trades or revenue were inserted. Temporary services from earlier browser checks were stopped; no new daemon/automation was installed.
-
-The independent review, deployment, funded testnet/mainnet and token gates are **not** completed by tests, manifests, document checkboxes or owner-supplied receipt hashes. The detailed continuation references are `USER-EXECUTION.md`, `USER-ACCEPTANCE.md`, `RELEASE.md`, `PILOT.md`, `ECONOMICS.md` and `BUYBACK-REPORTING.md`.
-
-## Autonomous continuation
-
-Substages 5.2d.5d–e add a fully offline five-scenario user runner and the unsigned consent workbench. The private preview now exposes profile/fee/agent details, exact local/SDK payloads, unsigned downloads and recent intent history; raw proof signatures are redacted from HTTP reads. Neither preparation nor sign-in activates financial wallet RPC or exchange submission. Actual extension acceptance remains open.
+Each command below only inspects configuration by default; it does not activate a financial runner.
 
 ```powershell
-node scripts/python.mjs scripts/user-rehearsal.py --output artifacts/rehearsals/new-run
+npm run agents:check
+npm run execution
+npm run users:execution
+npm run users:execution -- --config .env.users-mainnet
+npm run revenue
+npm run treasury
+npm run charity
 ```
 
-This command needs no API key, wallet, test funds or network. It uses public unfunded vectors, isolated new databases and an in-memory writer; all outputs are synthetic/unverified. The generated report binds five lifecycle/recovery cases and never certifies real trading. See `USER-EXECUTION.md` for the boundary and test coverage.
+Templates are `.env.agents.example`, `.env.execution.example`, `.env.users.example`, `.env.users-mainnet.example`, `.env.revenue.example`, `.env.treasury.example`, `.env.charity.example`, `.env.server.example` and `.env.ops.example`. Actual copies, keys, databases, recovery keys and backups remain ignored. Never put a main-wallet key in an API-wallet map. Activation details and bounded financial operations are documented in `PROJECT-EXECUTION.md`, `USER-FINANCIAL.md`, `REVENUE-INGESTION.md`, `SOLANA-TREASURY.md` and `CHARITY.md`.
 
-## Autonomous research and distribution — Stage 8
+## Explicit remaining boundaries
 
-The Research tab and independent receipt policy are implemented. Closed hourly BTC history/funding, three bounded rule families, development-only model hypotheses, chronological testing with stressed costs, a critic veto, durable call/schedule limits, audit exports and atomic paper signals are connected. Time exits remain in the independent protection worker. Models have no wallet or code-execution tools. Historical tests include funding; forward paper fills still exclude it. Results establish local behavior, not a profitable edge.
+The token network is **Solana**; mint, ticker, supply, issuance/allocation and administrative permissions are unspecified. No token has been launched. The policy allocates 50% of positive cumulative net realized trading profit, after recovering losses/costs and protecting reserves, to purchase then burn. It grants no staking/dividend/holder-payout right or price guarantee.
 
-For the prepared key-only **paper** preset, see `AGENT-SETUP.md`: `npm run setup:agents`, fill `ANTHROPIC_API_KEY` in ignored `.env.agents`, then `npm run agents:check` and `npm run agents`. The template includes a model ID and public data configuration. Access/billing still needs an actual successful provider request. Failed/interrupted calls are not blindly replayed; the daily limits are call ceilings, not a dollar cap.
+Actual reward claiming, allocation transfers and Hyperliquid-to-Solana/Ethereum bridging are **not implemented as autonomous operations**. The current financial runners require prefunded dedicated destination wallets. Principal movements must not be booked as income twice. This is a concrete remaining integration boundary, not a missing model API key. Unknown reserves prevent spending. Funding, wallet permission and token/liquidity decisions cannot be invented locally.
 
-The fee split and cumulative profit/burn accounting are implemented in `DISTRIBUTION.md`; unknown reserves suppress a spendable budget. No simulated trade is ingested as real treasury income. Actual fee collection/reconciliation, donations, token purchases/burns, live trading and public launch remain open, with no financial execution authorized by the key preset.
+Funded testnet acceptance was postponed by the owner. Jurisdiction, domain and hosting remain blank. Local tests do not certify compliance, financial profitability or production readiness. `SECURITY-STAGE9.md` records developer self-review; an independent review is still outstanding. The Docker CLI validates Compose, but its Linux daemon is unavailable, so no container/runtime/HTTPS deployment is claimed.
 
-The local demo was restarted with synthetic/scripted autonomous research using the preserved `data/tryout.db`, and the built frontend at port 3000. It is available for inspection; no model key or real financial account is used. Separate agent mode defaults to `data/agents-paper.db`.
+## Recovery and checks
+
+Every new writer registers its canonical network/account/signer journal before dispatch. Recovery inventory includes all registered project/user ledgers, application, treasury and operational outbox databases; missing/mismatched journals refuse incomplete backup. Encrypted restore validates MAC/manifests before writing into a new directory. Never overwrite live nonce/command state or automatically resume an old snapshot; reconcile external state first. See `ENCRYPTED-RECOVERY.md` and `OPERATIONAL-ALERTS.md`.
+
+Latest verification is recorded in `VERIFICATION.md`. Tests use public unfunded vectors, HTTP fixtures, an in-memory exchange and a real SPL program in LiteSVM. Real public market/account reads were verified without signing. Production metrics/revenue were not fabricated. The local browser remains available for inspection.

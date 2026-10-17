@@ -25,14 +25,12 @@ The first cohort can take several minutes to fetch/validate history, call the re
 
 The Treasury tab shows the agreed 0.05% entry builder fee, 40% agent capital / 20% team / 40% charity earmarks, and 50% of eligible net realized trading profit for buyback followed by burning. The receipt book remains independent of simulated trading. No virtual profit is presented as received revenue.
 
-## External steps that an API key cannot complete
+## Separate financial integration setup
 
-- Real exchange trading: funded testnet acceptance, wallet permissions, actual order/protection evidence and a separately reviewed mainnet implementation. Current user writer is locked.
-- Collected builder fees: actual user volume, builder eligibility/approval, exchange receipts and reconciliation. Local fee plans do not create revenue.
-- Donations: selected recipients, settlement method and actual payments/receipts.
-- Buyback/burn: token network and contract, available funds, reserve policy and actual reviewed chain transactions. The accounting policy is implemented; purchase/burn execution is not implemented or activated.
-- Public launch: hosting/domain, public authentication, operational controls and independent review.
+Stage 9 implements separately gated project/user trading, exact financial wallet consent, received-fee observation, Solana purchase/burn, The Giving Block charity payments and public-operation/recovery/alerting code. These are distinct from this model-key paper preset. The latest configuration map and remaining integration boundaries are in [HANDOFF.md](HANDOFF.md).
 
-These remain open deliberately and are not represented as “just enter API keys.” No jurisdiction choice or token deployment is required to run local research/paper trading.
+A model API key cannot supply a funded exchange account, approved dedicated API wallet, public builder identity, Solana mint/liquidity, treasury balances/gas, reserve policy, charity partner credentials or public domain/hosting. Actual reward claiming, allocation transfers and Hyperliquid-to-Solana/Ethereum bridging still require owner handling; an autonomous bridge is not implemented. Financial adapters require prefunded destination wallets. Funded exchange/chain/provider acceptance and independent security review remain open. Do not put exchange keys into `.env.agents` or describe this preset as enabling real financial execution.
+
+No jurisdiction choice, wallet funding or token deployment is required to run local research/paper trading.
 
 Provider references checked 2026-10-17: [model IDs](https://platform.claude.com/docs/en/models/overview), [structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs). Schema constraints are described to the model and independently enforced locally; no generated code is executed.

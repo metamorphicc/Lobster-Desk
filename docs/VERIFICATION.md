@@ -2,6 +2,17 @@
 
 Date: 2026-10-16 (Asia/Novosibirsk).
 
+## Latest integrated verification — 2026-10-17
+
+- **511 Python tests pass** across the full repository, including financial invariants, fixed-network signatures/transports, consent isolation, partial fills/stops/restart, revenue import/continuous observation, Solana/charity recovery, public privacy, HTTP boundaries, encrypted recovery and redacted operational alerts. One upstream Starlette/httpx deprecation warning remains.
+- **69 client tests pass**, including actual Python/SDK-generated mainnet/testnet contracts, exact original signed payloads and wallet account/network races. TypeScript and the Next.js production build pass.
+- Mainnet account viewing was checked against a real public unfunded sample address through fixed mainnet `/info`. It needed no wallet connection or signature. No extension prompt, permission, order, transfer, pledge, swap or burn was submitted to a live financial service.
+- The Mainnet, Journal and Treasury interfaces pass 320/375/414/768 px checks without horizontal overflow. Eight labelled actual React financial-review states and eight project-journal states were rendered from offline fixtures and checked at those widths. A live empty project report and unconfigured received-fee observer were verified in the running demo; no exchange performance was inferred from its paper trades.
+- The revenue runner's default CLI reports disabled/unconfigured and makes no network request. Its twelve focused cases verify exact cursor/receipt behavior, restart/late history, monitoring and integer environment configuration.
+- Prior Stage 9 checks include an actual isolated encrypted local two-database restore and real SPL BurnChecked execution in LiteSVM. Cloud S3 delivery, receiver notifications, Docker images/HTTPS, funded exchange/chain/provider acceptance and independent review remain unobserved. The 64-entry Python lock/advisory check is recorded in `SECURITY-STAGE9.md`.
+
+The sections below retain historical stage-specific evidence. Their older test counts and statements about earlier locked integrations describe those stages, not the latest implementation. Current capabilities/boundaries are in `HANDOFF.md` and `FEATURES.md`.
+
 ## Automated
 
 - 261 passing Python tests: schema validation, finite monetary input, direction/stop/target checks, leverage, expiry/freshness, sizing, loss thresholds, concurrent reservation, fill idempotency, transaction rollback, gap losses, fee accounting, provider failure, review budgets, feed isolation, HTTP endpoints and restart recovery. Testnet additions cover official SDK signatures/domain/expiry, atomic nonce/command claims, partial fills, uncertain requests without replay, protection failure, fixed-host HTTP, public-only readiness/preflight and operator-controlled local staging/cancellation.

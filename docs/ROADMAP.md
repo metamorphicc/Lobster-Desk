@@ -107,9 +107,11 @@ These are code deliverables, not documentation substitutes. Default operation re
   - [x] **9.8b Complete encrypted recovery.** Canonical financial-journal catalog/inventory, authenticated AES-256-GCM bundles, bounded immutable AWS SDK S3 transport and isolated restore. Thirteen focused/49 combined cases pass, including uncertain-entry nonce recovery without replay; actual local two-database encrypted restore passed. Real off-machine AWS acceptance remains unobserved. See `ENCRYPTED-RECOVERY.md`.
   - [x] **9.8c External operational alerts.** Durable static-code outbox, runner/financial uncertainty observations, fresh instance-bound API checks, heartbeat aging, HMAC generic/Slack format and bounded retry/recovery. Eleven focused cases and a real local no-notification probe pass. External receiver/whole-host outage acceptance remains open. See `OPERATIONAL-ALERTS.md` and `SECURITY-STAGE9.md`.
 
-- [ ] **9.9 Connected reporting and revenue observation.** Complete the background receipt-to-report path without relabelling simulated income.
+- [x] **9.9 Connected reporting and revenue observation.** Complete the background receipt-to-report path without relabelling simulated income.
   - [x] **9.9a Public project exchange journal.** Read-only catalog-bound project activity, exact network labels, reviewer/fill/protection links and a separate Journal block. User journals, signed commands, raw failures, keys, file paths and wallet identities are excluded. Four focused privacy/recovery cases, production build and eight labelled state views at all four responsive widths pass. No actual project financial activity was created.
-  - [ ] **9.9b Continuous received-fee observer.** Durable cursor recovery and bounded polling of actual received claims; no invented fees or automatic reward claim.
+  - [x] **9.9b Continuous received-fee observer.** Explicit baseline and immutable source, seven-day catchup bounds, overlap/deduplication/restart, error alerts and public redacted status. Twelve focused/31 combined receipt cases pass; default CLI inspects without networking. Actual received fees feed the 40/20/40 accounting without manual re-entry. Reward claiming and cross-chain funding remain owner operations, not silently implemented transfers.
+
+  - [x] **9.9c Integrated handoff and verification.** Updated current setup/capability map, explicit remaining capital-routing boundary and historical-record labelling. Full backend: 511 passed; client: 69 passed; TypeScript/build and live Journal/Treasury mobile views pass. No push or financial activation.
 
 ## Financial policy
 
