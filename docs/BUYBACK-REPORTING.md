@@ -1,6 +1,6 @@
 # Buyback and disposal reporting
 
-Status: **local receipt accounting only**. No token/network/contract is selected and no swap, transfer, burn, staking or payout is implemented/authorized. The report is prepared privately for review; nothing is automatically published.
+Status of this legacy report: **local receipt accounting only**. The owner subsequently selected Solana; the separate executable purchase/burn flow is described in `SOLANA-TREASURY.md`. No mint is configured and no actual swap/burn has occurred. This report continues to represent owner-supplied observations rather than the new runner's RPC evidence.
 
 The book links three separate facts:
 

@@ -36,6 +36,10 @@ def distribution(book: TreasuryBook, policy: DistributionPolicy | None = None) -
     policy = policy or DistributionPolicy()
     with book.transaction() as db:
         rows = book.read(db)
+    return distribution_rows(rows, policy)
+
+
+def distribution_rows(rows, policy):
     totals = {kind: sum((D(row["entry"]["amount"]) for row in rows if row["entry"]["kind"] == kind), D(0)) for kind in KINDS}
     cash = sum((amount if kind in CREDITS else -amount for kind, amount in totals.items()), D(0))
     # Refunds conservatively reduce builder proceeds; a refund exceeding receipts blocks.

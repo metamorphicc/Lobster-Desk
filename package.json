@@ -8,6 +8,7 @@
     "agents:check": "node scripts/agents.mjs --check",
     "agents": "node scripts/agents.mjs",
     "execution": "node scripts/execution.mjs",
+    "treasury": "node scripts/python.mjs scripts/treasury-runner.py",
     "dev": "node scripts/dev.mjs",
     "dev:web": "npm run dev --workspace @lobster/web",
     "build": "npm run build --workspace @lobster/web",

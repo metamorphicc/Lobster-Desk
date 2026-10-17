@@ -40,6 +40,7 @@ from .research.providers import AnthropicResearcher, DemoResearcher
 from .research.service import Research
 from .economics.distribution import DistributionPolicy, distribution
 from .economics.book import TreasuryBook
+from .economics.solana_treasury import public_solana_report
 from pathlib import Path
 from .funding import PaperFunding
 
@@ -311,7 +312,8 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
     @app.get("/api/v1/economics")
     def economics(request: Request):
         try:
-            return distribution(TreasuryBook(Path(config.treasury_path)), DistributionPolicy())
+            book = TreasuryBook(Path(config.treasury_path))
+            return distribution(book, DistributionPolicy()) | {"solana": public_solana_report(book)}
         except Exception:
             raise HTTPException(503, "Treasury receipt arithmetic is unavailable. No transfers were authorized.") from None
 
