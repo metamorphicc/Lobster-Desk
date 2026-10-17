@@ -7,6 +7,7 @@ import { AUTH_ORIGIN, validateAuthChallenge, validateAuthResult, type AuthChalle
 import type { Episode } from "@/lib/types";
 import { UserOrderPreview } from "./user-order-preview";
 import { UserCapital } from "./user-capital";
+import { UserStrategies } from "./user-strategies";
 import { UserFinancial } from "./user-financial";
 
 async function revoke(token: string, network: "testnet" | "mainnet"): Promise<boolean> {
@@ -88,8 +89,9 @@ export function WalletAuth({ address, chainId, session, now, episodes, network =
   return <section className="builder-consent wallet-auth" aria-labelledby="wallet-auth-title">
     <h3 id="wallet-auth-title">Verify this wallet for private previews</h3>
     <p className="small-note">Optional sign-in proves control of this wallet. It grants no trading, transfers or builder-fee permission. The session stays in this page&apos;s memory and expires within 15 minutes.</p>
-    {ready ? <><p className="positive user-connected"><Check size={16} />Verified for local previews</p><p className="small-note">Expires {new Date(result.expires_at).toLocaleTimeString("en-GB", { hour12: false })}. Scope: {network} previews only.</p>
+    {ready ? <><p className="positive user-connected"><Check size={16} />Verified for local previews</p><p className="small-note">Expires {new Date(result.expires_at).toLocaleTimeString("en-GB", { hour12: false })}. Scope: {network} private views and attributed pitches; no trading permission.</p>
       <button className="button button--secondary" onClick={() => { void logout(); }}><LogOut size={16} />Sign out</button>
+      <UserStrategies network={network} token={result.access_token} onSessionInvalid={() => { credential.current = null; setResult(null); setError("Sign in again to access strategy earnings."); }} />
       <UserCapital network={network} address={address} token={result.access_token} now={now} onSessionInvalid={() => { credential.current = null; setResult(null); setError("The server session is no longer valid. Sign in again."); }} />
       <UserFinancial network={network} address={address} token={result.access_token} session={session} now={now} onSessionInvalid={() => { credential.current = null; setResult(null); setError("The server session is no longer valid. Sign in again."); }} />
       <UserOrderPreview network={network} address={address} token={result.access_token} episodes={episodes} now={now} session={session} onSessionInvalid={() => { credential.current = null; setResult(null); setError("The server session is no longer valid. Sign in again."); }} /></> : <>
