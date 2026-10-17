@@ -17,7 +17,7 @@ from ..domain import utcnow
 from ..execution.contracts import fingerprint
 from .backup import read_only
 
-SAFE_CODES = {"database_unavailable", "worker_disabled", "market_worker_unavailable", "decision_worker_unavailable", "market_unavailable",
+SAFE_CODES = {"revenue_observation_unavailable", "database_unavailable", "worker_disabled", "market_worker_unavailable", "decision_worker_unavailable", "market_unavailable",
     "decision_error", "research_unavailable", "paper_paused", "paper_halted", "paper_funding_pending", "review_budget_exhausted",
     "testnet_reconciliation", "testnet_halted", "testnet_ledger_unavailable", "financial_runner_unavailable", "user_permission_uncertain",
     "user_consent_handoff", "exchange_command_uncertain", "exchange_exposure_review", "financial_journal_unavailable",
@@ -106,6 +106,13 @@ def financial_observations(application_path, treasury_path):
                 alert("charity_pledge_uncertain", "warning", "charity", sum(r["status"] in {"creating_pledge", "pledge_unknown"} for r in charity))
                 stale_heartbeat(db, "solana", any(r["status"] in {"sending", "submitted", "unknown"} for r in solana))
                 stale_heartbeat(db, "charity", any(r["status"] in {"sending", "submitted", "unknown"} for r in charity))
+                for state in rows(db, "revenue_watches"):
+                    if not state["active"]: continue
+                    try:
+                        age = (utcnow() - datetime.fromisoformat(state["last_success_at"])).total_seconds() if state.get("last_success_at") else None
+                        healthy = not state["failed"] and age is not None and -2 <= age <= max(90, state["poll_seconds"]*3)
+                    except Exception: healthy = False
+                    if not healthy: alert("revenue_observation_unavailable", "warning", "treasury")
         except Exception: alert("treasury_journal_unavailable", "critical", "treasury")
     # Merge repeated static observations; no account, path, thesis, signature or
     # raw exception is eligible to leave this process in an alert payload.

@@ -29,7 +29,7 @@ def safe_source(name):
     path = PurePosixPath(name)
     return (not path.is_absolute() and ".." not in path.parts and "\\" not in name
         and not any(part in {"data", "artifacts", ".venv", "node_modules", ".next", ".git"} for part in path.parts)
-        and (not path.name.startswith(".env") or path.name in {".env.example", ".env.testnet-signer.example", ".env.agents.example", ".env.execution.example", ".env.treasury.example", ".env.charity.example", ".env.users.example", ".env.users-mainnet.example", ".env.server.example", ".env.ops.example"})
+        and (not path.name.startswith(".env") or path.name in {".env.example", ".env.testnet-signer.example", ".env.agents.example", ".env.execution.example", ".env.treasury.example", ".env.charity.example", ".env.users.example", ".env.users-mainnet.example", ".env.revenue.example", ".env.server.example", ".env.ops.example"})
         and path.suffix.lower() not in {".db", ".sqlite", ".sqlite3", ".pem", ".key", ".p12", ".ldb"})
 
 

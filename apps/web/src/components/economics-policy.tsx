@@ -5,6 +5,7 @@ import { useLocalReport } from "@/lib/use-local-report";
 import { money, signed } from "@/lib/types";
 
 export type EconomicsReport = { record_count: number; recorded_cash: string;
+  revenue_observer?: { network: "mainnet"; status: "not_configured" | "stopped" | "running" | "unavailable"; last_success_at: string | null };
   fee_allocation: { agents: string; team: string; charity: string };
   net_realized_trading_profit_after_expenses: string; loss_carryforward: string;
   lifetime_buyback_entitlement: string; recorded_buyback_spend: string; reserve_bounded_buyback_budget: string | null;
@@ -28,6 +29,7 @@ export function EconomicsView({ data, error, loading, refresh }: { data: Economi
       {loading && !data && <p role="status">Loading the independent receipt book…</p>}
       {error && <p className="notice notice--error" role="alert">{error}</p>}
       {data && <><p className="small-note">{data.record_count} local receipts · Owner-supplied observations remain unverified. Paper capital and paper profits are not included.</p>
+        {data.revenue_observer && <p className="small-note">Received-fee observer · {data.revenue_observer.status.replaceAll("_", " ")}. Last successful mainnet reconciliation: {data.revenue_observer.last_success_at ? new Date(data.revenue_observer.last_success_at).toLocaleString("en-GB") : "Not observed"}. Unclaimed rewards are excluded.</p>}
         <dl className="levels"><div><dt>Recorded treasury cash</dt><dd>{money(data.recorded_cash)}</dd></div>
           <div><dt>Agent fee allocation</dt><dd>{money(data.fee_allocation.agents)}</dd></div><div><dt>Team fee allocation</dt><dd>{money(data.fee_allocation.team)}</dd></div><div><dt>Charity fee allocation</dt><dd>{money(data.fee_allocation.charity)}</dd></div>
           <div><dt>Net realized trading profit / costs</dt><dd>{signed(data.net_realized_trading_profit_after_expenses)}</dd></div><div><dt>Unrecovered loss</dt><dd>{money(data.loss_carryforward)}</dd></div>
