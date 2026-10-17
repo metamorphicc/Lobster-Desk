@@ -58,6 +58,9 @@ class TestnetBroker:
         self.entry_guard = entry_guard
         self.lock = asyncio.Lock()
         identity = ledger.snapshot()["control"]
+        self.network = identity["network"]
+        if self.network != getattr(gateway, "network", "testnet") or self.network != signer.network:
+            raise ValueError("Signer, gateway and ledger networks do not match.")
         if identity["account"] != gateway.account_address.lower() or identity["signer"] != signer.address.lower():
             raise ValueError("Signer, gateway and ledger identities do not match.")
 
@@ -193,7 +196,7 @@ class TestnetBroker:
         # Exchange-native trigger with bounded aggressive execution price. Gaps can
         # still exceed this bound; reconciliation must not claim a guaranteed stop.
         price = rules.price(trigger * (D("0.99") if sell else D("1.01")), upward=not sell)
-        key = cloid(trade["id"], f"{kind}:{quantity}")
+        key = cloid(trade["id"], f"{kind}:{quantity}", network=self.network)
         return OrderSpec(asset_id=rules.asset_id, side="sell" if sell else "buy", quantity=quantity,
                          price=price, trigger_price=trigger, kind=kind, cloid=key)
 
@@ -216,7 +219,7 @@ class TestnetBroker:
         sell = trade["setup"]["pitch"]["direction"] == "long"
         price = self.signer.rules.price(market.price * (D("0.99") if sell else D("1.01")), upward=not sell)
         order = OrderSpec(asset_id=self.signer.rules.asset_id, side="sell" if sell else "buy", quantity=quantity,
-            price=price, cloid=cloid(trade["id"], f"close:{quantity}"), kind="close")
+            price=price, cloid=cloid(trade["id"], f"close:{quantity}", network=self.network), kind="close")
         await self._send(trade["id"], order.cloid, "close", order.model_dump(mode="json"))
 
     async def _reconcile(self, trade_id: str) -> dict:
@@ -227,6 +230,8 @@ class TestnetBroker:
         if not entry:
             return trade
         account = await self.gateway.account()
+        if account.network != self.network or account.address.lower() != self.gateway.account_address.lower():
+            raise ValueError("Reconciliation observation belongs to a different network/account.")
         if not -2 <= (utcnow() - account.observed_at).total_seconds() <= self.policy.max_data_age_seconds:
             self.ledger.update_trade(trade_id, "needs_reconciliation", "Account observation is stale; no reconciliation writes authorized.")
             return self.ledger.trade(trade_id)

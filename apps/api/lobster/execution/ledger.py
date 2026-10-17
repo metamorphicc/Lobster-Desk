@@ -51,7 +51,9 @@ class Journal(Base):
 
 
 class ExecutionLedger:
-    def __init__(self, url: str, account_address: str, signer_address: str):
+    def __init__(self, url: str, account_address: str, signer_address: str, *, network: str = "testnet"):
+        if network not in {"testnet", "mainnet"}: raise ValueError("Unsupported execution network.")
+        self.network = network
         if url.startswith("sqlite:///") and ":memory:" not in url:
             Path(url.removeprefix("sqlite:///")).parent.mkdir(parents=True, exist_ok=True)
         options = {"connect_args": {"check_same_thread": False, "timeout": 20}} if url.startswith("sqlite") else {}
@@ -62,7 +64,7 @@ class ExecutionLedger:
         Base.metadata.create_all(self.engine)
         with self.transaction() as session:
             control = session.get(Control, 1)
-            identity = {"network": "testnet", "account": account_address.lower(), "signer": signer_address.lower()}
+            identity = {"network": network, "account": account_address.lower(), "signer": signer_address.lower()}
             if control:
                 if any(control.payload.get(key) != value for key, value in identity.items()):
                     raise ValueError("The testnet ledger belongs to a different account or API wallet. Use a new ledger for a new identity.")
@@ -84,12 +86,12 @@ class ExecutionLedger:
                 session.rollback()
                 raise
 
-    @staticmethod
-    def event(session, kind, message, trade_id=None, data=None):
-        session.add(Journal(payload={"timestamp": utcnow().isoformat(), "network": "testnet",
+    def event(self, session, kind, message, trade_id=None, data=None):
+        session.add(Journal(payload={"timestamp": utcnow().isoformat(), "network": self.network,
             "kind": kind, "message": message, "trade_id": trade_id, "data": data or {}}))
 
     def observe_capital(self, account: ExchangeAccount, policy: RiskPolicy) -> Capital:
+        if account.network != self.network: raise ValueError("Account and execution journal networks differ.")
         if not -2 <= (utcnow() - account.observed_at).total_seconds() <= policy.max_data_age_seconds:
             raise ValueError("Account observation is stale.")
         with self.transaction() as session:
@@ -116,6 +118,7 @@ class ExecutionLedger:
                 occupied=bool(account.btc_size or account.other_positions or account.open_order_count))
 
     def stage(self, setup: ReviewedSetup, order: dict, rules: dict, *, audit_binding: dict | None = None) -> dict:
+        if setup.network != self.network: raise ValueError("Setup and execution journal networks differ.")
         binding = fingerprint(setup.model_dump(mode="json"))
         with self.transaction() as session:
             existing = session.get(Trade, setup.episode_id)
@@ -131,7 +134,7 @@ class ExecutionLedger:
                 raise ValueError("The testnet execution ledger is halted.")
             if any(t.payload["status"] not in {"closed", "rejected", "expired", "cancelled"} for t in session.scalars(select(Trade))):
                 raise ValueError("Another testnet trade or unresolved command already owns the execution slot.")
-            data = {"id": setup.episode_id, "network": "testnet", "setup": setup.model_dump(mode="json"),
+            data = {"id": setup.episode_id, "network": self.network, "setup": setup.model_dump(mode="json"),
                 "setup_hash": binding, "entry": order, "rules": rules, "status": "staged",
                 "reason": "Intent staged locally. No exchange action has been sent.",
                 "filled_quantity": "0", "protected_quantity": "0", "created_at": utcnow().isoformat()}
@@ -255,7 +258,7 @@ class ExecutionLedger:
             control = session.get(Control, 1).payload
             events = list(session.scalars(select(Journal).order_by(Journal.id.desc()).limit(100)))
             fills = [row.payload for row in session.scalars(select(Fill))]
-            return {"network": "testnet", "control": control,
+            return {"network": self.network, "control": control,
                 "trades": [row.payload for row in session.scalars(select(Trade))], "fills": fills,
                 "observed_fill_fees": str(sum((D(f["fee"]) for f in fills), D("0"))),
                 "observed_builder_fee_component": str(sum((D(f.get("builderFee", "0")) for f in fills), D("0"))),

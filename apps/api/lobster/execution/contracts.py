@@ -11,6 +11,7 @@ from ..risk import assess
 from ..store import digest
 
 TESTNET_URL = "https://api.hyperliquid-testnet.xyz"
+MAINNET_URL = "https://api.hyperliquid.xyz"
 
 
 def fingerprint(value: dict) -> str:
@@ -41,7 +42,7 @@ class BtcRules(Contract):
 
 class ExchangeAccount(Contract):
     address: str = Field(pattern=r"^0x[0-9a-fA-F]{40}$")
-    network: Literal["testnet"] = "testnet"
+    network: Literal["testnet", "mainnet"] = "testnet"
     observed_at: datetime
     equity: Decimal = Field(ge=0, allow_inf_nan=False)
     withdrawable: Decimal = Field(ge=0, allow_inf_nan=False)
@@ -61,7 +62,7 @@ class ReviewedSetup(Contract):
     approved_quantity: Decimal = Field(gt=0, allow_inf_nan=False)
     approval_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     policy_version: str
-    network: Literal["testnet"] = "testnet"
+    network: Literal["testnet", "mainnet"] = "testnet"
 
     @model_validator(mode="after")
     def eligible(self):
@@ -72,11 +73,12 @@ class ReviewedSetup(Contract):
         return self
 
     @classmethod
-    def from_episode(cls, episode: dict, policy: RiskPolicy):
+    def from_episode(cls, episode: dict, policy: RiskPolicy, *, network: Literal["testnet", "mainnet"] = "testnet"):
         if episode.get("status") not in {"approved", "filled"} or episode.get("approval_hash") != digest(episode):
             raise ValueError("The episode has no current, bound capital approval.")
-        if episode.get("snapshot", {}).get("source") != "hyperliquid-testnet":
-            raise ValueError("Only an episode reviewed against testnet data can authorize testnet execution.")
+        source = "hyperliquid-testnet" if network == "testnet" else "hyperliquid" if network == "mainnet" else None
+        if source is None or episode.get("snapshot", {}).get("source") != source:
+            raise ValueError("Only an episode reviewed against the selected network can authorize execution.")
         if episode.get("policy") != policy.model_dump(mode="json") or not episode.get("risk", {}).get("approved"):
             raise ValueError("Risk approval does not match the current policy.")
         # Metadata is audit information, not part of the model's authority.
@@ -84,7 +86,7 @@ class ReviewedSetup(Contract):
                    for role in ("analyst", "risk")}
         return cls(episode_id=episode["id"], pitch=episode["pitch"], analyst=reviews["analyst"], risk=reviews["risk"],
             expires_at=episode["expires_at"], approved_quantity=episode["risk"]["quantity"],
-            approval_hash=episode["approval_hash"], policy_version=policy.version)
+            approval_hash=episode["approval_hash"], policy_version=policy.version, network=network)
 
 
 class OrderSpec(Contract):
@@ -111,15 +113,17 @@ class OrderSpec(Contract):
                 "s": wire(self.quantity), "r": self.kind != "entry", "t": order_type, "c": self.cloid}
 
 
-def cloid(trade_id: str, kind: str, revision: int = 0) -> str:
-    return "0x" + sha256(f"lobster:testnet:{trade_id}:{kind}:{revision}".encode()).hexdigest()[:32]
+def cloid(trade_id: str, kind: str, revision: int = 0, *, network: str = "testnet") -> str:
+    if network not in {"testnet", "mainnet"}: raise ValueError("Unsupported execution network.")
+    return "0x" + sha256(f"lobster:{network}:{trade_id}:{kind}:{revision}".encode()).hexdigest()[:32]
 
 
 def size_entry(setup: ReviewedSetup, market: Snapshot, account: ExchangeAccount,
                capital: Capital, rules: BtcRules, policy: RiskPolicy, now: datetime,
                max_notional: Decimal) -> OrderSpec:
-    if market.source != "hyperliquid-testnet" or account.network != "testnet":
-        raise ValueError("Testnet market and account observations are required.")
+    expected_source = "hyperliquid-testnet" if setup.network == "testnet" else "hyperliquid"
+    if market.source != expected_source or account.network != setup.network:
+        raise ValueError(f"{setup.network.capitalize()} market and account observations are required.")
     if not -2 <= (now - account.observed_at).total_seconds() <= policy.max_data_age_seconds:
         raise ValueError("Account observation is stale.")
     if setup.policy_version != policy.version:
@@ -146,5 +150,5 @@ def size_entry(setup: ReviewedSetup, market: Snapshot, account: ExchangeAccount,
     if quantity * price < policy.min_notional:
         raise ValueError("Final testnet order is below the minimum notional.")
     return OrderSpec(asset_id=rules.asset_id, side="buy" if buy else "sell", quantity=quantity,
-                     price=price, cloid=cloid(setup.episode_id, "entry"), kind="entry")
+                     price=price, cloid=cloid(setup.episode_id, "entry", network=setup.network), kind="entry")
 

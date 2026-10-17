@@ -1,4 +1,4 @@
-"""Fixed-host transport. No redirects, user-controlled URL or mainnet mode."""
+"""Network-specific fixed-host transports; no redirects or configurable URL."""
 
 from decimal import Decimal as D
 import re
@@ -6,11 +6,14 @@ import re
 import httpx
 
 from ..domain import Snapshot, utcnow
-from .contracts import BtcRules, ExchangeAccount, TESTNET_URL
+from .contracts import BtcRules, ExchangeAccount, TESTNET_URL, MAINNET_URL
 
 
 class HyperliquidTestnet:
     __test__ = False
+    network = "testnet"
+    endpoint = TESTNET_URL
+    market_source = "hyperliquid-testnet"
 
     def __init__(self, client: httpx.AsyncClient, account_address: str | None = None):
         if account_address is not None and (not re.fullmatch(r"0x[0-9a-fA-F]{40}", account_address) or int(account_address, 16) == 0):
@@ -24,7 +27,7 @@ class HyperliquidTestnet:
         return self.account_address
 
     async def info(self, kind: str, **fields):
-        response = await self.client.post(TESTNET_URL + "/info", json={"type": kind, **fields},
+        response = await self.client.post(self.endpoint + "/info", json={"type": kind, **fields},
                                           follow_redirects=False, timeout=10)
         response.raise_for_status()
         return response.json(parse_float=D)
@@ -37,7 +40,7 @@ class HyperliquidTestnet:
             raise ValueError("BTC is unavailable on testnet.")
         ctx = contexts[index]
         rules = BtcRules(asset_id=index, size_decimals=asset["szDecimals"], max_leverage=asset["maxLeverage"])
-        snapshot = Snapshot(source="hyperliquid-testnet", price=ctx["midPx"] or ctx["markPx"], timestamp=observed,
+        snapshot = Snapshot(source=self.market_source, price=ctx["midPx"] or ctx["markPx"], timestamp=observed,
             funding=ctx["funding"], open_interest=ctx["openInterest"])
         return rules, snapshot
 
@@ -48,7 +51,7 @@ class HyperliquidTestnet:
         positions = [item["position"] for item in state["assetPositions"]]
         btc = next((p for p in positions if p["coin"] == "BTC"), {})
         leverage = btc.get("leverage", {})
-        return ExchangeAccount(address=self.owner(), observed_at=observed,
+        return ExchangeAccount(address=self.owner(), network=self.network, observed_at=observed,
             equity=state["marginSummary"]["accountValue"], withdrawable=state["withdrawable"],
             btc_size=btc.get("szi", "0"), open_order_count=len(orders),
             other_positions=any(p["coin"] != "BTC" and D(p["szi"]) != 0 for p in positions),
@@ -73,7 +76,14 @@ class HyperliquidTestnet:
             raise ValueError("Unsupported testnet execution action.")
         if not envelope.get("expiresAfter") or envelope["expiresAfter"] <= int(utcnow().timestamp() * 1000):
             raise ValueError("Signed action expired before submission.")
-        response = await self.client.post(TESTNET_URL + "/exchange", json=envelope, follow_redirects=False, timeout=10)
+        response = await self.client.post(self.endpoint + "/exchange", json=envelope, follow_redirects=False, timeout=10)
         response.raise_for_status()
         return response.json()
+
+
+class HyperliquidMainnet(HyperliquidTestnet):
+    """Explicit separate transport; never selected by changing the data feed."""
+    network = "mainnet"
+    endpoint = MAINNET_URL
+    market_source = "hyperliquid"
 

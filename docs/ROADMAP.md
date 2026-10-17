@@ -88,7 +88,20 @@ Current handoff: local preparation includes Stage 8 autonomous paper research an
 - [x] **8.4 Research interface and key-only paper setup.** Research history/results/critic/signal links and full evidence export, independent distribution display, ignored key preset and checked launcher. Verified: 388 Python tests, 46 Node tests, TypeScript/build, responsive live/labelled state views and isolated research DB restore. Real paid-provider acceptance, execution, donations and burns remain unverified/disabled; see `AGENT-SETUP.md`.
 - [x] **8.5 Product feature baseline.** Agreed feature inventory, 0.05% entry fee / 40-20-40 distribution and 50% eligible net-profit buyback/burn rule recorded in `FEATURES.md`, with implementation status and undecided options separated. Documentation only; no financial activation or code behavior change.
 
-## Initial financial policy
+## Stage 9 — Complete operational integrations
+
+These are code deliverables, not documentation substitutes. Default operation remains paper; implementing a writer does not authorize the developer to send funds/orders. Every external integration must distinguish executable code, offline verification and observed external acceptance.
+
+- [x] **9.1 Network-bound execution core.** Explicit mainnet/testnet fixed transports/signing domains, immutable network/account journals and disjoint order IDs. Offline mainnet fixtures reuse partial-fill protection and restart recovery. No real orders; see `EXECUTION-NETWORKS.md`.
+- [ ] **9.2 Autonomous project execution runner.** Persistent signal-to-order bridge, single runner ownership, live capital/cash-flow controls, time exits and restart reconciliation.
+- [ ] **9.3 User financial signing and runner.** Explicit permission/intent signing, verified submission endpoints, per-user execution ownership and full journal recovery.
+- [ ] **9.4 Forward paper funding.** Historical hourly settlements applied exactly once, including restart/closed positions and missing-data controls.
+- [ ] **9.5 Received revenue reconciliation.** Observed builder proceeds and trading settlements, idempotent ingestion and separation from estimates/paper PnL.
+- [ ] **9.6 Solana treasury execution.** Network/mint-bound purchase, SPL burn, durable transaction state and authenticated finalized evidence. Solana selected by owner; mint remains unspecified.
+- [ ] **9.7 Charity integration.** Verified-provider/recipient directory, earmark-bound payment flow, receipts and retry/reconciliation. Provider research authorized; no recipient or payment invented.
+- [ ] **9.8 Public operation code.** Configurable public identity boundary, server packaging, external alerts, encrypted backup integration and operational checks. No deployment during implementation.
+
+## Financial policy
 
 - BTC only; one open position, including outstanding reservations.
 - Up to 2x leverage; isolated account assumptions for the future exchange adapter.

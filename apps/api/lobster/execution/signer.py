@@ -11,6 +11,7 @@ from .contracts import BtcRules, OrderSpec
 
 class TestnetSigner:
     __test__ = False
+    network = "testnet"
     def __init__(self, key: SecretStr, account_address: str, rules: BtcRules,
                  max_entry_notional: Decimal = Decimal("50"), *, builder: str | None = None, builder_fee_tenths_bps: int = 0):
         import re
@@ -35,7 +36,7 @@ class TestnetSigner:
         self.builder_fee_tenths_bps = builder_fee_tenths_bps
 
     def __repr__(self):
-        return f"TestnetSigner(address={self.address!r}, network='testnet')"
+        return f"{type(self).__name__}(address={self.address!r}, network={self.network!r})"
 
     def _envelope(self, action: dict, nonce: int, now_ms: int, deadline_ms: int | None = None) -> dict:
         if not now_ms - 1000 <= nonce <= now_ms + 1000:
@@ -43,7 +44,7 @@ class TestnetSigner:
         expires = min(now_ms + 5000, deadline_ms) if deadline_ms is not None else now_ms + 5000
         if expires <= now_ms:
             raise ValueError("Approval expired before signing.")
-        signature = sign_l1_action(self.__wallet, action, None, nonce, expires, False)
+        signature = sign_l1_action(self.__wallet, action, None, nonce, expires, self.network == "mainnet")
         return {"action": action, "nonce": nonce, "signature": signature, "vaultAddress": None, "expiresAfter": expires}
 
     def order(self, order: OrderSpec, nonce: int, now_ms: int, deadline_ms: int | None = None, *, include_builder: bool = True) -> dict:
@@ -72,4 +73,9 @@ class TestnetSigner:
             raise ValueError("Invalid client order ID.")
         return self._envelope({"type": "cancelByCloid", "cancels": [
             {"asset": self.rules.asset_id, "cloid": order_cloid}]}, nonce, now_ms)
+
+
+class MainnetSigner(TestnetSigner):
+    """Same restricted BTC action grammar, explicit mainnet signing domain."""
+    network = "mainnet"
 
