@@ -44,6 +44,7 @@ from .economics.book import TreasuryBook
 from .economics.solana_treasury import public_solana_report
 from .economics.charity import public_charity_report
 from pathlib import Path
+from urllib.parse import urlsplit
 from .funding import PaperFunding
 
 logger = logging.getLogger(__name__)
@@ -175,7 +176,7 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
             if config.worker_enabled and config.research_enabled:
                 runtime.research.recover()
             app.state.runtime = runtime
-            app.state.user_auth = UserAuth(runtime.store)
+            app.state.user_auth = UserAuth(runtime.store, origin=config.web_origin)
             app.state.user_plans = UserPlans(runtime.store)
             app.state.user_capital = UserCapital(runtime.store)
             app.state.user_intents = UserIntents(runtime.store)
@@ -206,10 +207,12 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
                     await asyncio.gather(*tasks, return_exceptions=True)
 
     app = FastAPI(title="Lobster Desk", version="0.1.0", lifespan=lifespan)
-    app.add_middleware(CORSMiddleware, allow_origins=sorted(LOCAL_ORIGINS),
+    origins = LOCAL_ORIGINS if config.deployment_mode == "local" else {config.web_origin}
+    hosts = ["127.0.0.1", "localhost", "[::1]"] if config.deployment_mode == "local" else [urlsplit(config.web_origin).hostname, "api", "127.0.0.1"]
+    app.add_middleware(CORSMiddleware, allow_origins=sorted(origins),
                        allow_methods=["GET", "POST"], allow_headers=["Content-Type", "Idempotency-Key", "Authorization"])
-    app.add_middleware(LocalBoundary)
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "[::1]"], www_redirect=False)
+    app.add_middleware(LocalBoundary, allowed_origins=origins, proxy_token=config.proxy_token.get_secret_value() if config.deployment_mode != "local" else None)
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=hosts, www_redirect=False)
 
     @app.exception_handler(AuthError)
     async def auth_error(request: Request, error: AuthError):

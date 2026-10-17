@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import Annotated
 
-from pydantic import AfterValidator, Field
+from pydantic import AfterValidator, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -24,3 +24,7 @@ class UserTestnetSettings(BaseSettings):
     builder_fee_tenths_bps: int = Field(default=50, ge=0, le=100)
     financial_enabled: bool = False
     execution_root: str = "data/users-financial"
+
+    @field_validator("builder_address", mode="before")
+    @classmethod
+    def blank_builder(cls, value): return None if value == "" else value

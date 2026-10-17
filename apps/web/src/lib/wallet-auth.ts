@@ -1,6 +1,6 @@
 /** Exact local sign-in message contract. Never signs orders or builder consent. */
-export const AUTH_ORIGIN = "http://127.0.0.1:3000";
-export const AUTH_STATEMENT = "Sign in to the local Lobster Desk testnet workspace. This grants no trading, transfer or fee approval.";
+export const AUTH_ORIGIN = process.env.NEXT_PUBLIC_WEB_ORIGIN || "http://127.0.0.1:3000";
+export const AUTH_STATEMENT = `Sign in to the ${AUTH_ORIGIN === "http://127.0.0.1:3000" ? "local " : ""}Lobster Desk testnet workspace. This grants no trading, transfer or fee approval.`;
 export type AuthChallenge = {
   challenge_id: string; address: string; origin: string; chain_id: number; nonce: string;
   issued_at: string; expires_at: string; message: string; scope: string;
@@ -9,7 +9,7 @@ export type AuthChallenge = {
 
 export function validateAuthChallenge(value: unknown, address: string, origin: string, chainId: string, now = Date.now()): AuthChallenge {
   if (origin !== AUTH_ORIGIN || !/^0x[0-9a-f]+$/i.test(chainId) || BigInt(chainId) !== 421614n) {
-    throw new Error("Sign-in requires http://127.0.0.1:3000 and wallet chain 421614 (Arbitrum Sepolia). Select it manually, then reconnect.");
+    throw new Error(`Sign-in requires ${AUTH_ORIGIN} and wallet chain 421614 (Arbitrum Sepolia). Select it manually, then reconnect.`);
   }
   if (!value || typeof value !== "object") throw new Error("Invalid sign-in challenge.");
   const c = value as AuthChallenge;

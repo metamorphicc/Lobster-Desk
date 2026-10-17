@@ -1,6 +1,8 @@
 """Bounded local HTTP boundary. Public hosting still requires separate controls."""
 
 import asyncio
+import hmac
+import ipaddress
 
 from starlette.datastructures import Headers, MutableHeaders
 from starlette.responses import JSONResponse
@@ -11,10 +13,13 @@ MAX_BODY_BYTES = 65536
 
 
 class LocalBoundary:
-    def __init__(self, app, max_body_bytes: int = MAX_BODY_BYTES, body_timeout: float = 5):
+    def __init__(self, app, max_body_bytes: int = MAX_BODY_BYTES, body_timeout: float = 5, allowed_origins=None, proxy_token=None):
         self.app = app
         self.max_body_bytes = max_body_bytes
         self.body_timeout = body_timeout
+        self.allowed_origins = set(allowed_origins) if allowed_origins is not None else LOCAL_ORIGINS
+        self.proxy_token = proxy_token
+        self.active = {}
 
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http":
@@ -33,9 +38,19 @@ class LocalBoundary:
             await JSONResponse({"detail": detail}, status_code=status)(scope, receive, guarded_send)
 
         headers = Headers(scope=scope)
+        if self.proxy_token:
+            tokens, clients = headers.getlist("x-lobster-proxy-token"), headers.getlist("x-lobster-client-ip")
+            if len(tokens) != 1 or not hmac.compare_digest(tokens[0].encode(), self.proxy_token.encode()) or len(clients) != 1:
+                await refuse(403, "Public API requests require the configured trusted reverse proxy.")
+                return
+            try: peer = str(ipaddress.ip_address(clients[0]))
+            except ValueError:
+                await refuse(400, "Malformed trusted-proxy client identity.")
+                return
+            scope = dict(scope, client=(peer, 0))
         origins = headers.getlist("origin")
-        if len(origins) > 1 or origins and origins[0] not in LOCAL_ORIGINS:
-            await refuse(403, "Only the configured loopback browser origins may access this local API.")
+        if len(origins) > 1 or origins and origins[0] not in self.allowed_origins:
+            await refuse(403, "Only the configured browser origins may access this API.")
             return
         lengths = headers.getlist("content-length")
         if len(lengths) > 1 or lengths and (len(lengths[0]) > 20 or not lengths[0].isascii() or not lengths[0].isdigit()):
@@ -44,8 +59,19 @@ class LocalBoundary:
         if lengths and int(lengths[0]) > self.max_body_bytes:
             await refuse(413, "Request body exceeds the 64 KiB local API limit.")
             return
+        async def serve(receiver):
+            if not self.proxy_token: return await self.app(scope, receiver, guarded_send)
+            peer = scope["client"][0]
+            if sum(self.active.values()) >= 128 or self.active.get(peer, 0) >= 8:
+                await refuse(429, "Public connection capacity reached; retry after active requests finish.")
+                return
+            self.active[peer] = self.active.get(peer, 0) + 1
+            try: await self.app(scope, receiver, guarded_send)
+            finally:
+                self.active[peer] -= 1
+                if not self.active[peer]: del self.active[peer]
         if scope["method"] not in {"POST", "PUT", "PATCH", "DELETE"}:
-            await self.app(scope, receive, guarded_send)
+            await serve(receive)
             return
         body = bytearray()
         try:
@@ -73,4 +99,4 @@ class LocalBoundary:
                 return {"type": "http.request", "body": bytes(body), "more_body": False}
             return await receive()
 
-        await self.app(scope, replay, guarded_send)
+        await serve(replay)

@@ -1,0 +1,65 @@
+name: lobster-desk
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.api
+    restart: unless-stopped
+    environment:
+      DEPLOYMENT_MODE: public-single-host
+      WEB_ORIGIN: https://${LOBSTER_DOMAIN:?Set LOBSTER_DOMAIN in the private server environment}
+      PROXY_TOKEN: ${LOBSTER_PROXY_TOKEN:?Set a unique strong proxy secret}
+      OPERATOR_TOKEN: ${OPERATOR_TOKEN:?Set a different strong operator secret}
+      DATABASE_URL: sqlite:///data/lobster.db
+      TREASURY_PATH: data/treasury.sqlite3
+      MARKET_SOURCE: ${MARKET_SOURCE:-hyperliquid}
+      AGENT_PROVIDER: ${AGENT_PROVIDER:-demo}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-}
+      RESEARCH_ENABLED: ${RESEARCH_ENABLED:-false}
+      USER_TESTNET_BUILDER_ADDRESS: ${USER_TESTNET_BUILDER_ADDRESS:-}
+      USER_TESTNET_FINANCIAL_ENABLED: "false"
+    volumes: ["lobster-data:/app/data"]
+    networks: [internal]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 1g
+    pids_limit: 128
+    stop_grace_period: 30s
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.web
+      args:
+        NEXT_PUBLIC_WEB_ORIGIN: https://${LOBSTER_DOMAIN:?Set LOBSTER_DOMAIN}
+    restart: unless-stopped
+    environment:
+      API_ORIGIN: http://api:8000
+    networks: [internal]
+    read_only: true
+    tmpfs: [/tmp, /app/apps/web/.next/cache]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    pids_limit: 128
+  proxy:
+    image: caddy:2
+    restart: unless-stopped
+    environment:
+      LOBSTER_DOMAIN: ${LOBSTER_DOMAIN:?Set LOBSTER_DOMAIN}
+      LOBSTER_PROXY_TOKEN: ${LOBSTER_PROXY_TOKEN:?Set LOBSTER_PROXY_TOKEN}
+    ports: ["80:80", "443:443", "443:443/udp"]
+    volumes: ["./Caddyfile:/etc/caddy/Caddyfile:ro", "caddy-data:/data", "caddy-config:/config"]
+    networks: [internal]
+    depends_on: [api, web]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    pids_limit: 128
+volumes:
+  lobster-data:
+  caddy-data:
+  caddy-config:
+networks:
+  internal:

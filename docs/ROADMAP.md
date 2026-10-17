@@ -103,6 +103,9 @@ These are code deliverables, not documentation substitutes. Default operation re
 - [x] **9.6 Solana treasury execution.** Separate opt-in exact-input Jupiter purchase and full purchased-lot SPL BurnChecked, fixed mainnet/genesis, durable claims/signatures, finalized balance checks and read-only evidence API. 13 focused tests include actual SPL execution in LiteSVM; 72 combined checks pass. Supports bounded classic direct routes, requires separately funded Solana wallet; no automatic cross-chain bridge or observed funded acceptance. Mint remains unspecified; see `SOLANA-TREASURY.md`.
 - [x] **9.7 Charity integration.** The Giving Block authenticated EIN-matched directory, selected children/animal causes, exact USDC/Ethereum pledge and bounded payment runner, finalized-transfer/provider-record separation and uncertain-state recovery. Ten offline scenarios pass; real partner credentials, wallet funding and provider acceptance remain missing. No actual pledge/payment; see `CHARITY.md`.
 - [ ] **9.8 Public operation code.** Configurable public identity boundary, server packaging, external alerts, encrypted backup integration and operational checks. No deployment during implementation.
+  - [x] **9.8a Public single-host boundary/packaging.** Exact HTTPS signing origin, distinct proxy/operator secrets, trusted client identity, connection bounds, standalone Next/Docker/Caddy source and private config generator. 52 focused backend/58 Node cases and build pass; Compose validates. Container runtime/HTTPS acceptance unverified because Docker daemon is unavailable. No deployment; see `PUBLIC-DEPLOYMENT.md`.
+  - [ ] **9.8b Complete encrypted recovery.** Include every financial journal and immutable cross-machine encrypted snapshot transport/restore.
+  - [ ] **9.8c External operational alerts.** Durable observations of runner/financial uncertainty, bounded redacted notifications and outage recovery.
 
 ## Financial policy
 

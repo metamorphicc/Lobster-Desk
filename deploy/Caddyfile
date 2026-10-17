@@ -1,0 +1,24 @@
+{$LOBSTER_DOMAIN} {
+    encode zstd gzip
+    request_body {
+        max_size 64KB
+    }
+    header {
+        Strict-Transport-Security "max-age=31536000"
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy no-referrer
+        -Server
+    }
+    handle /api/* {
+        reverse_proxy api:8000 {
+            header_up X-Lobster-Proxy-Token {$LOBSTER_PROXY_TOKEN}
+            header_up X-Lobster-Client-IP {remote_host}
+            header_down -X-Lobster-Proxy-Token
+            flush_interval -1
+        }
+    }
+    handle {
+        reverse_proxy web:3000
+    }
+}

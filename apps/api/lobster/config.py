@@ -1,5 +1,7 @@
 from decimal import Decimal
 from typing import Literal
+from urllib.parse import urlsplit
+import re
 
 from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -24,6 +26,9 @@ class Settings(BaseSettings):
     max_research_calls_per_day: int = Field(default=4, ge=1, le=20)
     treasury_path: str = "data/treasury.sqlite3"
     paper_funding_enabled: bool = True
+    deployment_mode: Literal["local", "public-single-host"] = "local"
+    web_origin: str = "http://127.0.0.1:3000"
+    proxy_token: SecretStr | None = None
 
     @model_validator(mode="after")
     def configured_provider(self):
@@ -31,5 +36,21 @@ class Settings(BaseSettings):
             raise ValueError("Anthropic mode requires ANTHROPIC_API_KEY and ANTHROPIC_MODEL.")
         if self.operator_token and len(self.operator_token.get_secret_value()) < 24:
             raise ValueError("OPERATOR_TOKEN must contain at least 24 characters.")
+        origin = urlsplit(self.web_origin)
+        if (origin.username or origin.password or origin.path or origin.query or origin.fragment or not origin.hostname
+                or self.web_origin != f"{origin.scheme}://{origin.netloc}" or origin.scheme not in {"http", "https"}):
+            raise ValueError("A canonical exact web origin is required, without credentials/path/query.")
+        if self.deployment_mode == "public-single-host":
+            if (origin.scheme != "https" or origin.port not in {None, 443}
+                    or not re.fullmatch(r"[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?\.[a-z]{2,63}", origin.hostname)
+                    or origin.hostname.endswith((".localhost", ".local"))
+                    or not self.proxy_token or len(self.proxy_token.get_secret_value()) < 32
+                    or not self.operator_token or len(self.operator_token.get_secret_value()) < 32):
+                raise ValueError("Public single-host mode requires HTTPS origin and separate strong proxy/operator tokens.")
+            if self.proxy_token.get_secret_value() == self.operator_token.get_secret_value(): raise ValueError("Proxy/operator secrets must differ.")
+            if not self.database_url.startswith("sqlite:///") or ":memory:" in self.database_url or not self.worker_enabled:
+                raise ValueError("Public single-host packaging requires one file-backed SQLite worker owner.")
+        elif self.web_origin not in {"http://127.0.0.1:3000", "http://localhost:3000"}:
+            raise ValueError("Non-loopback origins require explicit public-single-host mode.")
         return self
 

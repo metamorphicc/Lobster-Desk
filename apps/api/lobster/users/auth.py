@@ -70,15 +70,17 @@ def iso(now: datetime) -> str:
     return now.isoformat().replace("+00:00", "Z")
 
 
-def message(address: str, nonce: str, issued: str, expires: str, request_id: str) -> str:
-    return (f"{ORIGIN} wants you to sign in with your Ethereum account:\n{to_checksum_address(address)}\n\n"
-        f"{STATEMENT}\n\nURI: {ORIGIN}\nVersion: 1\nChain ID: {CHAIN_ID}\nNonce: {nonce}"
+def message(address: str, nonce: str, issued: str, expires: str, request_id: str, *, origin=ORIGIN) -> str:
+    statement = STATEMENT if origin == ORIGIN else STATEMENT.replace("local ", "")
+    return (f"{origin} wants you to sign in with your Ethereum account:\n{to_checksum_address(address)}\n\n"
+        f"{statement}\n\nURI: {origin}\nVersion: 1\nChain ID: {CHAIN_ID}\nNonce: {nonce}"
         f"\nIssued At: {issued}\nExpiration Time: {expires}\nRequest ID: {request_id}")
 
 
 class UserAuth:
-    def __init__(self, store):
+    def __init__(self, store, *, origin=ORIGIN):
         self.store = store
+        self.origin = origin
         self.boot = secrets.token_hex(16)  # Restart invalidates every prior proof/session.
         Base.metadata.create_all(store.engine)
         with store.transaction() as session:
@@ -115,9 +117,9 @@ class UserAuth:
             expires = now + timedelta(minutes=2)
             data = {"address": address, "boot": self.boot, "nonce": nonce, "issued_at": iso(now), "expires_at": iso(expires), "used": False}
             session.add(Challenge(id=request_id, expires_us=micros(expires), payload=data))
-        return {"challenge_id": request_id, "address": address, "origin": ORIGIN, "chain_id": CHAIN_ID,
+        return {"challenge_id": request_id, "address": address, "origin": self.origin, "chain_id": CHAIN_ID,
             "nonce": nonce, "issued_at": data["issued_at"], "expires_at": data["expires_at"],
-            "message": message(address, nonce, data["issued_at"], data["expires_at"], request_id),
+            "message": message(address, nonce, data["issued_at"], data["expires_at"], request_id, origin=self.origin),
             "scope": SCOPE, "order_submission_enabled": False, "fee_collection_enabled": False}
 
     def verify(self, body: VerifyInput, peer: str) -> dict:
@@ -135,7 +137,7 @@ class UserAuth:
             raise AuthError()
         try:
             signer = Account.recover_message(encode_defunct(text=message(data["address"], data["nonce"],
-                data["issued_at"], data["expires_at"], body.challenge_id)), signature=signature).lower()
+                data["issued_at"], data["expires_at"], body.challenge_id, origin=self.origin)), signature=signature).lower()
         except Exception:
             raise AuthError() from None
         if signer != data["address"]:
