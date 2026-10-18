@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { ArrowDownLeft, ArrowRight, ArrowUpRight, BookOpen, ChevronRight, CircleHelp, Download,
   FileClock, FlaskConical, Gauge, Landmark, LoaderCircle, Radio, ShieldCheck, SlidersHorizontal,
   Terminal, Waves, X } from "lucide-react";
-import { Creature } from "./creature";
 import { PriceChart } from "./price-chart";
 import { UserAccount } from "./user-account";
 import { ProjectActivity, ProjectActivityView, type ProjectActivityData } from "./project-activity";
@@ -18,9 +17,9 @@ type DeskState = State & { activity?: ProjectActivityData };
 type Tab = "tank" | "journal" | "research" | "treasury" | "testnet" | "mainnet";
 const active = new Set(["queued", "analyzing", "risk_check", "capital_check", "approved", "filled", "staged", "submitting", "protected", "closing", "needs_protection", "needs_review", "needs_reconciliation"]);
 const roles = [
-  { name: "Clawdius", role: "Analyst", key: "analyst", kind: "lobster", line: "Find the setup. Defend the thesis." },
-  { name: "Pinch", role: "Risk manager", key: "risk", kind: "crab", line: "First, tell me what we can lose." },
-  { name: "Ledger", role: "Banker & executor", key: "banker", kind: "crayfish", line: "A good idea still needs a budget." },
+  { name: "Clawdius", role: "Analyst", key: "analyst", line: "Find the setup. Defend the thesis." },
+  { name: "Pinch", role: "Risk manager", key: "risk", line: "First, tell me what we can lose." },
+  { name: "Ledger", role: "Banker & executor", key: "banker", line: "A good idea still needs a budget." },
 ] as const;
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -152,27 +151,11 @@ export function Desk({ internal = false }: { internal?: boolean }) {
             <div className="main-column">
               <section className="tank-panel" aria-labelledby="tank-title">
                 <div className="panel-heading"><h2 id="tank-title"><span className="status-dot" /> Inside the tank</h2><span className="micro-label">{internal ? (state?.service.agent_provider === "anthropic" ? "AI REVIEWS" : "SCRIPTED DEMO") : "THE COLLECTIVE"}</span></div>
-                <div className="tank-scene">
-                  <div className="scene-caption"><span className="scene-coordinate">BTC / USDC</span><span>EST. 2026</span></div>
-                  <div className="porthole porthole--one" aria-hidden="true" /><div className="porthole porthole--two" aria-hidden="true" />
-                  <div className="scene-waterline" aria-hidden="true" /><span className="scene-word" aria-hidden="true">THE TANK</span>
-                  <div className="agents">
-                    {roles.map(agent => {
-                      const speaking = (agent.key === "analyst" && current?.status === "analyzing") || (agent.key === "risk" && current?.status === "risk_check") || (agent.key === "banker" && current?.status === "capital_check");
-                      return <div className={`agent ${speaking ? "agent--speaking" : ""}`} key={agent.key}>
-                        <span className={`agent-state ${speaking ? "is-speaking" : ""}`}>{speaking ? "Reviewing…" : current?.reviews[agent.key as "analyst" | "risk"] ? "Verdict recorded" : "At the desk"}</span>
-                        <Creature kind={agent.kind} />
-                        <div className="agent-nameplate"><strong>{agent.name}</strong><span>{agent.role}</span></div>
-                      </div>;
-                    })}
-                  </div>
-                  <div className="scene-caption scene-caption--bottom"><span><ShieldCheck size={12} /> Risk enforced in code</span><span>ONE MARKET. THREE PERSPECTIVES.</span></div>
-                </div>
                 <div className="agent-commentary">
                   {roles.map(agent => {
                     const review = current?.reviews[agent.key as "analyst" | "risk"];
                     const message = review?.summary || (agent.key === "banker" && current?.risk ? current.reason : agent.line);
-                    return <div key={agent.key}><span className="commentary-name">{agent.name}<span>{review ? review.verdict === "approve" ? " / IN" : " / OUT" : ""}</span></span><p>{message}</p></div>;
+                    return <div key={agent.key}><span className="commentary-name">{agent.name}<span>{review ? review.verdict === "approve" ? " / IN" : " / OUT" : ""}</span></span><span className="small-note">{agent.role}</span><p>{message}</p></div>;
                   })}
                 </div>
                 <div className="episode-bar"><span className="micro-label">{current ? `EP ${current.id.slice(0, 6).toUpperCase()}` : "AWAITING FIRST PITCH"}</span><span className={`verdict verdict--${current?.status || "idle"}`}>{current ? statusLabel(current.status) : "The floor is yours"}</span></div>
