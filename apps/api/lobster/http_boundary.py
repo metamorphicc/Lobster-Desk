@@ -59,44 +59,49 @@ class LocalBoundary:
         if lengths and int(lengths[0]) > self.max_body_bytes:
             await refuse(413, "Request body exceeds the 64 KiB local API limit.")
             return
-        async def serve(receiver):
-            if not self.proxy_token: return await self.app(scope, receiver, guarded_send)
-            peer = scope["client"][0]
-            if sum(self.active.values()) >= 128 or self.active.get(peer, 0) >= 8:
-                await refuse(429, "Public connection capacity reached; retry after active requests finish.")
+        async def process():
+            if scope["method"] not in {"POST", "PUT", "PATCH", "DELETE"}:
+                await self.app(scope, receive, guarded_send)
                 return
-            self.active[peer] = self.active.get(peer, 0) + 1
-            try: await self.app(scope, receiver, guarded_send)
-            finally:
-                self.active[peer] -= 1
-                if not self.active[peer]: del self.active[peer]
-        if scope["method"] not in {"POST", "PUT", "PATCH", "DELETE"}:
-            await serve(receive)
+            body = bytearray()
+            try:
+                async with asyncio.timeout(self.body_timeout):
+                    while True:
+                        message = await receive()
+                        if message["type"] == "http.disconnect":
+                            return
+                        chunk = message.get("body", b"")
+                        if len(body) + len(chunk) > self.max_body_bytes:
+                            await refuse(413, "Request body exceeds the 64 KiB local API limit.")
+                            return
+                        body.extend(chunk)
+                        if not message.get("more_body", False):
+                            break
+            except TimeoutError:
+                await refuse(408, "Request body did not arrive within the local API time limit.")
+                return
+            delivered = False
+
+            async def replay():
+                nonlocal delivered
+                if not delivered:
+                    delivered = True
+                    return {"type": "http.request", "body": bytes(body), "more_body": False}
+                return await receive()
+
+            await self.app(scope, replay, guarded_send)
+
+        # Reserve capacity before reading even the first body chunk. Slow POSTs
+        # must count toward the same per-peer/global limits as downstream work.
+        if not self.proxy_token:
+            return await process()
+        peer = scope["client"][0]
+        if sum(self.active.values()) >= 128 or self.active.get(peer, 0) >= 8:
+            await refuse(429, "Public connection capacity reached; retry after active requests finish.")
             return
-        body = bytearray()
+        self.active[peer] = self.active.get(peer, 0) + 1
         try:
-            async with asyncio.timeout(self.body_timeout):
-                while True:
-                    message = await receive()
-                    if message["type"] == "http.disconnect":
-                        return
-                    chunk = message.get("body", b"")
-                    if len(body) + len(chunk) > self.max_body_bytes:
-                        await refuse(413, "Request body exceeds the 64 KiB local API limit.")
-                        return
-                    body.extend(chunk)
-                    if not message.get("more_body", False):
-                        break
-        except TimeoutError:
-            await refuse(408, "Request body did not arrive within the local API time limit.")
-            return
-        delivered = False
-
-        async def replay():
-            nonlocal delivered
-            if not delivered:
-                delivered = True
-                return {"type": "http.request", "body": bytes(body), "more_body": False}
-            return await receive()
-
-        await serve(replay)
+            await process()
+        finally:
+            self.active[peer] -= 1
+            if not self.active[peer]: del self.active[peer]

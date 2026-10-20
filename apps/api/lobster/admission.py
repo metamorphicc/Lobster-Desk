@@ -9,8 +9,9 @@ REQUEST_LIMIT = 10
 MAX_PEERS = 128
 
 
-def consume(state: dict, peer: str, now: datetime) -> tuple[dict, int]:
+def consume(state: dict, peer: str, now: datetime, *, limit: int = REQUEST_LIMIT) -> tuple[dict, int]:
     """Return new state and retry seconds (zero admits). Never mutate input."""
+    if type(limit) is not int or not 1 <= limit <= 120: raise ValueError("Invalid admission limit.")
     if not isinstance(peer, str) or not peer or len(peer) > 256 or now.tzinfo is None:
         raise ValueError("Invalid pitch admission source or clock.")
     last = state.get("last_seen_us")
@@ -19,7 +20,7 @@ def consume(state: dict, peer: str, now: datetime) -> tuple[dict, int]:
         raise ValueError("Invalid persisted pitch admission state.")
     for key, times in peers.items():
         if (not isinstance(key, str) or not re.fullmatch(r"[a-f0-9]{64}", key)
-                or not isinstance(times, list) or not 1 <= len(times) <= REQUEST_LIMIT
+                or not isinstance(times, list) or not 1 <= len(times) <= limit
                 or any(type(value) is not int or not 0 <= value <= last for value in times)
                 or times != sorted(times)):
             raise ValueError("Invalid persisted pitch admission window.")
@@ -33,7 +34,7 @@ def consume(state: dict, peer: str, now: datetime) -> tuple[dict, int]:
     key = sha256(peer.encode("utf-8")).hexdigest()
     times = active.get(key, [])
     retry_until = None
-    if len(times) >= REQUEST_LIMIT:
+    if len(times) >= limit:
         retry_until = times[0] + WINDOW_US
     elif key not in active and len(active) >= MAX_PEERS:
         # Capacity becomes free only when an entire peer window expires.

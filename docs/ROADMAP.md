@@ -127,6 +127,11 @@ These are code deliverables, not documentation substitutes. Default operation re
 
 - [x] **11.3 Temporary text-only agents.** Removed the character scene and illustrations from both tank surfaces. Names, role labels, reviews and verdicts remain in the compact commentary block. Existing artwork source is retained for a future design. Production build passes; 320/375/414/768 checks show three text roles, no scene/artwork and no horizontal overflow. No financial behavior changed.
 
+## Stage 12 — Security and UI follow-up
+
+- [x] **12.1 HTTP abuse protection and security review.** Connection slots cover body upload; persistent shared exchange-read admission blocks address/network rotation and upstream amplification. Twenty-three focused checks and all 536 backend tests pass. Current npm production/64-pin OSV checks and bounded redacted source scanning completed. See `AUDIT-2026-10-20.md` for findings and remaining launch boundaries. No push or financial activation.
+- [ ] **12.2 UI recovery and agent-visual proposal.** Bound/abort read requests, clear stale/previous-identity reports and distinguish unknown from empty data. Verify the production build and responsive/recovery states; document replacement concepts without restoring the removed character illustrations.
+
 ## Financial policy
 
 The owner-directed economics revision is implemented in Stage 10: received fees allocate 40% team / 60% bot; verified user-strategy net profits allocate 50% author / 50% bot. Donation execution is retired. See `STRATEGY-SHARING.md` for accounting, authorship and observed payment boundaries. Historical Stage 8–9 descriptions below/above record the superseded implementation.

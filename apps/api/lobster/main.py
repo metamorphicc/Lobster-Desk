@@ -7,7 +7,7 @@ import json
 import logging
 import re
 
-from fastapi import FastAPI, Header, HTTPException, Query, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -17,6 +17,7 @@ import httpx
 
 from .agents import AnthropicReviewer, DemoReviewer
 from .config import Settings
+from .external_reads import ExternalReads, admit_external_read
 from .domain import Contract, OperatorAction, PitchInput, Snapshot, utcnow
 from .market import DemoFeed, HyperliquidFeed
 from .pipeline import Pipeline
@@ -192,6 +193,7 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
             if config.worker_enabled and config.research_enabled:
                 runtime.research.recover()
             app.state.runtime = runtime
+            app.state.external_reads = ExternalReads(runtime.store)
             app.state.user_auth = UserAuth(runtime.store, origin=config.web_origin)
             app.state.user_plans = UserPlans(runtime.store)
             app.state.user_capital = UserCapital(runtime.store)
@@ -232,7 +234,7 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
                         task.cancel()
                     await asyncio.gather(*tasks, return_exceptions=True)
 
-    app = FastAPI(title="Lobster Desk", version="0.1.0", lifespan=lifespan)
+    app = FastAPI(title="Lobster Desk", version="0.1.0", lifespan=lifespan, dependencies=[Depends(admit_external_read)])
     origins = LOCAL_ORIGINS if config.deployment_mode == "local" else {config.web_origin}
     hosts = ["127.0.0.1", "localhost", "[::1]"] if config.deployment_mode == "local" else [urlsplit(config.web_origin).hostname, "api", "127.0.0.1"]
     app.add_middleware(CORSMiddleware, allow_origins=sorted(origins),
