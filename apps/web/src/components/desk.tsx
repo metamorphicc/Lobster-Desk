@@ -23,7 +23,7 @@ const roles = [
 ] as const;
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`/api${path}`, { cache: "no-store", ...init });
+  const response = await fetch(`/api${path}`, { cache: "no-store", ...init, signal: init?.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(15000)]) : AbortSignal.timeout(15000) });
   if (!response.ok) {
     let message = `The service returned ${response.status}. Try again.`;
     try {
@@ -39,25 +39,26 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
 function useDesk(internal: boolean) {
   const [state, setState] = useState<DeskState | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const busy = useRef(false);
+  const request = useRef<AbortController | null>(null);
   const alive = useRef(true);
   const refresh = useCallback(async () => {
-    if (busy.current) return;
-    busy.current = true;
+    if (request.current) return;
+    const current = new AbortController(); request.current = current;
     try {
-      const next = await api<DeskState>(internal ? "/v1/state" : "/v1/product/state");
-      if (alive.current) { setState(next); setError(null); }
+      const next = await api<DeskState>(internal ? "/v1/state" : "/v1/product/state", { signal: current.signal });
+      if (alive.current && request.current === current && !current.signal.aborted) { setState(next); setError(null); }
       return next;
     } catch {
-      if (alive.current) { if (!internal) setState(null); setError("The tank is temporarily unavailable. Please retry in a moment."); }
-    } finally { busy.current = false; }
+      if (alive.current && request.current === current && !current.signal.aborted) { if (!internal) setState(null); setError("The tank is temporarily unavailable. Please retry in a moment."); }
+    } finally { if (request.current === current) request.current = null; }
   }, [internal]);
   useEffect(() => {
     alive.current = true;
+    let disposed = false;
     let events: EventSource | undefined;
     let timeout: ReturnType<typeof setTimeout> | undefined;
     void refresh().then(initial => {
-      if (!alive.current || !internal) return;
+      if (disposed || !alive.current || !internal) return;
       events = new EventSource(`/api/v1/events?after=${initial?.last_event_id || 0}`);
       events.addEventListener("decision", () => {
         clearTimeout(timeout);
@@ -65,7 +66,7 @@ function useDesk(internal: boolean) {
       });
     });
     const timer = setInterval(() => { void refresh(); }, 5000);
-    return () => { alive.current = false; events?.close(); clearTimeout(timeout); clearInterval(timer); };
+    return () => { disposed = true; alive.current = false; request.current?.abort(); request.current = null; events?.close(); clearTimeout(timeout); clearInterval(timer); };
   }, [refresh, internal]);
   return { state, error, refresh };
 }
@@ -158,7 +159,7 @@ export function Desk({ internal = false }: { internal?: boolean }) {
                     return <div key={agent.key}><span className="commentary-name">{agent.name}<span>{review ? review.verdict === "approve" ? " / IN" : " / OUT" : ""}</span></span><span className="small-note">{agent.role}</span><p>{message}</p></div>;
                   })}
                 </div>
-                <div className="episode-bar"><span className="micro-label">{current ? `EP ${current.id.slice(0, 6).toUpperCase()}` : "AWAITING FIRST PITCH"}</span><span className={`verdict verdict--${current?.status || "idle"}`}>{current ? statusLabel(current.status) : "The floor is yours"}</span></div>
+                <div className="episode-bar"><span className="micro-label">{current ? `EP ${current.id.slice(0, 6).toUpperCase()}` : state ? "AWAITING FIRST PITCH" : "AWAITING LATEST DECISION"}</span><span className={`verdict verdict--${current?.status || "idle"}`}>{current ? statusLabel(current.status) : state ? "The floor is yours" : "Waiting for updates"}</span></div>
               </section>
 
               <section className="market-panel" aria-labelledby="market-title">
@@ -172,8 +173,8 @@ export function Desk({ internal = false }: { internal?: boolean }) {
               <section className="setup-panel"><div className="panel-heading"><h2>On the table</h2><BookOpen size={16} /></div>
                 {current ? <Setup internal={internal} episode={current} position={state?.positions.find(p => p.episode_id === current.id)} /> : <div className="empty-setup"><span className="empty-icon"><ArrowUpRight size={24} /></span><h3>Got a thesis?</h3><p>Pitch a BTC setup. The tank checks the idea, the risk and the budget.</p><button className="button button--secondary" onClick={pitch}>Take the floor <ArrowRight size={15} /></button><span className="small-note">Free to pitch. No trade guaranteed.</span></div>}
               </section>
-              <section className="queue-panel"><div className="panel-heading"><h2>In the queue</h2><span className="count-label">{pending.length}</span></div>
-                {pending.length ? pending.map(ep => <button className="queue-item" key={ep.id} onClick={() => setSelectedId(ep.id)}><span className={`direction-icon ${ep.pitch.direction}`}>{ep.pitch.direction === "long" ? <ArrowUpRight size={16} /> : <ArrowDownLeft size={16} />}</span><span><strong>BTC {ep.pitch.direction}</strong><small>{ep.pitch.author} · {statusLabel(ep.status)}</small></span><ChevronRight size={15} /></button>) : <p className="empty-note">No setups waiting.<br />Your idea could be next.</p>}
+              <section className="queue-panel"><div className="panel-heading"><h2>In the queue</h2><span className="count-label">{state ? pending.length : "—"}</span></div>
+                {pending.length ? pending.map(ep => <button className="queue-item" key={ep.id} onClick={() => setSelectedId(ep.id)}><span className={`direction-icon ${ep.pitch.direction}`}>{ep.pitch.direction === "long" ? <ArrowUpRight size={16} /> : <ArrowDownLeft size={16} />}</span><span><strong>BTC {ep.pitch.direction}</strong><small>{ep.pitch.author} · {statusLabel(ep.status)}</small></span><ChevronRight size={15} /></button>) : <p className="empty-note">{state ? <>No setups waiting.<br />Your idea could be next.</> : "Waiting for the latest setups…"}</p>}
               </section>
               <div className="rules-note"><ShieldCheck size={21} /><div><strong>The house rules</strong><p>BTC only. One position. Up to 2× leverage. Every entry passes coded risk and capital checks.</p><button className="text-link" onClick={() => helpDialog.current?.showModal()}>Read the mechanics <ArrowRight size={13} /></button></div></div>
             </aside>
@@ -226,7 +227,7 @@ function Setup({ episode, position, internal = true }: { episode: Episode; posit
 
 function Journal({ state, compact = false, onSelect }: { state: State | null; compact?: boolean; onSelect: (id: string) => void }) {
   const episodes = compact ? state?.episodes.slice(0, 5) : state?.episodes;
-  return <section className="journal-panel"><div className="panel-heading"><h2>{compact ? "Recent calls" : "All setups"}</h2><span className="micro-label">{state?.episodes.length || 0} RECORDED</span></div>{episodes?.length ? <div className="table-wrap"><table><thead><tr><th>Setup / pitcher</th><th>Entry</th><th>Verdict</th><th>Net PnL</th><th><span className="sr-only">Details</span></th></tr></thead><tbody>{episodes.map(ep => { const position = state?.positions.find(p => p.episode_id === ep.id); return <tr key={ep.id}><td><strong className={ep.pitch.direction === "long" ? "positive" : "negative"}>{ep.pitch.direction === "long" ? "↗" : "↙"} BTC {ep.pitch.direction}</strong><small>{ep.pitch.author}</small></td><td>{money(ep.pitch.entry)}</td><td><span className={`verdict verdict--${ep.status}`}>{statusLabel(ep.status)}</span></td><td className={Number(position?.net_pnl || 0) < 0 ? "negative" : ""}>{position?.net_pnl != null ? signed(position.net_pnl) : "—"}</td><td><button className="icon-button" onClick={() => onSelect(ep.id)} aria-label={`View ${ep.pitch.author}'s ${ep.pitch.direction} setup`}><ArrowUpRight size={17} /></button></td></tr>; })}</tbody></table></div> : <div className="journal-empty"><FileClock size={22} /><div><strong>No calls on record yet.</strong><p>The first pitch starts the story. Rejections will be recorded too.</p></div></div>}</section>;
+  return <section className="journal-panel"><div className="panel-heading"><h2>{compact ? "Recent calls" : "All setups"}</h2><span className="micro-label">{state ? state.episodes.length : "—"} RECORDED</span></div>{episodes?.length ? <div className="table-wrap"><table><thead><tr><th>Setup / pitcher</th><th>Entry</th><th>Verdict</th><th>Net PnL</th><th><span className="sr-only">Details</span></th></tr></thead><tbody>{episodes.map(ep => { const position = state?.positions.find(p => p.episode_id === ep.id); return <tr key={ep.id}><td><strong className={ep.pitch.direction === "long" ? "positive" : "negative"}>{ep.pitch.direction === "long" ? "↗" : "↙"} BTC {ep.pitch.direction}</strong><small>{ep.pitch.author}</small></td><td>{money(ep.pitch.entry)}</td><td><span className={`verdict verdict--${ep.status}`}>{statusLabel(ep.status)}</span></td><td className={Number(position?.net_pnl || 0) < 0 ? "negative" : ""}>{position?.net_pnl != null ? signed(position.net_pnl) : "—"}</td><td><button className="icon-button" onClick={() => onSelect(ep.id)} aria-label={`View ${ep.pitch.author}'s ${ep.pitch.direction} setup`}><ArrowUpRight size={17} /></button></td></tr>; })}</tbody></table></div> : <div className="journal-empty"><FileClock size={22} /><div><strong>{state ? "No calls on record yet." : "Waiting for the journal…"}</strong><p>{state ? "The first pitch starts the story. Rejections will be recorded too." : "The latest decisions will appear when the connection is restored."}</p></div></div>}</section>;
 }
 
 function PitchForm({ state, onSent }: { state: State | null; onSent: (id: string) => void }) {

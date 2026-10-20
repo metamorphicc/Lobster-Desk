@@ -40,10 +40,10 @@ export function UserAccount({ episodes = [], network = "testnet", product = fals
     const unsubscribe = current.subscribe(setWallet);
     const stopDiscovery = discoverWallets(window, setWallets);
     const controller = new AbortController();
-    void fetch(`/api/v1/users/${network}/config`, { signal: controller.signal, cache: "no-store" }).then(async response => {
+    void fetch(`/api/v1/users/${network}/config`, { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]), cache: "no-store" }).then(async response => {
       if (!response.ok) throw new Error();
       const value = await response.json(); if (value.network !== network) throw new Error(); if (!controller.signal.aborted) setConfig(value);
-    }).catch(() => { if (!controller.signal.aborted) setError("User account settings are unavailable. Check the local API."); });
+    }).catch(() => { if (!controller.signal.aborted) setError("Account settings are temporarily unavailable. Please retry."); });
     setNow(Date.now());
     const timer = setInterval(() => setNow(Date.now()), 5000);
     return () => { unsubscribe(); current.disconnect(); stopDiscovery(); controller.abort(); clearInterval(timer); };
@@ -53,9 +53,9 @@ export function UserAccount({ episodes = [], network = "testnet", product = fals
     if (!address) { setLoading(false); return; }
     const controller = new AbortController();
     setLoading(true);
-    void fetch(`/api/v1/users/${network}/accounts/${address}`, { cache: "no-store", signal: controller.signal }).then(async response => {
+    void fetch(`/api/v1/users/${network}/accounts/${address}`, { cache: "no-store", signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]) }).then(async response => {
       const value = await response.json();
-      if (!response.ok) throw new Error(typeof value.detail === "string" ? value.detail : "The testnet account could not be read.");
+      if (!response.ok) throw new Error(typeof value.detail === "string" ? value.detail : "The account could not be read.");
       if (value.network !== network || value.address !== address || !Number.isFinite(Date.parse(value.observed_at))) throw new Error("The account response did not match the requested address.");
       if (!controller.signal.aborted) { setResult({ key, data: value }); setNow(Date.now()); }
     }).catch(failure => { if (!controller.signal.aborted) setError(failure instanceof Error ? failure.message : "Account observation failed."); })

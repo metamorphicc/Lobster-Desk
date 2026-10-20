@@ -20,13 +20,13 @@ export function useLocalReport<T>(path: string) {
         const result = await response.json() as T;
         if (!controller.signal.aborted) { setData(result); setError(""); }
       } catch {
-        if (!controller.signal.aborted) setError("This report is temporarily unavailable. Please retry.");
+        if (!controller.signal.aborted) { setData(null); setError("This report is temporarily unavailable. Please retry."); }
       } finally {
         if (!controller.signal.aborted) setLoading(false);
         busy = false;
       }
     }
-    setLoading(true);
+    setData(null); setLoading(true);
     void load();
     const timer = setInterval(() => { void load(); }, 15000);
     return () => { controller.abort(); clearInterval(timer); };

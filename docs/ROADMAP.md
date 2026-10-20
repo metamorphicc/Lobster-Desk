@@ -130,7 +130,7 @@ These are code deliverables, not documentation substitutes. Default operation re
 ## Stage 12 — Security and UI follow-up
 
 - [x] **12.1 HTTP abuse protection and security review.** Connection slots cover body upload; persistent shared exchange-read admission blocks address/network rotation and upstream amplification. Twenty-three focused checks and all 536 backend tests pass. Current npm production/64-pin OSV checks and bounded redacted source scanning completed. See `AUDIT-2026-10-20.md` for findings and remaining launch boundaries. No push or financial activation.
-- [ ] **12.2 UI recovery and agent-visual proposal.** Bound/abort read requests, clear stale/previous-identity reports and distinguish unknown from empty data. Verify the production build and responsive/recovery states; document replacement concepts without restoring the removed character illustrations.
+- [x] **12.2 UI recovery and agent-visual proposal.** Read deadlines, component cancellation, previous-report clearing and unknown queue/journal/decision states implemented. Production build/72 client tests and all four product tabs at 320/375/414/768 pass. A 40-second stalled API fixture triggers bounded failure; normal service recovery restores the real market feed. Isolated committee/rail/notebook proposal includes four checked review states. Character illustrations remain out of the product; pre-execution public discussion is explicitly a separate integration in `AUDIT-2026-10-20.md`.
 
 ## Financial policy
 

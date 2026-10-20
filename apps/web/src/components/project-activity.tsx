@@ -41,6 +41,8 @@ export function ProjectActivity() {
 }
 
 export function ProjectActivityView({ data, busy, error, refresh, product = false }: { data: ProjectActivityData | null; busy: boolean; error: string; refresh: () => void; product?: boolean }) {
+  if (product && !data) return <section className="journal-panel"><div className="panel-heading"><h2>Recent exchange fills</h2></div>
+    <div className="journal-empty"><p role={error ? "alert" : "status"}>{error ? "The exchange journal is temporarily unavailable." : "Reading the latest exchange fills…"}</p></div></section>;
   if (product) return <section className="journal-panel"><div className="panel-heading"><h2>Recent exchange fills</h2></div>
     {!data?.journals.some(j => j.trades.some(t => t.recent_fills.length)) ? <div className="journal-empty"><RefreshCw size={22} /><div><strong>No trades recorded yet.</strong><p>Executed trades will appear here with their prices and fees.</p></div></div> :
       <ul className="product-fill-list">{data.journals.filter(j => j.network === "mainnet").flatMap(j => j.trades.flatMap(t => t.recent_fills.map((f, i) => <li key={`${j.id}:${t.id}:${i}`}>

@@ -35,6 +35,7 @@ export function UserStrategies({ network, token, onSessionInvalid }: { network: 
   }
   useEffect(() => {
     const current = new AbortController();
+    setData(null); setError(""); setNotice("");
     void refresh(current.signal).catch(() => { if (!current.signal.aborted) setError("Strategy earnings are unavailable. Refresh to retry."); });
     return () => { current.abort(); request.current?.abort(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -63,7 +64,7 @@ export function UserStrategies({ network, token, onSessionInvalid }: { network: 
   async function reload() {
     request.current?.abort(); const current = new AbortController(); request.current = current;
     setBusy("refresh"); setError("");
-    try { await refresh(current.signal); } catch { if (!current.signal.aborted) setError("Strategy earnings are unavailable."); }
+    try { await refresh(current.signal); } catch { if (!current.signal.aborted && active.current === identity) { setData(null); setError("Strategy earnings are unavailable."); } }
     finally { if (!current.signal.aborted) setBusy(""); }
   }
   return <UserStrategiesView network={network} data={data} values={values} direction={direction} busy={busy} error={error} notice={notice}
