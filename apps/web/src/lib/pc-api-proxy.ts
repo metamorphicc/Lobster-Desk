@@ -14,7 +14,19 @@ export async function proxyPCRead(request: Request, env: Record<string, string |
   const write = request.method === "POST" && writes.has(path);
   if (request.method !== "GET" && !write) return fail(405, "This operation is not available on the website.");
   if (incoming.search || (!write && !reads.has(path) && path !== privateRead)) return fail(404, "This API route is not available on the website.");
-  if (write && request.headers.get("origin") !== incoming.origin) return fail(403, "Submit from this website's own origin.");
+  let writeOrigin = "";
+  if (write) {
+    try {
+      const origin = new URL(request.headers.get("origin") || "");
+      // Next may reconstruct request.url with its internal service hostname.
+      // Host is the HTTP destination; a browser cannot set it to another site.
+      const destinationHost = request.headers.get("host") || incoming.host;
+      const localHTTP = origin.protocol === "http:" && ["127.0.0.1", "localhost"].includes(origin.hostname);
+      if (origin.origin !== request.headers.get("origin") || origin.host !== destinationHost
+          || (origin.protocol !== "https:" && !localHTTP)) throw new Error();
+      writeOrigin = origin.origin;
+    } catch { return fail(403, "Submit from this website's own origin."); }
+  }
   const upstreamHeaders: Record<string, string> = { Accept: "application/json" };
   if (path === privateRead || path === userPrefix + "auth/logout" || path === userPrefix + "strategy-pitches") {
     const authorization = request.headers.get("authorization") || "";
@@ -53,7 +65,7 @@ export async function proxyPCRead(request: Request, env: Record<string, string |
     } catch { return fail(deadline.aborted ? 408 : 400, "A valid JSON request body is required."); }
     finally { deadline.removeEventListener("abort", cancel); reader.releaseLock(); }
     upstreamHeaders["Content-Type"] = "application/json";
-    upstreamHeaders.Origin = incoming.origin;
+    upstreamHeaders.Origin = writeOrigin;
   }
   let target: URL;
   try {

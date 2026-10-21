@@ -6,6 +6,7 @@ import { money, number, type Episode } from "@/lib/types";
 import { discoverWallets, normalizeAddress, WalletSession, type Wallet, type WalletState } from "@/lib/wallet";
 import { BuilderConsent } from "./builder-consent";
 import { WalletAuth } from "./wallet-auth";
+import { StrategyWallet } from "./strategy-wallet";
 
 type UserConfig = { network: "testnet" | "mainnet"; builder_address: string | null; builder_fee_percent: string; builder_fee_tenths_bps: number };
 type Account = UserConfig & {
@@ -19,7 +20,7 @@ const initial: WalletState = { status: "idle", address: null, chainId: null, err
 type UserAccountProps = { episodes?: Episode[]; network?: "testnet" | "mainnet"; product?: boolean };
 
 export function UserAccount(props: UserAccountProps) {
-  if (props.product && process.env.NEXT_PUBLIC_HOSTED_PREVIEW === "true") return <section className="testnet-panel"><div className="panel-heading"><h2>My strategies</h2><span className="tag">PREVIEW</span></div><div className="testnet-body"><p>Wallet connection and strategy submission are not enabled in this preview.</p></div></section>;
+  if (props.product) return <StrategyWallet episodes={props.episodes || []} />;
   return <ConnectedUserAccount {...props} />;
 }
 

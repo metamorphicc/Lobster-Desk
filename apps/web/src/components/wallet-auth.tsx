@@ -12,7 +12,7 @@ import { UserFinancial } from "./user-financial";
 
 async function revoke(token: string, network: "testnet" | "mainnet"): Promise<boolean> {
   try {
-    const response = await fetch(`/api/v1/users/${network}/auth/logout`, { method: "POST", headers: { Authorization: "Bearer " + token },
+    const response = await fetch(`/api/v1/users/${network}/auth/logout`, { method: "POST", headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" }, body: "{}",
       signal: AbortSignal.timeout(5000), cache: "no-store" });
     return response.ok || response.status === 401;
   } catch { return false; }
@@ -42,7 +42,7 @@ export function WalletAuth({ address, chainId, session, now, episodes, network =
     const response = await fetch(prefix + path, { method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body), signal: AbortSignal.any([current.signal, AbortSignal.timeout(10000)]), cache: "no-store" });
     const value = await response.json();
-    if (!response.ok) throw new Error("Local sign-in request failed.");
+    if (!response.ok) throw new Error("Sign-in request failed.");
     return value;
   }
   async function act(sign: boolean) {
@@ -74,30 +74,30 @@ export function WalletAuth({ address, chainId, session, now, episodes, network =
       if (!current.signal.aborted) {
         setChallenge(null);
         const code = failure && typeof failure === "object" ? (failure as { code?: number }).code : null;
-        setError(code === 4001 ? "Sign-in declined. No permission changed." : "Sign-in could not complete. Check the canonical local URL, wallet account, the selected chain and message deadline, then prepare again.");
+        setError(code === 4001 ? "Sign-in declined. No permission changed." : "Sign-in could not complete. Check the website address, wallet account and Arbitrum network, then prepare again.");
       }
     } finally { if (request.current === current && !current.signal.aborted) setBusy(""); }
   }
-  function cancel() { request.current?.abort(); setBusy(""); setChallenge(null); setNotice("Local sign-in cancelled. Dismiss any pending prompt in your wallet."); }
+  function cancel() { request.current?.abort(); setBusy(""); setChallenge(null); setNotice("Sign-in cancelled. Dismiss any pending prompt in your wallet."); }
   async function logout() {
     const token = credential.current?.access_token;
     credential.current = null; setResult(null); setChallenge(null); setError("");
-    if (token && !await revoke(token, network)) setNotice("Local credentials cleared. Server revocation could not be confirmed; the token expires within 15 minutes.");
-    else setNotice("Local session cleared.");
+    if (token && !await revoke(token, network)) setNotice("Signed out on this page. Server sign-out could not be confirmed; the session expires within 15 minutes.");
+    else setNotice("Signed out.");
   }
 
   return <section className="builder-consent wallet-auth" aria-labelledby="wallet-auth-title">
-    <h3 id="wallet-auth-title">Verify this wallet for private previews</h3>
-    <p className="small-note">Optional sign-in proves control of this wallet. It grants no trading, transfers or builder-fee permission. The session stays in this page&apos;s memory and expires within 15 minutes.</p>
-    {ready ? <><p className="positive user-connected"><Check size={16} />Signed in</p><p className="small-note">Expires {new Date(result.expires_at).toLocaleTimeString("en-GB", { hour12: false })}. Scope: {network} private views and attributed pitches; no trading permission.</p>
+    <h3 id="wallet-auth-title">{strategyOnly ? "Sign in to submit a strategy" : "Verify this wallet for private previews"}</h3>
+    <p className="small-note">Sign-in proves this wallet is yours. It grants no trading, transfer or fee permission. Your session expires after 15 minutes.</p>
+    {ready ? <><p className="positive user-connected"><Check size={16} />Signed in</p><p className="small-note">Expires {new Date(result.expires_at).toLocaleTimeString("en-GB", { hour12: false })}. {strategyOnly ? "Your setups are linked to this wallet." : `Scope: ${network} private views and attributed pitches; no trading permission.`}</p>
       <button className="button button--secondary" onClick={() => { void logout(); }}><LogOut size={16} />Sign out</button>
       <UserStrategies network={network} token={result.access_token} onSessionInvalid={() => { credential.current = null; setResult(null); setError("Sign in again to access strategy earnings."); }} />
       {!strategyOnly && <><UserCapital network={network} address={address} token={result.access_token} now={now} onSessionInvalid={() => { credential.current = null; setResult(null); setError("The server session is no longer valid. Sign in again."); }} />
       <UserFinancial network={network} address={address} token={result.access_token} session={session} now={now} onSessionInvalid={() => { credential.current = null; setResult(null); setError("The server session is no longer valid. Sign in again."); }} />
       <UserOrderPreview network={network} address={address} token={result.access_token} episodes={episodes} now={now} session={session} onSessionInvalid={() => { credential.current = null; setResult(null); setError("The server session is no longer valid. Sign in again."); }} /></>}</> : <>
       {result && <p className="notice">Your session expired. Sign in again.</p>}
-      {!chainOk && <p className="notice">Sign-in requires wallet chain {expectedChain} ({network === "testnet" ? "Arbitrum Sepolia" : "Arbitrum One"}). Select it manually, then reconnect. Public account viewing works without signing in.</p>}
-      <button className="button button--secondary" disabled={!!busy || !chainOk} onClick={() => { void act(false); }}>{busy === "prepare" ? <LoaderCircle size={16} className="spinner" /> : <FileCheck2 size={16} />}Prepare sign-in message</button>
+      {!chainOk && <p className="notice">Select {network === "testnet" ? "Arbitrum Sepolia" : "Arbitrum One"} in your wallet to sign in. No funds are needed for this message.</p>}
+      <button className="button button--secondary" disabled={!!busy || !chainOk} onClick={() => { void act(false); }}>{busy === "prepare" ? <LoaderCircle size={16} className="spinner" /> : <FileCheck2 size={16} />}{strategyOnly ? "Sign in" : "Prepare sign-in message"}</button>
       {challenge && <SignInMessage challenge={challenge} expired={!!expired} busy={busy === "sign"} sign={() => { void act(true); }} />}
       {busy && <button className="text-button" onClick={cancel}>Cancel sign-in</button>}
     </>}
@@ -107,7 +107,7 @@ export function WalletAuth({ address, chainId, session, now, episodes, network =
 
 export function SignInMessage({ challenge, expired, busy, sign }: { challenge: AuthChallenge; expired: boolean; busy: boolean; sign: () => void }) {
   return <div className="testnet-preview"><strong>Review before opening your wallet</strong><pre className="auth-message">{challenge.message}</pre>
-        <p className="small-note">EOA wallets only. This is a local authentication message, not an exchange approval. Valid until {new Date(challenge.expires_at).toLocaleTimeString("en-GB", { hour12: false })}.</p>
+        <p className="small-note">This message signs you in. It costs no gas and grants no exchange permission. Standard Ethereum wallets only. Valid until {new Date(challenge.expires_at).toLocaleTimeString("en-GB", { hour12: false })}.</p>
         {expired && <p className="notice">Message expired. Prepare a fresh one.</p>}
         <button className="button button--secondary" disabled={busy || expired} onClick={() => { sign(); }}>{busy && <LoaderCircle size={16} className="spinner" />}Sign this message</button></div>;
 }

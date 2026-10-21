@@ -5,11 +5,12 @@
  * states: default/hover/focus/active/disabled/loading/error/success */
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { LoaderCircle, RefreshCw } from "lucide-react";
-import { money, signed } from "@/lib/types";
+import { money, signed, statusLabel, type Episode } from "@/lib/types";
 
 export type Earnings = { network: "testnet" | "mainnet"; payout_submission_enabled: false;
   payout_jobs?: { id: string; status: string; amount: string }[];
   strategies: { attribution: { strategy_id: string }; episode_id: string }[];
+  submissions?: Pick<Episode, "id" | "created_at" | "pitch" | "status" | "reason" | "reviews">[];
   balance: null | { net_realized_profit: string; entitlement: string; paid: string; outstanding: string }; note: string };
 const initial = { author: "", entry: "", stop: "", target: "", thesis: "" };
 
@@ -17,6 +18,7 @@ export function UserStrategies({ network, token, onSessionInvalid }: { network: 
   const [values, setValues] = useState(initial), [direction, setDirection] = useState("long");
   const [data, setData] = useState<Earnings | null>(null), [busy, setBusy] = useState("");
   const [error, setError] = useState(""), [notice, setNotice] = useState("");
+  const [loadError, setLoadError] = useState("");
   const request = useRef<AbortController | null>(null);
   const pending = useRef<{ body: string; key: string } | null>(null);
   const invalid = useRef(onSessionInvalid); invalid.current = onSessionInvalid;
@@ -28,16 +30,24 @@ export function UserStrategies({ network, token, onSessionInvalid }: { network: 
       signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(10000)]) : AbortSignal.timeout(10000) });
     if (active.current !== identity) return;
     if (response.status === 401) { invalid.current(); return; }
-    if (!response.ok) throw new Error("Strategy earnings are unavailable.");
+    if (!response.ok) throw new Error("Your strategies are unavailable.");
     const value = await response.json();
     if (value.network !== network || value.payout_submission_enabled !== false || !Array.isArray(value.strategies)) throw new Error("Unexpected strategy earnings response.");
-    if (!signal?.aborted && active.current === identity) setData(value);
+    if (!signal?.aborted && active.current === identity) { setData(value); setLoadError(""); }
   }
   useEffect(() => {
     const current = new AbortController();
-    setData(null); setError(""); setNotice("");
-    void refresh(current.signal).catch(() => { if (!current.signal.aborted) setError("Strategy earnings are unavailable. Refresh to retry."); });
-    return () => { current.abort(); request.current?.abort(); };
+    setData(null); setError(""); setLoadError(""); setNotice("");
+    let reading = false;
+    const poll = async () => {
+      if (reading || current.signal.aborted) return;
+      reading = true;
+      try { await refresh(current.signal); }
+      catch { if (!current.signal.aborted) { setData(null); setLoadError("Your strategies are unavailable. Refresh to retry."); } }
+      finally { reading = false; }
+    };
+    void poll(); const timer = setInterval(() => { void poll(); }, 5000);
+    return () => { clearInterval(timer); current.abort(); request.current?.abort(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [identity]);
 
@@ -56,18 +66,20 @@ export function UserStrategies({ network, token, onSessionInvalid }: { network: 
       const value = await response.json();
       if (!response.ok) throw new Error(typeof value.detail === "string" ? value.detail : "Check the setup fields and retry.");
       if (!value.strategy_attribution || value.strategy_attribution.network !== network) throw new Error("Strategy ownership was not confirmed.");
-      pending.current = null; setNotice("Strategy submitted with verified wallet attribution. Reviews and risk checks still decide whether the bot trades it.");
-      setValues(initial); await refresh(current.signal);
+      pending.current = null; setNotice("Setup received. Follow its review status below.");
+      setValues(initial);
+      try { await refresh(current.signal); }
+      catch { if (!current.signal.aborted) setLoadError("Setup received, but the status list could not refresh. Try Refresh."); }
     } catch (failure) { if (!current.signal.aborted && active.current === identity) setError(failure instanceof Error ? failure.message : "Strategy submission unavailable."); }
     finally { if (!current.signal.aborted && active.current === identity) setBusy(""); }
   }
   async function reload() {
     request.current?.abort(); const current = new AbortController(); request.current = current;
     setBusy("refresh"); setError("");
-    try { await refresh(current.signal); } catch { if (!current.signal.aborted && active.current === identity) { setData(null); setError("Strategy earnings are unavailable."); } }
+    try { await refresh(current.signal); } catch { if (!current.signal.aborted && active.current === identity) { setData(null); setLoadError("Your strategies are unavailable."); } }
     finally { if (!current.signal.aborted) setBusy(""); }
   }
-  return <UserStrategiesView network={network} data={data} values={values} direction={direction} busy={busy} error={error} notice={notice}
+  return <UserStrategiesView network={network} data={data} values={values} direction={direction} busy={busy} error={error || loadError} notice={notice}
     setValues={setValues} setDirection={setDirection} submit={submit} reload={reload} />;
 }
 
@@ -76,10 +88,9 @@ export function UserStrategiesView({ network, data, values, direction, busy, err
   setValues: (value: typeof initial) => void; setDirection: (value: string) => void;
   submit: (event: FormEvent) => void | Promise<void>; reload: () => void | Promise<void>;
 }) {
-  return <section className="builder-consent"><h3>Your strategies and profit share</h3>
-    <p className="small-note">Submit a BTC setup attributed to this verified wallet. Closed project trades allocate 50% of net strategy profit to you and 50% to bot capital, after trading fees, funding and strategy loss recovery. Anonymous pitches cannot be claimed later.</p>
+  return <section className="builder-consent"><h3>Pitch a BTC setup</h3>
+    <p className="small-note">Choose a direction, entry, stop and target. Explain why the trade makes sense. The agents review it against market data and risk limits.</p>
     {network === "testnet" && <p className="notice">Testnet strategy results use test funds and create no payable balance.</p>}
-    <StrategyEarningsView data={data} />
     <form className="pitch-form" onSubmit={event => { void submit(event); }}>
       <label>Display name<input required minLength={2} maxLength={32} value={values.author} onChange={event => setValues({ ...values, author: event.target.value })} /></label>
       <label>Direction<select value={direction} onChange={event => setDirection(event.target.value)}><option value="long">Long BTC</option><option value="short">Short BTC</option></select></label>
@@ -87,10 +98,22 @@ export function UserStrategiesView({ network, data, values, direction, busy, err
         <input required inputMode="decimal" pattern="[0-9]+(\.[0-9]{1,2})?" value={values[key]} onChange={event => setValues({ ...values, [key]: event.target.value })} /></label>)}</div>
       <label>Strategy thesis<textarea required minLength={20} maxLength={1200} value={values.thesis} onChange={event => setValues({ ...values, thesis: event.target.value })} /></label>
       <p className="small-note">BTC only · 1× leverage · Every setup still needs agent approval and coded risk/capital checks.</p>
-      <button className="button button--secondary" type="submit" disabled={!!busy}>{busy === "submit" && <LoaderCircle size={15} className="spinner" />}{busy === "submit" ? "Submitting…" : "Submit attributed strategy"}</button>
+      <button className="button button--primary" type="submit" disabled={!!busy}>{busy === "submit" && <LoaderCircle size={15} className="spinner" />}{busy === "submit" ? "Submitting…" : "Submit setup"}</button>
     </form>
     {error && <p className="form-error" role="alert">{error}</p>}{notice && <p className="positive" role="status">{notice}</p>}
-    <button className="text-button" disabled={!!busy} onClick={() => { void reload(); }}><RefreshCw size={14} />Refresh earnings</button>
+    <div className="panel-heading"><h3>Your recent setups</h3><button className="text-button" disabled={!!busy} onClick={() => { void reload(); }}><RefreshCw size={14} />Refresh</button></div>
+    <p className="small-note">Review status updates every five seconds. Approval and paper tracking do not confirm a live exchange trade.</p>
+    {data && !data.submissions && <p className="notice">Restart the PC API with the latest code to see setup statuses here.</p>}
+    {data?.submissions?.length === 0 && <p className="empty-note">No setups yet. Your first submission will appear here.</p>}
+    {data?.submissions?.map(item => <article className="research-candidate" key={item.id}>
+      <div className="research-candidate-title"><h4>BTC {item.pitch.direction === "long" ? "Long" : "Short"}</h4><span className="tag">{item.status === "approved" ? "Approved by checks" : item.status === "filled" ? "Paper position open" : item.status === "closed" ? "Paper position closed" : statusLabel(item.status)}</span></div>
+      <p className="small-note">{new Date(item.created_at).toLocaleString("en-GB")} · {item.id.slice(0, 8)}</p>
+      <dl className="testnet-observations"><div><dt>Entry</dt><dd>{money(item.pitch.entry)}</dd></div><div><dt>Stop</dt><dd>{money(item.pitch.stop)}</dd></div><div><dt>Target</dt><dd>{money(item.pitch.target)}</dd></div></dl>
+      <p>{item.reason}</p><details><summary>Thesis and agent reviews</summary><p>{item.pitch.thesis}</p>
+        {Object.entries(item.reviews).map(([role, review]) => review && <p key={role}><strong>{role === "analyst" ? "Analyst" : "Risk manager"} · {review.verdict}</strong> {review.summary}</p>)}
+      </details>
+    </article>)}
+    <details><summary>Your profit share</summary><p className="small-note">If an attributed strategy is used for a real project trade, you receive 50% of eligible net profit after costs and loss recovery. Review and paper outcomes create no payable earnings.</p><StrategyEarningsView data={data} /></details>
   </section>;
 }
 

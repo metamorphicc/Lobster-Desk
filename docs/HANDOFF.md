@@ -6,7 +6,7 @@ Completed substages are committed locally on `lobster-desk`, the branch name req
 
 ## Run locally
 
-For the owner-confirmed split setup, Vercel hosts only `web`; the API and agents run on the PC behind an owner-started HTTPS tunnel. See `VERCEL-PC.md` for the single-service import, ignored `.env.pc` and private Vercel variables. This hosted appearance preview is read-only and retains the illustrative-figures badge; no cloud or tunnel acceptance has occurred.
+For the owner-confirmed split setup, Vercel hosts only `web`; the API and agents run on the PC behind an owner-started HTTPS tunnel. See `VERCEL-PC.md` for the single-service import, ignored `.env.pc` and private Vercel variables. The hosted site now supports wallet sign-in, attributed BTC setup submission and private review statuses; financial commands remain closed and money animations remain illustrative. The owner's existing public market connection returned 200 during diagnosis; the new wallet flow still requires owner push, deployment and actual extension acceptance.
 
 Open `http://127.0.0.1:3000` for the product. Its independent mainnet market feed supplies actual BTC candles; public setups/fills come only from registered mainnet project journals, and capital requires a fresh single-project reference. Missing financial observations display `—`. Main navigation contains The tank, Journal, Research and My strategies, with no fee-allocation or treasury panels.
 

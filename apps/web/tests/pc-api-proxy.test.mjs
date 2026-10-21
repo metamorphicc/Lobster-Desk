@@ -103,6 +103,19 @@ test('cross-origin, malformed, oversized and anonymous writes never reach the PC
   assert.equal(calls,0);
 });
 
+test('write origin follows the HTTP Host when Next reconstructs an internal request URL', async () => {
+  const incoming = new Request('http://localhost:3000'+user+'auth/challenge',{
+    method:'POST',body:'{}',headers:{host:'desk.example.test',origin:'https://desk.example.test',
+      'content-type':'application/json','x-vercel-forwarded-for':'203.0.113.10'}});
+  const response=await proxyPCRead(incoming,env,async(url,init)=>{
+    assert.equal(init.headers.Origin,'https://desk.example.test');
+    return Response.json({ok:true});
+  });
+  assert.equal(response.status,200);
+  assert.equal((await proxyPCRead(post('auth/challenge','{}',{host:'different.example.test'}),env)).status,403);
+  assert.equal((await proxyPCRead(post('auth/challenge','{}',{origin:'http://desk.example.test'}),env)).status,403);
+});
+
 test('financial, operator, anonymous and testnet paths stay closed on the hosted site', async () => {
   let calls=0; const never=async()=>{calls++;throw new Error();};
   for(const path of ['financial/prepare','capital/refresh','order-preview','permissions','auth/verify/extra'])

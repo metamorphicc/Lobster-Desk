@@ -8,7 +8,7 @@ A collective trading desk on Hyperliquid: pitch a BTC strategy, follow three cru
 
 - `docs/FEATURES.md`: agreed product features, fee distribution, own-agent donation reserve and implementation status.
 - `docs/LAUNCH-PREVIEW.md`: temporary illustrative figures on the local homepage, sidebar preview badge and the source switch for disabling them.
-- `docs/VERCEL-PC.md`: web-only Vercel import, with a private runtime HTTPS proxy to the API/agents on your PC; the current hosted view is read-only.
+- `docs/VERCEL-PC.md`: web-only Vercel import, with a private runtime HTTPS proxy to the API/agents on your PC; wallet sign-in and attributed setup submission are enabled, while financial commands remain closed.
 - `apps/api`: FastAPI, deterministic risk/capital controls, paper broker, market feeds, agent adapters, persistent audit journal.
 - `apps/web`: Next.js trading tank and pitch interface.
 - `docs/ROADMAP.md`: stages, substages, acceptance criteria, and completion status.

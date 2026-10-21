@@ -1,5 +1,9 @@
 /** Exact local sign-in message contract. Never signs orders or builder consent. */
-export const AUTH_ORIGIN = process.env.NEXT_PUBLIC_WEB_ORIGIN || "http://127.0.0.1:3000";
+// Hosted sign-in is bound to the page's HTTPS origin. The PC independently
+// generates the exact configured WEB_ORIGIN message; other domains cannot sign in.
+export const AUTH_ORIGIN = process.env.NEXT_PUBLIC_WEB_ORIGIN ||
+  (process.env.NEXT_PUBLIC_HOSTED_PREVIEW === "true" && typeof window !== "undefined" && window.location.protocol === "https:"
+    ? window.location.origin : "http://127.0.0.1:3000");
 export const AUTH_STATEMENT = `Sign in to the ${AUTH_ORIGIN === "http://127.0.0.1:3000" ? "local " : ""}Claw Desk testnet workspace. This grants no trading, transfer or fee approval.`;
 export type AuthChallenge = {
   challenge_id: string; address: string; origin: string; chain_id: number; nonce: string;

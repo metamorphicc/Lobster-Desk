@@ -113,6 +113,7 @@ export function Desk({ internal = false }: { internal?: boolean }) {
         {([{ id: "tank", label: "The tank", icon: Radio }, { id: "journal", label: "Journal", icon: FileClock }, { id: "research", label: "Research", icon: BookOpen }, ...(internal ? [{ id: "treasury" as const, label: "Treasury", icon: Landmark }, { id: "testnet" as const, label: "Testnet", icon: FlaskConical }] : []), { id: "mainnet", label: internal ? "Mainnet" : "My strategies", icon: Landmark }] as const).map(item =>
           <button key={item.id} className={`nav-item ${tab === item.id ? "is-current" : ""}`} aria-current={tab === item.id ? "page" : undefined} onClick={() => { setTab(item.id); if (item.id === "tank") setSelectedId(null); }}><item.icon size={18} /><span>{item.label}</span>{item.id === "tank" && <span className="nav-dot" />}</button>)}
       </nav>
+      {illustrative && <div className="launch-preview-badge" role="note"><span className="status-dot" /><div><strong>LOCAL PREVIEW</strong><span>Illustrative figures</span></div></div>}
       <div className="sidebar-bottom">
         <div className="network-note"><span className="status-dot" /><span>Hyperliquid ecosystem</span><ArrowUpRight size={13} /></div>
         <p>Small positions.<br />Every decision on record.</p>

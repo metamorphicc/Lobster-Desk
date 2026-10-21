@@ -6,7 +6,7 @@ Current economics v3 replaces own-agent token buybacks with a 50% net-profit don
 | --- | --- | --- |
 | F01 | Autonomous research | Bounded BTC trend, breakout and mean-reversion hypotheses, chronological history/funding tests, cost stress and critic veto. |
 | F02 | Agent decisions | Analyst/risk review and deterministic banker/executor; models cannot enlarge risk or capital permissions. |
-| F03 | User pitches | Anonymous pitches remain available. Signed-in users can submit a wallet-attributed strategy before review; submitting does not guarantee execution. |
+| F03 | User pitches | Hosted My strategies supports explicit Ethereum wallet connection, EIP-191 sign-in on Arbitrum One, an attributed BTC entry/stop/target/thesis form and private review statuses with reasons. Status refreshes every five seconds; the latest 50 setups are shown. No deposit is needed. Anonymous pitches remain local-only; submitting does not guarantee execution or create earnings. |
 | F04 | Project execution | Separate opt-in testnet/mainnet runner with small positions, exact loss budgets, partial-fill protection and recovery. Attributed user strategies use project capital after the same reviews and coded gates. |
 | F05 | User-owned trading | Separate Testnet/Mainnet sign-in, explicit permissions/exact trade signatures, private journals and dedicated API-wallet runners. This differs from earning an author share on project-funded trades. |
 | F06 | Public audit | Tank, Research and Journal views, public project exchange observations and evidence exports. Wallet authorship records, user account journals and proofs remain private. |
