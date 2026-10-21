@@ -71,7 +71,7 @@ export function UserAccount({ episodes = [], network = "testnet", product = fals
   }
 
   return <section className="testnet-panel user-account" aria-labelledby="user-account-title">
-    <div className="panel-heading"><h2 id="user-account-title"><WalletIcon size={17} /> {product ? "Your account" : `Your ${network} account`}</h2><span className="tag">READ ONLY</span></div>
+    <div className="panel-heading"><h2 id="user-account-title"><WalletIcon size={17} /> {product ? "Your account" : `Your ${network} account`}</h2></div>
     <div className="testnet-body">
       {!product && network === "mainnet" && <p className="notice">Mainnet uses real funds. Viewing and sign-in grant no trading permission. Review each delegation, fee and exact trade separately.</p>}
       <p>{product ? "Connect your wallet to submit strategies and track your share of the profits." : "Connect a wallet or watch a public address. Your account stays separate from the tank’s capital. Viewing requests no signature."}</p>
