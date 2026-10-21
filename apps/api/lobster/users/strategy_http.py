@@ -79,7 +79,8 @@ def install(app, config, require_operator):
     @app.get("/api/v1/users/{network}/strategy-earnings")
     def earnings(network: Literal["testnet", "mainnet"], request: Request, authorization: str | None = Header(default=None)):
         owner = identity(request, network, authorization)
-        strategies = UserStrategies(request.app.state.runtime.store, network).list(owner)
+        authors = UserStrategies(request.app.state.runtime.store, network)
+        strategies = authors.list(owner)
         balance = None
         jobs = []
         if network == "mainnet":
@@ -92,7 +93,7 @@ def install(app, config, require_operator):
                         if job["plan"]["action"]["destination"] == owner:
                             jobs.append({"id": job["id"], "status": job["status"], "amount": job["plan"]["action"]["amount"]})
                             if len(jobs) == 10: break
-        return {"network": network, "strategies": strategies, "balance": balance,
+        return {"network": network, "strategies": strategies, "submissions": authors.recent(owner), "balance": balance,
             "payout_jobs": jobs, "payout_submission_enabled": False,
             "note": "Only verified, realized project trades accrue author shares. Testnet/paper results are not payable. A separately enabled owner-run process pays authors; this API cannot send money. Accrued shares and observed payments are separate."}
 

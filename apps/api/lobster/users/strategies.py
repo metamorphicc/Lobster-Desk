@@ -3,6 +3,7 @@ from sqlalchemy import JSON, String, select
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from ..execution.contracts import fingerprint
+from ..store import Episode
 
 
 class Base(DeclarativeBase): pass
@@ -46,3 +47,18 @@ class UserStrategies:
         with self.store.transaction() as session:
             return [row.payload for row in session.scalars(select(StrategyOwner).where(StrategyOwner.owner == owner))
                 if row.payload["attribution"]["network"] == self.network]
+
+    def recent(self, owner):
+        """Private review queue, never projected as a real exchange fill."""
+        with self.store.transaction() as session:
+            rows = session.execute(select(StrategyOwner, Episode).join(Episode,
+                Episode.id == StrategyOwner.payload["episode_id"].as_string()).where(
+                    StrategyOwner.owner == owner,
+                    StrategyOwner.payload["attribution"]["network"].as_string() == self.network
+                ).order_by(Episode.payload["created_at"].as_string().desc(), Episode.id.desc()).limit(50))
+            return [{"id": episode.id, "created_at": episode.payload["created_at"],
+                "pitch": episode.payload["pitch"], "status": episode.payload["status"],
+                "reason": episode.payload["reason"], "execution_mode": "paper",
+                "reviews": {role: {key: review[key] for key in ("verdict", "summary", "evidence")}
+                    for role, review in episode.payload["reviews"].items() if review}}
+                for _, episode in rows]

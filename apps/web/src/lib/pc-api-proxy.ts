@@ -2,13 +2,59 @@
 import { isIP } from "node:net";
 
 const reads = new Set(["/api/v1/product/state", "/api/v1/research"]);
+const userPrefix = "/api/v1/users/mainnet/";
+const privateRead = userPrefix + "strategy-earnings";
+const writes = new Set(["auth/challenge", "auth/verify", "auth/logout", "strategy-pitches"].map(path => userPrefix + path));
 const headers = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" };
 const fail = (status: number, detail: string) => Response.json({ detail }, { status, headers });
 
 export async function proxyPCRead(request: Request, env: Record<string, string | undefined>, fetcher: typeof fetch = fetch) {
-  if (request.method !== "GET") return fail(405, "This website currently supports viewing only.");
   const incoming = new URL(request.url);
-  if (!reads.has(incoming.pathname) || incoming.search) return fail(404, "This API route is not available on the hosted preview.");
+  const path = incoming.pathname;
+  const write = request.method === "POST" && writes.has(path);
+  if (request.method !== "GET" && !write) return fail(405, "This operation is not available on the website.");
+  if (incoming.search || (!write && !reads.has(path) && path !== privateRead)) return fail(404, "This API route is not available on the website.");
+  if (write && request.headers.get("origin") !== incoming.origin) return fail(403, "Submit from this website's own origin.");
+  const upstreamHeaders: Record<string, string> = { Accept: "application/json" };
+  if (path === privateRead || path === userPrefix + "auth/logout" || path === userPrefix + "strategy-pitches") {
+    const authorization = request.headers.get("authorization") || "";
+    if (!/^Bearer [A-Za-z0-9_-]{43}$/.test(authorization)) return fail(401, "Sign in to submit and view your strategies.");
+    upstreamHeaders.Authorization = authorization;
+  }
+  if (path === userPrefix + "strategy-pitches") {
+    const key = request.headers.get("idempotency-key") || "";
+    if (!/^[a-zA-Z0-9_-]{8,64}$/.test(key)) return fail(422, "A valid strategy request identity is required.");
+    upstreamHeaders["Idempotency-Key"] = key;
+  }
+  let body: Uint8Array | undefined;
+  if (write) {
+    if (!/^application\/json(?:\s*;\s*charset=utf-8)?$/i.test(request.headers.get("content-type") || "") || request.headers.has("content-encoding")) return fail(415, "Send a JSON request.");
+    const length = request.headers.get("content-length");
+    if (length && (!/^\d{1,8}$/.test(length) || Number(length) > 8192)) return fail(413, "The request is too large.");
+    const reader = request.body?.getReader();
+    if (!reader) return fail(400, "A JSON request body is required.");
+    const deadline = AbortSignal.any([request.signal, AbortSignal.timeout(5000)]);
+    const cancel = () => { void reader.cancel().catch(() => {}); };
+    deadline.addEventListener("abort", cancel, { once: true });
+    const chunks: Uint8Array[] = []; let size = 0;
+    try {
+      if (deadline.aborted) return fail(408, "Request upload timed out.");
+      while (true) {
+        const item = await reader.read();
+        if (deadline.aborted) return fail(408, "Request upload timed out.");
+        if (item.done) break;
+        size += item.value.byteLength;
+        if (size > 8192) { await reader.cancel(); return fail(413, "The request is too large."); }
+        chunks.push(item.value);
+      }
+      body = new Uint8Array(size); let offset = 0;
+      for (const chunk of chunks) { body.set(chunk, offset); offset += chunk.length; }
+      JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(body));
+    } catch { return fail(deadline.aborted ? 408 : 400, "A valid JSON request body is required."); }
+    finally { deadline.removeEventListener("abort", cancel); reader.releaseLock(); }
+    upstreamHeaders["Content-Type"] = "application/json";
+    upstreamHeaders.Origin = incoming.origin;
+  }
   let target: URL;
   try {
     target = new URL(env.API_ORIGIN || "");
@@ -25,8 +71,8 @@ export async function proxyPCRead(request: Request, env: Record<string, string |
   const signal = AbortSignal.any([request.signal, AbortSignal.timeout(12000)]);
   try {
     target.pathname = incoming.pathname; // Preserve the API's existing /api prefix.
-    const response = await fetcher(target, { method: "GET", redirect: "error", cache: "no-store", signal,
-      headers: { "Accept": "application/json", "X-Lobster-Proxy-Token": secret, "X-Lobster-Client-IP": peer } });
+    const response = await fetcher(target, { method: request.method, redirect: "error", cache: "no-store", signal, body: body as BodyInit | undefined,
+      headers: { ...upstreamHeaders, "X-Lobster-Proxy-Token": secret, "X-Lobster-Client-IP": peer } });
     if (response.status >= 300 && response.status < 400) return fail(502, "The PC backend returned an unexpected redirect.");
     if (!response.headers.get("content-type")?.toLowerCase().startsWith("application/json")) return fail(502, "The PC backend returned an unexpected response.");
     const reader = response.body?.getReader();
@@ -43,11 +89,13 @@ export async function proxyPCRead(request: Request, env: Record<string, string |
         }
       } finally { reader.releaseLock(); }
     }
-    const body = new Uint8Array(size);
+    const responseBody = new Uint8Array(size);
     let offset = 0;
-    for (const chunk of chunks) { body.set(chunk, offset); offset += chunk.byteLength; }
-    // Only public JSON from these two reads is exposed. Never relay cookies,
+    for (const chunk of chunks) { responseBody.set(chunk, offset); offset += chunk.byteLength; }
+    // Only allowlisted JSON is exposed. Never relay cookies,
     // proxy credentials, redirects or internal upstream response headers.
-    return new Response(body, { status: response.status, headers: { ...headers, "Content-Type": "application/json" } });
+    const retryAfter = response.headers.get("retry-after");
+    return new Response(responseBody, { status: response.status, headers: { ...headers, "Content-Type": "application/json",
+      ...(retryAfter && /^\d{1,6}$/.test(retryAfter) ? { "Retry-After": retryAfter } : {}) } });
   } catch { return fail(signal.aborted ? 504 : 502, "The PC backend is offline or the tunnel is unavailable."); }
 }

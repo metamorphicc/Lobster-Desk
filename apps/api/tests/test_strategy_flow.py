@@ -54,8 +54,38 @@ def test_strategy_http_never_trusts_display_name_or_claims_anonymous_history(tmp
         assert client.post(path, json=pitch().model_dump(mode="json") | {"target": "62000"}, headers=headers).status_code == 409
         private = client.get("/api/v1/users/mainnet/strategy-earnings", headers=headers).json()
         assert len(private["strategies"]) == 1 and private["balance"] is None and not private["payout_submission_enabled"]
+        assert len(private["submissions"]) == 1
+        assert private["submissions"][0]["id"] == ep["id"]
+        assert private["submissions"][0]["status"] == "queued"
+        assert private["submissions"][0]["execution_mode"] == "paper"
+        assert ADDRESS not in str(private["submissions"])
         assert client.get("/api/v1/users/testnet/strategy-earnings", headers=headers).status_code == 401
         assert "charity" not in client.get("/api/v1/economics").json()
+
+
+def test_private_setup_status_survives_restart_and_never_crosses_wallets_or_networks(tmp_path):
+    from test_user_orders import OTHER_KEY
+    from lobster.store import Episode
+    settings = Settings(_env_file=None, database_url=f"sqlite:///{tmp_path/'status.db'}", treasury_path=str(tmp_path/'book.db'), worker_enabled=False)
+    app = create_app(settings)
+    with TestClient(app, base_url="http://127.0.0.1:8000") as client:
+        headers = signin(client)
+        ep = client.post("/api/v1/users/mainnet/strategy-pitches", json=pitch().model_dump(mode="json"), headers=headers).json()
+        with app.state.runtime.store.transaction() as db:
+            row = db.get(Episode, ep["id"])
+            row.payload = row.payload | {"status": "rejected", "reason": "Risk limits rejected the setup.",
+                "reviews": {"risk": {"verdict": "reject", "summary": "The stop exceeds this account's allowed loss.", "evidence": ["Risk budget exceeded"], "metadata": {"private": "not public"}}}}
+        assert client.get("/api/v1/users/mainnet/strategy-earnings").status_code == 401
+    with TestClient(create_app(settings), base_url="http://127.0.0.1:8000") as client:
+        assert client.get("/api/v1/users/mainnet/strategy-earnings", headers=headers).status_code == 401
+        headers = signin(client)
+        item = client.get("/api/v1/users/mainnet/strategy-earnings", headers=headers).json()["submissions"][0]
+        assert item["status"] == "rejected" and item["reason"] == "Risk limits rejected the setup."
+        assert item["reviews"]["risk"]["verdict"] == "reject" and "metadata" not in item["reviews"]["risk"]
+        challenge = client.post("/api/v1/users/mainnet/auth/challenge", json={"address": Account.from_key(OTHER_KEY).address.lower()}).json()
+        signature = "0x" + Account.sign_message(encode_defunct(text=challenge["message"]), OTHER_KEY).signature.hex().removeprefix("0x")
+        other = client.post("/api/v1/users/mainnet/auth/verify", json={"challenge_id": challenge["challenge_id"], "signature": signature}).json()
+        assert client.get("/api/v1/users/mainnet/strategy-earnings", headers={"Authorization": "Bearer " + other["access_token"]}).json()["submissions"] == []
 
 
 @pytest.mark.parametrize("funding", ["0", "-0.100000", "0.040000"])

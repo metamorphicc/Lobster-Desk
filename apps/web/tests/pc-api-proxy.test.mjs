@@ -59,3 +59,65 @@ test('redirects, offline backends and oversized responses are bounded and never 
   assert.equal((await proxyPCRead(request(),env,async()=>new Response(null,{status:302}))).status,502);
   assert.equal((await proxyPCRead(request(),env,async()=>new Response('x'.repeat(1024*1024+1),{headers:{'content-type':'application/json'}}))).status,502);
 });
+
+const token = 'Bearer ' + 'a'.repeat(43);
+const user = '/api/v1/users/mainnet/';
+const post = (path, body = '{}', headers = {}) => request(user + path, {method:'POST',body,
+  headers:{origin:'https://desk.example.test','content-type':'application/json',...headers}});
+
+test('hosted auth and attributed pitches forward only bounded same-origin requests', async () => {
+  for (const path of ['auth/challenge','auth/verify','auth/logout','strategy-pitches']) {
+    const response = await proxyPCRead(post(path,'{"fixture":true}',{authorization:token,'idempotency-key':'setup-request-001'}),env,async(url,init)=>{
+      assert.equal(String(url),'https://pc-tunnel.example.test'+user+path);
+      assert.equal(init.method,'POST');
+      assert.equal(new TextDecoder().decode(init.body),'{"fixture":true}');
+      assert.equal(init.headers.Origin,'https://desk.example.test');
+      if (path === 'strategy-pitches' || path === 'auth/logout') assert.equal(init.headers.Authorization,token);
+      else assert.equal(init.headers.Authorization,undefined);
+      if (path === 'strategy-pitches') assert.equal(init.headers['Idempotency-Key'],'setup-request-001');
+      return Response.json({accepted:true});
+    });
+    assert.equal(response.status,200);
+  }
+});
+
+test('authenticated reads keep bearer tokens private and retain server-side throttling', async () => {
+  assert.equal((await proxyPCRead(request(user+'strategy-earnings'),env)).status,401);
+  const response=await proxyPCRead(request(user+'strategy-earnings',{headers:{authorization:token,cookie:'private-cookie'}}),env,async(url,init)=>{
+    assert.equal(init.headers.Authorization,token); assert.equal(init.headers.cookie,undefined);
+    return Response.json({detail:'Wait'},{status:429,headers:{'Retry-After':'30','Set-Cookie':'private'}});
+  });
+  assert.equal(response.status,429); assert.equal(response.headers.get('retry-after'),'30');
+  assert.equal(response.headers.get('set-cookie'),null); assert.equal(response.headers.get('cache-control'),'no-store');
+});
+
+test('cross-origin, malformed, oversized and anonymous writes never reach the PC', async () => {
+  let calls=0; const never=async()=>{calls++;throw new Error();};
+  assert.equal((await proxyPCRead(post('auth/challenge','{}',{origin:'https://evil.example'}),env,never)).status,403);
+  assert.equal((await proxyPCRead(post('auth/challenge','{}',{origin:''}),env,never)).status,403);
+  assert.equal((await proxyPCRead(post('strategy-pitches'),env,never)).status,401);
+  assert.equal((await proxyPCRead(post('strategy-pitches','{}',{authorization:token}),env,never)).status,422);
+  assert.equal((await proxyPCRead(post('auth/challenge','x'.repeat(8193)),env,never)).status,413);
+  assert.equal((await proxyPCRead(post('auth/challenge','{invalid'),env,never)).status,400);
+  assert.equal((await proxyPCRead(post('auth/challenge','{}',{'content-type':'text/plain'}),env,never)).status,415);
+  assert.equal(calls,0);
+});
+
+test('financial, operator, anonymous and testnet paths stay closed on the hosted site', async () => {
+  let calls=0; const never=async()=>{calls++;throw new Error();};
+  for(const path of ['financial/prepare','capital/refresh','order-preview','permissions','auth/verify/extra'])
+    assert.equal((await proxyPCRead(post(path),env,never)).status,405);
+  for(const path of ['/api/v1/pitches','/api/v1/operator','/api/v1/users/testnet/auth/challenge'])
+    assert.equal((await proxyPCRead(request(path,{method:'POST',body:'{}'}),env,never)).status,405);
+  assert.equal(calls,0);
+});
+
+test('an uncertain pitch is not retried and its explicit retry keeps the same identity', async () => {
+  let calls=0; const keys=[];
+  const upstream=async(url,init)=>{calls++;keys.push(init.headers['Idempotency-Key']);throw new Error('connection reset');};
+  for(let attempt=0;attempt<2;attempt++) {
+    const response=await proxyPCRead(post('strategy-pitches','{}',{authorization:token,'idempotency-key':'stable-request-001'}),env,upstream);
+    assert.equal(response.status,502); assert.equal(calls,attempt+1);
+  }
+  assert.deepEqual(keys,['stable-request-001','stable-request-001']);
+});

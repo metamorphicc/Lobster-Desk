@@ -152,6 +152,10 @@ These are code deliverables, not documentation substitutes. Default operation re
 
 - [x] **15.1 Product name.** Updated the wordmark, accessibility label, browser title, tank sign, breadcrumb, footer, exported filenames, API title, sign-in wording, service descriptions, agent prompts, alerts and product documentation to Claw Desk. Both sign-in message validators use the new wording. Branch/repository URLs, storage/workspace identifiers and existing financial signing domains retain their compatibility names. Production build, 81 client tests and 44 focused backend tests pass; browser title, wordmark and tank sign verified at 320/375/414/768 without horizontal overflow or old branding. No financial activation or push.
 
+## Stage 16 — Wallet-attributed setup submission on the hosted site
+
+- [x] **16.1 Hosted authentication and private review transport.** Exact mainnet authentication/logout and attributed-pitch POST routes plus private earnings/status GET are allowlisted in the Vercel runtime proxy. Same-origin writes, bounded JSON uploads, bearer/idempotency checks and existing trusted-proxy identity preserve the boundary; financial/operator/anonymous/testnet writes remain closed. Private review summaries include only the owner's latest 50 setups with reasons and agent verdicts, separately labelled paper execution. Forty focused backend checks pass. A cross-runtime Node wallet/proxy -> isolated Python API test verifies sign-in, attribution, duplicate/conflicting retries, actual deterministic review, private status and logout; no real wallet or external financial request.
+
 ## Financial policy
 
 Current v3 economics: received fees allocate 40% team / 60% bot; verified user-strategy net profits allocate 50% author / 50% bot; own-agent eligible net realized profit allocates 50% donation reserve / 50% bot, replacing new buybacks. Donation accrual/public reporting is implemented; the retired payment provider has not been restored and a recipient/payment integration remains pending. See `DISTRIBUTION.md` and `STRATEGY-SHARING.md`. Earlier stage descriptions record superseded policies.
