@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claw Desk — trading floor film</title>
+<style>
+@font-face{font-family:DeskMono;src:url(/mono.woff2)}@font-face{font-family:DeskSans;src:url(/sans.woff2)}
+*{box-sizing:border-box}body{margin:0;background:#090806;color:#faebd3;font:15px DeskSans,sans-serif;display:grid;justify-items:center;padding:20px;gap:14px}canvas,video{width:min(100%,960px);height:auto;border-radius:14px}nav{display:flex;gap:12px;align-items:center;flex-wrap:wrap}button{font:inherit;background:#ff975f;border:0;border-radius:7px;padding:11px 18px;cursor:pointer}button:disabled{opacity:.5}output{color:#b5ad9b;font-family:DeskMono,monospace;font-size:12px}video{display:none}#verification{font:12px DeskMono,monospace;color:#b5ad9b}
+</style>
+<nav><button id="record">Record 20-second film</button><button id="replay">Replay illustration</button><output id="status">Loading fonts…</output></nav>
+<canvas id="film" width="1440" height="1080" aria-label="Illustrated Claw Desk trading floor with changing example PnL"></canvas>
+<video id="result" controls playsinline></video><div id="verification"></div>
+<script>
+// An owner-requested illustration. This file never reads the trading API,
+// opens a wallet, submits orders or modifies project accounting.
+const canvas=document.getElementById('film'),ctx=canvas.getContext('2d',{alpha:false});
+const W=1440,H=1080,DURATION=20,FPS=30;
+const status=document.getElementById('status'),recordButton=document.getElementById('record');
+const palette={bg:'#0c0a07',panel:'#15120c',line:'#322c22',ink:'#fff1d8',muted:'#a39a83',green:'#96e2bc',coral:'#fa9979',mint:'#94d8c4',lilac:'#c3a7ea',cream:'#faebc9',terminal:'#102b30'};
+const fills=[{at:2.8,profit:5.8},{at:5.8,profit:11.4},{at:9.2,profit:6.3},{at:12.5,profit:14.2},{at:15.7,profit:9.6},{at:18.5,profit:17.8}];
+const agents=[{name:'CLAWDIUS',role:'Market analyst',color:palette.coral,light:'#ffd0a7',dark:'#b95b46'},
+ {name:'PINCH',role:'Risk manager',color:palette.mint,light:'#d0efd1',dark:'#4d9085'},
+ {name:'LEDGER',role:'Capital & execution',color:palette.lilac,light:'#ead4fa',dark:'#8a6caa'}];
+const beats=[
+ {actor:0,label:'Scanning the BTC market',positions:[[172,204],[510,295],[708,204]],work:[1,0,1],speech:['Found a setup','Watching risk','Capital ready']},
+ {actor:0,label:'Passing a setup to risk',positions:[[330,284],[440,204],[600,303]],work:[0,1,0],speech:['Your turn, Pinch','Checking the stop','Sizing the trade']},
+ {actor:1,label:'Checking risk and position size',positions:[[530,294],[440,204],[708,204]],work:[0,1,1],speech:['Watching BTC','Risk approved','Size confirmed']},
+ {actor:2,label:'Following the entry',positions:[[172,204],[600,286],[708,204]],work:[1,0,1],speech:['Back to the tape','Keep the stop','Entry confirmed']},
+ {actor:2,label:'Tracking the position',positions:[[290,303],[440,204],[540,284]],work:[0,1,0],speech:['Tracking momentum','Exposure in check','PnL coming in']},
+ {actor:2,label:'Closing and counting realized PnL',positions:[[172,204],[310,293],[708,204]],work:[1,0,1],speech:['Next opportunity','Risk stays capped','Profit recorded']}
+];
+const fmt=v=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2}).format(v);
+const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v)),ease=v=>1-Math.pow(1-clamp(v),3);
+function rect(x,y,w,h,color){ctx.fillStyle=color;ctx.fillRect(x,y,w,h)}
+function line(x1,y1,x2,y2,color,width=1){ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke()}
+function round(x,y,w,h,r,color,stroke){ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fillStyle=color;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.stroke()}}
+function text(value,x,y,size=16,color=palette.ink,font='DeskSans',align='left',weight=400){ctx.font=`${weight} ${size}px ${font}`;ctx.textAlign=align;ctx.textBaseline='alphabetic';ctx.fillStyle=color;ctx.fillText(value,x,y)}
+function path(value,color,stroke,width=1){const p=new Path2D(value);if(color){ctx.fillStyle=color;ctx.fill(p)}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=width;ctx.stroke(p)}}
+function ellipse(x,y,rx,ry,color,stroke){ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);if(color){ctx.fillStyle=color;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke()}}
+function sample(t){let gain=0,count=0,last=null;for(const fill of fills){gain+=fill.profit*ease((t-fill.at)/.85);if(t>=fill.at){count++;last=fill}}return{profit:331.30+gain,equity:1251.30+gain,charity:(331.30+gain)/2,count,last,gain}}
+function background(){
+ rect(0,0,880,380,'#243537');rect(0,65,880,315,'#6d5039');
+ for(let y=67,row=0;y<380;y+=16,row++){line(0,y,880,y,'#5c4433',1);for(let x=(row%2)*55;x<880;x+=110){line(x,y,x,y+16,'#604735');rect(x+12,y+5,22,1,'#72563c')}}
+ rect(0,61,880,8,'#303c38');
+ for(const x of [40,733]){rect(x,12,107,40,'#201d20');rect(x+5,17,97,30,'#14252d');path(`M${x+10} 40h10v-8h9v12h12V28h11v16h11V22h13v22h19`,'#344d50');rect(x+53,17,2,30,'#201d20')}
+ round(310,10,260,39,2,'#102b30','#4d6769');text('C L A W  D E S K',440,36,16,palette.cream,'DeskMono','center',500);
+ ctx.globalAlpha=.15;text('SMALL POSITIONS. BIG IDEAS.',440,265,13,palette.cream,'DeskMono','center');ctx.globalAlpha=1;
+ ellipse(440,312,103,31,'#3a342d');ellipse(440,309,93,26,'#293e43','#4d6769');ellipse(440,309,65,17,null,'#4d6769');text('THE COLLECTIVE',440,313,7,palette.cream,'DeskMono','center');
+ for(const x of [40,830]){ctx.save();ctx.translate(x,303);path('M-11 3h22l-3 22H-8z','#bb7350');path('M-3 4v-28h7V4M-3-7h-13v-15h6v8h7M4-15h10v-16h6v23H4','#759872');ctx.restore()}
+}
+function station(x,index,t,equity,active){
+ ctx.save();ctx.translate(x,92);
+ rect(-98,87,198,20,'#57402f');rect(-90,70,10,40,'#88603f');rect(80,70,10,40,'#88603f');rect(-103,51,206,24,'#ba8959');rect(-103,75,206,9,'#88603f');
+ if(active){ctx.shadowColor=agents[index].color;ctx.shadowBlur=14}rect(-70,-7,140,63,'#201d20');ctx.shadowBlur=0;
+ rect(-65,-2,130,49,'#102b30');rect(-7,53,14,8,'#201d20');rect(-20,60,40,4,'#201d20');
+ for(const y of [12,27,42])line(-60,y,60,y,'#24454a',.6);for(const x of [-30,0,30])line(x,3,x,42,'#24454a',.6);
+ text(index===0?'BTC / USDC':index===1?'RISK CONTROL':'EXECUTION',-58,8,5,'#83c9ac','DeskMono');
+ if(index===0){ctx.beginPath();for(let n=0;n<24;n++){const y=33-Math.sin(n*.6+t*.6)*6-n*.45;const x=-57+n*4.9;n?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.strokeStyle='#96e2bc';ctx.lineWidth=1.7;ctx.stroke();}
+ if(index===1){text('0.25% MAX LOSS',-55,25,8,'#94d8c4','DeskMono');text('RISK CHECK PASSED',-55,39,5,'#83c9ac','DeskMono')}
+ if(index===2){text(fmt(equity),-55,25,9,'#94d8c4','DeskMono');text('REALIZED PNL / USDC',-55,39,5,'#83c9ac','DeskMono')}
+ for(let n=0;n<4;n++){const h=5+(Math.sin(t*7+n)+1)*7;rect(38+n*5,43-h,3,h,'#83c9ac')}
+ rect(-45,68,73,4,'#273332');rect(44,64,9,8,'#273332');rect(74,43,12,17,palette.cream);rect(86,46,5,9,palette.cream);
+ round(-49,91,98,18,2,'#273332');text(agents[index].name,0,103,8,palette.cream,'DeskMono','center',500);
+ ctx.restore();
+}
+function sprite(index,x,y,t,working,active){
+ const a=agents[index];ctx.save();ctx.translate(x,y);
+ ctx.globalAlpha=.28;ellipse(0,38,24,5,'#201d20');ctx.globalAlpha=1;
+ const pace=Math.sin(t*32+index*2),step=working?0:(pace>0?3:-3);
+ ctx.save();ctx.translate(0,step);path('M-13 23h-8v7h-9v5h15V30h7v-7',a.color);ctx.restore();ctx.save();ctx.translate(0,-step);path('M13 23h8v7h9v5H15V30H8v-7',a.color);ctx.restore();
+ ctx.translate(0,working?(Math.sin(t*18)>.2?-2:0):(Math.sin(t*27)>.1?-2:0));
+ path('M-18-4h36v29H12v7h-24v-7h-6z',a.dark);path('M-13-12h26v7h7v22h-6v7h-28v-7h-6V-5h7z',a.color);path('M-10-8h20v5h-20zM-15-3h6v15h-6z',a.light);
+ ctx.save();ctx.translate(0,working?Math.sin(t*24)*2:0);path('M-19 4h-8V-8h-9v-15h7v9h5v-9h7v15h-4v12M19 4h8V-8h9v-15h-7v9h-5v-9h-7v15h4v12',a.dark);path('M-29-12h9v-7h-3v4h-3v-7h-6v7h3M29-12h-9v-7h3v4h3v-7h6v7h-3',a.color);ctx.restore();
+ path('M-11-12v-8h7v8M4-12v-8h7v8',a.dark);path('M-10-19h6v7h-6zM4-19h6v7H4z',palette.cream);path('M-7-17h3v4h-3zM7-17h3v4H7zM-4 8h8v3h-8z','#201d20');
+ if(index===1){path('M-15-13h30v3H-15zM-14-10h11v9h-11zM3-10h11v9H3z',null,'#102b30',2.4)}
+ if(index===2)path('M-5 19H5l-2 5 3 9H-6l3-9z','#102b30');
+ if(active){ctx.globalAlpha=.75;ellipse(0,43,28,2,a.color);ctx.globalAlpha=1}ctx.restore();
+}
+function bubble(value,x,y,active){const width=Math.max(132,Math.min(168,value.length*6+20));round(x-width/2,y-69,width,25,4,palette.cream);path(`M${x-5} ${y-44}h10l-5 7z`,palette.cream);text(value,x,y-52,8.5,'#203538','DeskMono','center',active?500:400)}
+function packet(t){const points=[[172,214],[172,288],[440,288],[440,214],[440,288],[708,288],[708,214]];ctx.save();ctx.setLineDash([3,8]);ctx.globalAlpha=.16;ctx.strokeStyle=palette.cream;ctx.lineWidth=1.5;ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.stroke();ctx.restore();
+ let distance=(t%3.2)/3.2*1004;let px=172,py=214;for(let i=1;i<points.length;i++){const [a,b]=[points[i-1],points[i]],len=Math.hypot(b[0]-a[0],b[1]-a[1]);if(distance<=len){px=a[0]+(b[0]-a[0])*distance/len;py=a[1]+(b[1]-a[1])*distance/len;break}distance-=len}
+ round(px-9,py-6,18,12,2,palette.cream);line(px-8,py-5,px,py+1,'#88603f');line(px,py+1,px+8,py-5,'#88603f');
+}
+function draw(t){
+ const m=sample(t),beatNumber=Math.floor(t/1.65),beat=beats[beatNumber%beats.length],prev=beats[(beatNumber-1+beats.length)%beats.length];
+ const travel=clamp((t%1.65)/.62),blend=travel*travel*(3-2*travel),elapsed=m.last?t-m.last.at:Infinity;
+ rect(0,0,W,H,palette.bg);
+ round(24,24,1392,160,18,palette.panel);
+ const metrics=[['Tank equity',fmt(m.equity),'USDC'],['Trading PnL','+'+fmt(m.profit),'Since tracking began'],['Charity pool',fmt(m.charity),'50% of agent net profit'],['Setups reviewed',String(18+m.count),'Across the collective']];
+ metrics.forEach(([label,value,note],i)=>{const x=64+i*346;text(label,x,65,18,palette.muted);text(value,x,116,i===1?36:35,i===1?palette.green:palette.ink,'DeskMono','left',500);text(note,x,153,14,palette.muted)});
+ round(24,208,1392,820,18,palette.panel);ctx.save();ctx.beginPath();ctx.roundRect(24,208,1392,820,18);ctx.clip();
+ ctx.fillStyle=palette.green;ctx.beginPath();ctx.arc(64,246,4,0,Math.PI*2);ctx.fill();text('Inside the tank',82,253,22,palette.ink,'DeskSans','left',600);text('THE COLLECTIVE',1376,252,12,palette.muted,'DeskMono','right');line(24,277,1416,277,palette.line);
+ text('THE TRADING FLOOR',64,311,11,palette.muted,'DeskMono');text(beat.label,64,339,18,palette.ink);
+ text('BOT EQUITY · USDC',1376,308,11,palette.muted,'DeskMono','right');text(fmt(m.equity),1376,342,31,palette.ink,'DeskMono','right',500);
+ const sx=24,sy=367,scale=1392/880;ctx.save();ctx.translate(sx,sy);ctx.scale(scale,scale);background();
+ [172,440,708].forEach((x,i)=>station(x,i,t,m.equity,beat.actor===i));packet(t);
+ const positions=agents.map((_,i)=>{const old=beatNumber===0?beat.positions[i]:prev.positions[i],next=beat.positions[i];return[old[0]+(next[0]-old[0])*blend,old[1]+(next[1]-old[1])*blend]});
+ const order=[0,1,2].sort((a,b)=>positions[a][1]-positions[b][1]);
+ for(const i of order){const [x,y]=positions[i],moving=travel<1&&beatNumber>0;sprite(i,x,y,t,!!beat.work[i]&&!moving,beat.actor===i)}
+ for(const i of order){const [x,y]=positions[i];bubble(elapsed<1.8&&i===2?'+'+fmt(m.last.profit)+' profit':beat.speech[i],x,y,beat.actor===i)}
+ if(elapsed>=0&&elapsed<2.2){const alpha=elapsed<1.3?1:1-(elapsed-1.3)/.9;ctx.globalAlpha=clamp(alpha);const y=278-ease(elapsed/2.2)*60;ctx.strokeStyle=palette.terminal;ctx.lineWidth=5;ctx.font='500 24px DeskMono';ctx.textAlign='center';ctx.strokeText('+'+fmt(m.last.profit),708,y);text('+'+fmt(m.last.profit),708,y,24,palette.green,'DeskMono','center',500);for(let n=0;n<12;n++){const age=elapsed/2.2,angle=n*Math.PI/6;const x=708+Math.cos(angle)*age*75,py=280-Math.sin(angle)*age*45-age*40;rect(x,py,4,4,n%2?palette.cream:palette.green)}ctx.globalAlpha=1}
+ ctx.globalAlpha=.8;text('BTC / USDC',56,357,9,palette.cream,'DeskMono');text('HYPERLIQUID',837,357,9,palette.cream,'DeskMono','right');ctx.globalAlpha=1;ctx.restore();
+ const y=986;line(24,y,1416,y,palette.line);agents.forEach((a,i)=>{const x=52+i*464;if(beat.actor===i)rect(24+i*464,y,464,42,'#211c15');rect(x,y+17,7,7,a.color);text(a.name,x+18,y+25,13,palette.ink,'DeskMono');text(a.role,x+174,y+25,12,palette.muted)});ctx.restore();
+ if(elapsed>=0&&elapsed<1.8){const label='+'+fmt(m.last.profit)+' realized';ctx.font='13px DeskMono';const width=ctx.measureText(label).width+30;round(1376-width,352,width,28,4,'#183428');text(label,1361,372,13,palette.green,'DeskMono','right')}
+ text('Illustrative animation',28,1059,13,palette.muted,'DeskSans');text('CLAW DESK',1414,1059,13,palette.muted,'DeskMono','right');
+}
+let started=performance.now(),recording=false,done=false,frameCount=0,lastFrame=-1,recordStart=0,recordDuration=0,raf=0;
+function loop(now){const t=recording?(now-recordStart)/1000:((now-started)/1000)%DURATION;const f=Math.floor(t*FPS);if(f!==lastFrame){draw(Math.min(t,DURATION));frameCount++;lastFrame=f}if(recording&&t>=DURATION){recordDuration=t;recording=false;done=true;recorder.stop()}if(!done)raf=requestAnimationFrame(loop)}
+let recorder;
+async function record(){
+ if(recording)return;await document.fonts.ready;cancelAnimationFrame(raf);
+ const types=['video/mp4;codecs=avc1.42001E','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8'];
+ const mimeType=types.find(type=>MediaRecorder.isTypeSupported(type));if(!mimeType){status.textContent='This browser cannot record the canvas.';return}
+ recordButton.disabled=true;document.getElementById('replay').disabled=true;
+ const stream=canvas.captureStream(FPS),chunks=[];recorder=new MediaRecorder(stream,{mimeType,videoBitsPerSecond:9000000});
+ recorder.ondataavailable=event=>{if(event.data.size)chunks.push(event.data)};
+ recorder.onstop=async()=>{stream.getTracks().forEach(track=>track.stop());const blob=new Blob(chunks,{type:mimeType});status.textContent='Saving film…';
+  try{const response=await fetch('/recording',{method:'POST',headers:{'Content-Type':mimeType,'X-Render-Session':'__RENDER_TOKEN__'},body:blob});if(!response.ok)throw new Error('save');const saved=await response.json();status.textContent=`Saved ${saved.filename} · ${frameCount} rendered frames · ${recordDuration.toFixed(2)} seconds`;document.getElementById('verification').textContent=JSON.stringify({frames:frameCount,seconds:recordDuration,mimeType,bytes:blob.size,start:sample(0),end:sample(20)});const video=document.getElementById('result');video.src=URL.createObjectURL(blob);video.style.display='block';video.onloadedmetadata=()=>{document.getElementById('verification').dataset.duration=video.duration;document.getElementById('verification').dataset.width=video.videoWidth;document.getElementById('verification').dataset.height=video.videoHeight};}
+  catch{status.textContent='Saving failed. Keep the local render server running.'}recordButton.disabled=false;document.getElementById('replay').disabled=false;
+ };
+ done=false;frameCount=0;lastFrame=-1;recordStart=performance.now();recording=true;draw(0);recorder.start(1000);status.textContent='Recording the 20-second illustration…';requestAnimationFrame(loop);
+}
+document.getElementById('record').onclick=record;
+document.getElementById('replay').onclick=()=>{if(recording)return;cancelAnimationFrame(raf);done=false;started=performance.now();lastFrame=-1;raf=requestAnimationFrame(loop)};
+document.fonts.ready.then(()=>{status.textContent='Ready · 1440 × 1080 · 30 fps · illustration only';draw(0);raf=requestAnimationFrame(loop)});
+</script>
+</html>
