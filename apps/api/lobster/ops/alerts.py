@@ -182,7 +182,7 @@ class AlertOutbox:
             row.update(status="sending", attempts=row["attempts"]+1, next_attempt_ms=now+60000*min(15, 2**row["attempts"]))
             db.execute("UPDATE ops_alert_outbox SET payload=? WHERE id=?", (json.dumps(row), row["id"])); db.commit()
         event = {k: row[k] for k in ("id", "kind", "alerts", "created_at")}
-        body = event if settings.alert_format == "generic" else {"text": "Lobster Desk " + row["kind"] + " · " + row["id"] + "\n" +
+        body = event if settings.alert_format == "generic" else {"text": "Claw Desk " + row["kind"] + " · " + row["id"] + "\n" +
             ("\n".join(f"{a['severity']}: {a['code']} ({a['scope']}, {a['count']})" for a in row["alerts"]) or "Previously observed alerts cleared.")}
         payload = json.dumps(body, sort_keys=True, separators=(",", ":")).encode()
         headers = {"Content-Type": "application/json", "Idempotency-Key": row["id"], "X-Lobster-Event-ID": row["id"]}

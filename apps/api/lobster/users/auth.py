@@ -18,7 +18,7 @@ from .contracts import Address
 
 ORIGIN = "http://127.0.0.1:3000"
 CHAIN_ID = 421614
-STATEMENT = "Sign in to the local Lobster Desk testnet workspace. This grants no trading, transfer or fee approval."
+STATEMENT = "Sign in to the local Claw Desk testnet workspace. This grants no trading, transfer or fee approval."
 SCOPE = "testnet:preview"
 CURVE_N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
 

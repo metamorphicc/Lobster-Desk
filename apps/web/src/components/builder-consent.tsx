@@ -40,7 +40,7 @@ export function BuilderConsent({ address, configured, now }: { address: string; 
     if (!plan) return;
     if (Date.now() >= Date.parse(plan.preview_valid_until)) { setError("The local preview expired. Prepare a fresh plan before downloading."); return; }
     const url = URL.createObjectURL(new Blob([JSON.stringify(plan, null, 2)], { type: "application/json" }));
-    const link = document.createElement("a"); link.href = url; link.download = `lobster-testnet-${plan.intent}-${plan.action.nonce}.json`;
+    const link = document.createElement("a"); link.href = url; link.download = `claw-desk-testnet-${plan.intent}-${plan.action.nonce}.json`;
     link.click(); URL.revokeObjectURL(url);
     setMessage("Unsigned plan downloaded. No permission changed and no signature was requested.");
   }

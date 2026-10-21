@@ -1,6 +1,6 @@
 /** Exact local sign-in message contract. Never signs orders or builder consent. */
 export const AUTH_ORIGIN = process.env.NEXT_PUBLIC_WEB_ORIGIN || "http://127.0.0.1:3000";
-export const AUTH_STATEMENT = `Sign in to the ${AUTH_ORIGIN === "http://127.0.0.1:3000" ? "local " : ""}Lobster Desk testnet workspace. This grants no trading, transfer or fee approval.`;
+export const AUTH_STATEMENT = `Sign in to the ${AUTH_ORIGIN === "http://127.0.0.1:3000" ? "local " : ""}Claw Desk testnet workspace. This grants no trading, transfer or fee approval.`;
 export type AuthChallenge = {
   challenge_id: string; address: string; origin: string; chain_id: number; nonce: string;
   issued_at: string; expires_at: string; message: string; scope: string;

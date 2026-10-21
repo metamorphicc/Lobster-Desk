@@ -1,4 +1,4 @@
-# Lobster Desk
+# Claw Desk
 
 A collective trading desk on Hyperliquid: pitch a BTC strategy, follow three crustacean agents and track decisions and trades.
 

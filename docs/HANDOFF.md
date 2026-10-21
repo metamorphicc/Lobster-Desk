@@ -1,5 +1,7 @@
 # Delivery handoff — updated 2026-10-21
 
+The product name is **Claw Desk**. The existing branch, GitHub repository, Python/workspace identifiers, storage names and financial signing domains retain their original names for compatibility. This branding change does not rename or migrate existing financial jobs.
+
 Completed substages are committed locally on `lobster-desk`, the branch name requested by the owner. GitHub remote: `https://github.com/metamorphicc/Lobster-Desk.git`. No push, deployment, real financial order/transfer, token issuance or external message was performed. `ROADMAP.md` separates implemented software from observed external acceptance; `FEATURES.md` is the agreed product baseline.
 
 ## Run locally

@@ -67,7 +67,7 @@ async def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Lobster Desk testnet-only inspection and owner signer")
+    parser = argparse.ArgumentParser(description="Claw Desk testnet-only inspection and owner signer")
     actions = parser.add_mutually_exclusive_group()
     actions.add_argument("--dispatch", action="store_true", help="Submit one locally staged testnet intent; requires separate local signer enablement")
     actions.add_argument("--reconcile", action="store_true", help="Reconcile an intent, install protection or reduce owned risk; never open a new position")

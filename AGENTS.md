@@ -1,4 +1,4 @@
-# Lobster Desk development rules
+# Claw Desk development rules
 
 - Work on local `lobster-desk` (renamed from `codex/mvp-foundation` at the owner's explicit request). Commit every completed roadmap substage. Never push; the owner pushes manually.
 - Keep `docs/ROADMAP.md` current and identify partial integrations honestly.

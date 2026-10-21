@@ -1,4 +1,4 @@
-# Lobster Desk — product features
+# Claw Desk — product features
 
 Current economics v3 replaces own-agent token buybacks with a 50% net-profit donation reserve. User-strategy shares and builder fees remain unchanged. The earlier donation provider was removed in Stage 10; the new reserve/public counter does not restore a payment provider. Default execution remains paper.
 

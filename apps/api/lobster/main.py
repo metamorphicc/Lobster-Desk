@@ -234,7 +234,7 @@ def create_app(settings: Settings | None = None, testnet_settings: TestnetSettin
                         task.cancel()
                     await asyncio.gather(*tasks, return_exceptions=True)
 
-    app = FastAPI(title="Lobster Desk", version="0.1.0", lifespan=lifespan, dependencies=[Depends(admit_external_read)])
+    app = FastAPI(title="Claw Desk", version="0.1.0", lifespan=lifespan, dependencies=[Depends(admit_external_read)])
     origins = LOCAL_ORIGINS if config.deployment_mode == "local" else {config.web_origin}
     hosts = ["127.0.0.1", "localhost", "[::1]"] if config.deployment_mode == "local" else [urlsplit(config.web_origin).hostname, "api", "127.0.0.1"]
     app.add_middleware(CORSMiddleware, allow_origins=sorted(origins),

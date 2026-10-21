@@ -58,7 +58,7 @@ export function UserConsent({ address, token, plan, now, onSessionInvalid }: {
     const value = kind === "intent" ? model.intent : model.permissions;
     if (!value || (kind === "intent" && (!model.intent || Date.now() >= model.intent.expires_ms))) return;
     const url = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2)], { type: "application/json" }));
-    const link = document.createElement("a"); link.href = url; link.download = `lobster-unsigned-${kind}-${plan.id}.json`; link.click(); URL.revokeObjectURL(url);
+    const link = document.createElement("a"); link.href = url; link.download = `claw-desk-unsigned-${kind}-${plan.id}.json`; link.click(); URL.revokeObjectURL(url);
   }
   return <UserConsentView model={model} plan={plan} now={now} actions={{ refresh: () => { void load("context"); }, prepare: kind => { void load(kind); }, download }} />;
 }

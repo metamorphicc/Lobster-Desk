@@ -51,7 +51,7 @@ export function UserOrderPreview({ address, token, episodes, now, session, onSes
   function download() {
     if (!plan || plan.expired || Date.now() >= Date.parse(plan.expires_at)) return;
     const url = URL.createObjectURL(new Blob([JSON.stringify(plan, null, 2)], { type: "application/json" }));
-    const link = document.createElement("a"); link.href = url; link.download = `lobster-user-preview-${plan.id}.json`; link.click(); URL.revokeObjectURL(url);
+    const link = document.createElement("a"); link.href = url; link.download = `claw-desk-user-preview-${plan.id}.json`; link.click(); URL.revokeObjectURL(url);
   }
 
   return <section className="builder-consent" aria-labelledby="user-order-title"><h3 id="user-order-title">Preview an agent-reviewed user order</h3>

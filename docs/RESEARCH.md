@@ -12,7 +12,7 @@ The complete dataset/rules and report hashes make a result reproducible. Failed 
 
 Public history adapter smoke check on 2026-10-17: 1,440 real BTC hourly candles and 1,440 funding observations validated. Public reads only; no keys or exchange writes. The initial check exposed millisecond funding settlement timestamps and the adapter was corrected and covered by inclusive-pagination tests.
 
-Primary references: [Hyperliquid candles and pagination](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint), [historical funding](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint/perpetuals). These document data transport, not the performance of any Lobster Desk strategy.
+Primary references: [Hyperliquid candles and pagination](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint), [historical funding](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint/perpetuals). These document data transport, not the performance of any Claw Desk strategy.
 
 ## Durable autonomous paper loop
 

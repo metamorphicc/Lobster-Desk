@@ -97,7 +97,7 @@ export function Desk({ internal = false }: { internal?: boolean }) {
         cursor = batch.events.at(-1)!.id;
       }
       const url = URL.createObjectURL(new Blob([JSON.stringify({ exported_at: new Date().toISOString(), execution_mode: "paper", events: all }, null, 2)], { type: "application/json" }));
-      const link = document.createElement("a"); link.href = url; link.download = "lobster-desk-journal.json"; link.click();
+      const link = document.createElement("a"); link.href = url; link.download = "claw-desk-journal.json"; link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (e) { setExportError((e as Error).message); }
     finally { setExporting(false); }
@@ -107,7 +107,7 @@ export function Desk({ internal = false }: { internal?: boolean }) {
   return <div className={`app-shell ${internal ? "" : "app-shell--product"}`}>
     <a className="skip-link" href="#main">Skip to tank</a>
     <aside className="sidebar">
-      <a className="wordmark" href="/" aria-label="Lobster Desk home"><span className="brand-symbol"><Waves size={25} /></span><span>LOBSTER<span className="wordmark-bottom">DESK<span className="brand-period">.</span></span></span></a>
+      <a className="wordmark" href="/" aria-label="Claw Desk home"><span className="brand-symbol"><Waves size={25} /></span><span>CLAW<span className="wordmark-bottom">DESK<span className="brand-period">.</span></span></span></a>
       <div className="sidebar-caption">A LITTLE COLLECTIVE INTELLIGENCE.</div>
       <nav aria-label="Main navigation">
         {([{ id: "tank", label: "The tank", icon: Radio }, { id: "journal", label: "Journal", icon: FileClock }, { id: "research", label: "Research", icon: BookOpen }, ...(internal ? [{ id: "treasury" as const, label: "Treasury", icon: Landmark }, { id: "testnet" as const, label: "Testnet", icon: FlaskConical }] : []), { id: "mainnet", label: internal ? "Mainnet" : "My strategies", icon: Landmark }] as const).map(item =>
@@ -123,7 +123,7 @@ export function Desk({ internal = false }: { internal?: boolean }) {
 
     <div className="workspace">
       <header className="topbar">
-        <div className="breadcrumb"><span>Lobster Desk</span><ChevronRight size={13} /><strong>{tab === "tank" ? "The tank" : tab === "journal" ? "Trade journal" : tab === "research" ? "Research" : tab === "testnet" ? "Testnet workbench" : tab === "mainnet" ? (internal ? "Mainnet account" : "My strategies") : "Treasury"}</strong></div>
+        <div className="breadcrumb"><span>Claw Desk</span><ChevronRight size={13} /><strong>{tab === "tank" ? "The tank" : tab === "journal" ? "Trade journal" : tab === "research" ? "Research" : tab === "testnet" ? "Testnet workbench" : tab === "mainnet" ? (internal ? "Mainnet account" : "My strategies") : "Treasury"}</strong></div>
         {internal && <div className="topbar-right"><span className="mode-badge"><FlaskConical size={13} /> {tab === "testnet" ? "TESTNET LAB" : tab === "mainnet" ? "MAINNET · REAL FUNDS" : "PAPER MODE"}</span><button className="icon-button" aria-label="Open operator controls" onClick={() => operatorDialog.current?.showModal()}><SlidersHorizontal size={17} /></button></div>}
       </header>
 
@@ -190,7 +190,7 @@ export function Desk({ internal = false }: { internal?: boolean }) {
           <div className="event-list">{state?.events.length ? state.events.slice(-12).reverse().map(event => <div className="event-row" key={event.id}><time dateTime={event.timestamp}>{new Date(event.timestamp).toLocaleTimeString("en-GB", { hour12: false })}</time><span className={`event-actor event-actor--${event.actor}`}>{event.actor}</span><p>{event.message}</p></div>) : <p className="empty-note">The journal starts when the local API is ready. Every decision and paper fill will appear here.</p>}</div>
         </section>}
         {internal && <OpsStatus />}
-        <footer className="footer"><span><Waves size={15} /> Lobster Desk</span><span>{internal ? (tab === "testnet" ? "Testnet inspection & local staging · Separate owner signer" : `Paper execution · ${state?.service.agent_provider === "anthropic" ? "AI reviews" : "Scripted demo reviews"} · ${state?.account.funding_included ? "Hourly funding for tracked positions" : "Funding excluded"}`) : "Small positions. Every decision on record."}</span><a href="https://hyperliquid.gitbook.io/hyperliquid-docs" target="_blank" rel="noreferrer">Hyperliquid docs <ArrowUpRight size={12} /></a></footer>
+        <footer className="footer"><span><Waves size={15} /> Claw Desk</span><span>{internal ? (tab === "testnet" ? "Testnet inspection & local staging · Separate owner signer" : `Paper execution · ${state?.service.agent_provider === "anthropic" ? "AI reviews" : "Scripted demo reviews"} · ${state?.account.funding_included ? "Hourly funding for tracked positions" : "Funding excluded"}`) : "Small positions. Every decision on record."}</span><a href="https://hyperliquid.gitbook.io/hyperliquid-docs" target="_blank" rel="noreferrer">Hyperliquid docs <ArrowUpRight size={12} /></a></footer>
       </main>
     </div>
 

@@ -95,7 +95,7 @@ export function AgentTank({ state, episode, internal = false, illustrative = nul
         <path d="M0 66h880v314H0z" fill="url(#tank-floor-boards)" />
         <path className={styles.baseboard} d="M0 61h880v8H0z" />
         {[40, 733].map(x => <g key={x} transform={`translate(${x} 12)`}><rect width="107" height="40" className={styles.windowFrame} /><rect x="5" y="5" width="97" height="30" className={styles.window} /><path d="M10 28h10v-8h9v12h12V16h11v16h11V10h13v22h19" className={styles.skyline} /><path d="M53 5v30" className={styles.windowFrame} stroke="currentColor" /></g>)}
-        <rect x="310" y="10" width="260" height="39" rx="2" className={styles.signBoard} /><text x="440" y="35" textAnchor="middle" className={styles.roomSign}>LOBSTER DESK</text>
+        <rect x="310" y="10" width="260" height="39" rx="2" className={styles.signBoard} /><text x="440" y="35" textAnchor="middle" className={styles.roomSign}>CLAW DESK</text>
         <text x="440" y="264" textAnchor="middle" className={styles.floorMark}>SMALL POSITIONS. BIG IDEAS.</text>
         {stationX.map((x, i) => <Workstation key={i} x={x} index={i} chart={chart} state={available ? state : null} equity={illustrative ? equity : available ? equity : null} />)}
         <g className={styles.signalRoute} aria-hidden="true"><path d="M172 214v74h268v-74M440 288h268v-74" /><g className={styles.dispatchPacket}><rect x="-9" y="-6" width="18" height="12" rx="2" /><path d="m-8-5 8 6 8-6" /></g></g>

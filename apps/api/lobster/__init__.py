@@ -1,2 +1,2 @@
-"""Lobster Desk: explicit financial authority and observable decisions."""
+"""Claw Desk: explicit financial authority and observable decisions."""
 
