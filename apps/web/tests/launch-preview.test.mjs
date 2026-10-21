@@ -9,6 +9,10 @@ test('homepage figures require the configuration switch and stay isolated to loo
   assert.equal(isLaunchPreview('http://127.0.0.1:3000/', false, false), false);
   assert.equal(isLaunchPreview('http://127.0.0.1:3000/?preview=launch', false, false), false);
   assert.equal(isLaunchPreview('http://127.0.0.1:3000/'), false);
+  assert.equal(isLaunchPreview('https://desk.vercel.app/', false, true, true), true);
+  assert.equal(isLaunchPreview('https://desk.vercel.app/', false, false, true), false);
+  assert.equal(isLaunchPreview('https://desk.vercel.app/operator', false, true, true), false);
+  assert.equal(isLaunchPreview('https://desk.vercel.app/', true, true, true), false);
 });
 
 test('illustrative capital, profit and donation figures stay internally consistent and include losses', () => {

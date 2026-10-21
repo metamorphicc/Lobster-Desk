@@ -4,6 +4,9 @@
   "private": true,
   "workspaces": ["apps/web"],
   "scripts": {
+    "setup:pc": "node scripts/pc-api.mjs --setup",
+    "api:pc:check": "node scripts/pc-api.mjs --check",
+    "api:pc": "node scripts/pc-api.mjs",
     "setup:agents": "node scripts/agents.mjs --setup",
     "agents:check": "node scripts/agents.mjs --check",
     "agents": "node scripts/agents.mjs",

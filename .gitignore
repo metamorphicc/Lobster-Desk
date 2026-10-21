@@ -22,6 +22,7 @@ htmlcov/
 !.env.author-payouts.example
 !.env.server.example
 !.env.ops.example
+!.env.pc.example
 *.ldb
 data/
 artifacts/

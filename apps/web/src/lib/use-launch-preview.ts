@@ -8,7 +8,8 @@ export function useLaunchPreview(blocked: boolean) {
   const [enabled, setEnabled] = useState(false);
   const [tick, setTick] = useState(0);
   useEffect(() => {
-    const sync = () => setEnabled(isLaunchPreview(window.location.href, blocked, LOCAL_LAUNCH_PREVIEW_ENABLED));
+    const sync = () => setEnabled(isLaunchPreview(window.location.href, blocked, LOCAL_LAUNCH_PREVIEW_ENABLED,
+      process.env.NEXT_PUBLIC_HOSTED_PREVIEW === "true"));
     sync(); window.addEventListener("popstate", sync);
     return () => window.removeEventListener("popstate", sync);
   }, [blocked]);

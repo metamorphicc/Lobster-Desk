@@ -1,9 +1,9 @@
 // Owner-requested illustrative fixtures. Never import into accounting or execution.
-export function isLaunchPreview(url: string, internal = false, enabled = false): boolean {
+export function isLaunchPreview(url: string, internal = false, enabled = false, hostedPreview = false): boolean {
   try {
     const location = new URL(url);
     return enabled && !internal && ["http:", "https:"].includes(location.protocol)
-      && ["127.0.0.1", "localhost", "[::1]"].includes(location.hostname)
+      && (hostedPreview || ["127.0.0.1", "localhost", "[::1]"].includes(location.hostname))
       && location.pathname === "/";
   } catch { return false; }
 }

@@ -4,6 +4,8 @@ Completed substages are committed locally on `lobster-desk`, the branch name req
 
 ## Run locally
 
+For the owner-confirmed split setup, Vercel hosts only `web`; the API and agents run on the PC behind an owner-started HTTPS tunnel. See `VERCEL-PC.md` for the single-service import, ignored `.env.pc` and private Vercel variables. This hosted appearance preview is read-only and retains the illustrative-figures badge; no cloud or tunnel acceptance has occurred.
+
 Open `http://127.0.0.1:3000` for the product. Its independent mainnet market feed supplies actual BTC candles; public setups/fills come only from registered mainnet project journals, and capital requires a fresh single-project reference. Missing financial observations display `—`. Main navigation contains The tank, Journal, Research and My strategies, with no fee-allocation or treasury panels.
 
 The `/operator` workspace retains treasury, paper history, diagnostics and testnet tools. It is a separate presentation surface, not a new authentication gate; financial writes retain operator authorization. The preserved `data/tryout.db` remains an internal synthetic/scripted paper journal and is not relabelled as project performance. `npm run dev` starts both data surfaces. For paid-model research with public market history, use `npm run setup:agents`, enter the model key in ignored `.env.agents`, then `npm run agents:check` and `npm run agents`. That preset is paper-only and uses a separate database. See `AGENT-SETUP.md`.

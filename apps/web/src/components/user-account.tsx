@@ -16,7 +16,14 @@ type Account = UserConfig & {
 };
 const initial: WalletState = { status: "idle", address: null, chainId: null, error: null, revision: 0 };
 
-export function UserAccount({ episodes = [], network = "testnet", product = false }: { episodes?: Episode[]; network?: "testnet" | "mainnet"; product?: boolean }) {
+type UserAccountProps = { episodes?: Episode[]; network?: "testnet" | "mainnet"; product?: boolean };
+
+export function UserAccount(props: UserAccountProps) {
+  if (props.product && process.env.NEXT_PUBLIC_HOSTED_PREVIEW === "true") return <section className="testnet-panel"><div className="panel-heading"><h2>My strategies</h2><span className="tag">PREVIEW</span></div><div className="testnet-body"><p>Wallet connection and strategy submission are not enabled in this preview.</p></div></section>;
+  return <ConnectedUserAccount {...props} />;
+}
+
+function ConnectedUserAccount({ episodes = [], network = "testnet", product = false }: UserAccountProps) {
   const session = useRef<WalletSession | null>(null);
   const [wallet, setWallet] = useState(initial);
   const [wallets, setWallets] = useState<Wallet[]>([]);
