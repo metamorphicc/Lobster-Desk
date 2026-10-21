@@ -6,6 +6,7 @@ import { ArrowDownLeft, ArrowRight, ArrowUpRight, BookOpen, ChevronRight, Circle
   Terminal, Waves, X } from "lucide-react";
 import { PriceChart } from "./price-chart";
 import { AgentTank } from "./agent-tank";
+import { useLaunchPreview } from "@/lib/use-launch-preview";
 import { UserAccount } from "./user-account";
 import { ProjectActivity, ProjectActivityView, type ProjectActivityData } from "./project-activity";
 import { TestnetWorkbench } from "./testnet-workbench";
@@ -70,6 +71,7 @@ function useDesk(internal: boolean) {
 export function Desk({ internal = false }: { internal?: boolean }) {
   const { state, error, refresh } = useDesk(internal);
   const [tab, setTab] = useState<Tab>("tank");
+  const illustrative = useLaunchPreview(internal || tab !== "tank");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const pitchDialog = useRef<HTMLDialogElement>(null);
   const helpDialog = useRef<HTMLDialogElement>(null);
@@ -122,6 +124,7 @@ export function Desk({ internal = false }: { internal?: boolean }) {
     <div className="workspace">
       <header className="topbar">
         <div className="breadcrumb"><span>Lobster Desk</span><ChevronRight size={13} /><strong>{tab === "tank" ? "The tank" : tab === "journal" ? "Trade journal" : tab === "research" ? "Research" : tab === "testnet" ? "Testnet workbench" : tab === "mainnet" ? (internal ? "Mainnet account" : "My strategies") : "Treasury"}</strong></div>
+        {illustrative && <span className="launch-preview-badge" title="Equity, profit and charity figures are invented for this local visual preview. BTC market data and execution settings are unchanged.">LOCAL PREVIEW · ILLUSTRATIVE FIGURES</span>}
         {internal && <div className="topbar-right"><span className="mode-badge"><FlaskConical size={13} /> {tab === "testnet" ? "TESTNET LAB" : tab === "mainnet" ? "MAINNET · REAL FUNDS" : "PAPER MODE"}</span><button className="icon-button" aria-label="Open operator controls" onClick={() => operatorDialog.current?.showModal()}><SlidersHorizontal size={17} /></button></div>}
       </header>
 
@@ -137,9 +140,9 @@ export function Desk({ internal = false }: { internal?: boolean }) {
         </div>
 
         {tab !== "testnet" && tab !== "mainnet" && <section className={`account-strip ${internal ? "" : "account-strip--charity"}`} aria-label={internal ? "Paper account performance" : "Tank performance"}>
-          <Metric label="Tank equity" value={money(state?.account.equity)} note={internal ? "Simulated USDC" : "USDC"} />
-          <Metric label={internal ? "Net realized PnL" : "Trading PnL"} value={signed((internal ? state?.account.net_realized_pnl : state?.account.performance_pnl) ?? null)} note={internal ? "After modeled trading fees" : "Since tracking began"} />
-          {!internal && <Metric label="Charity pool" value={money(state?.donations?.allocated)} note={`Sent ${money(state?.donations?.sent)} · 50% of agent net profit`} />}
+          <Metric label="Tank equity" value={money(illustrative?.equity ?? state?.account.equity)} note={internal ? "Simulated USDC" : "USDC"} animate={!!illustrative} />
+          <Metric label={internal ? "Net realized PnL" : "Trading PnL"} value={signed(illustrative?.profit ?? (internal ? state?.account.net_realized_pnl : state?.account.performance_pnl) ?? null)} note={internal ? "After modeled trading fees" : "Since tracking began"} animate={!!illustrative} />
+          {!internal && <Metric label="Charity pool" value={money(illustrative?.donations.allocated ?? state?.donations?.allocated)} note={`Sent ${money(illustrative?.donations.sent ?? state?.donations?.sent)} · 50% of agent net profit`} animate={!!illustrative} />}
           {internal ? <Metric label="Open PnL" value={state?.market ? signed(pnl) : "—"} note={openPosition ? "1 paper position" : "No open position"} /> : <Metric label="Recent setups" value={state ? String(state.episodes.length) : "—"} note="Project journal" />}
           <Metric label="Risk per setup" value={state ? `${Number(state.policy.risk_fraction) * 100}%` : "—"} note="Maximum planned loss" />
         </section>}
@@ -149,7 +152,7 @@ export function Desk({ internal = false }: { internal?: boolean }) {
             <div className="main-column">
               <section className="tank-panel" aria-labelledby="tank-title">
                 <div className="panel-heading"><h2 id="tank-title"><span className="status-dot" /> Inside the tank</h2><span className="micro-label">{internal ? (state?.service.agent_provider === "anthropic" ? "AI REVIEWS" : "SCRIPTED DEMO") : "THE COLLECTIVE"}</span></div>
-                <AgentTank state={state} episode={current} internal={internal} />
+                <AgentTank key={illustrative ? "launch-preview" : "project-observations"} state={state} episode={current} internal={internal} illustrative={illustrative} />
               </section>
 
               <section className="market-panel" aria-labelledby="market-title">
@@ -207,8 +210,8 @@ export function Desk({ internal = false }: { internal?: boolean }) {
   </div>;
 }
 
-function Metric({ label, value, note, tone = "" }: { label: string; value: string; note: string; tone?: string }) {
-  return <div className="metric"><span>{label}</span><strong className={tone}>{value}</strong><small>{note}</small></div>;
+function Metric({ label, value, note, tone = "", animate = false }: { label: string; value: string; note: string; tone?: string; animate?: boolean }) {
+  return <div className="metric"><span>{label}</span><strong key={animate ? value : "metric"} className={`${tone} ${animate ? "launch-metric-tick" : ""}`}>{value}</strong><small>{note}</small></div>;
 }
 
 function Setup({ episode, position, internal = true }: { episode: Episode; position?: Position; internal?: boolean }) {

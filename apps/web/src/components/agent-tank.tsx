@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { equityDelta, tankAgents, tankPhase } from "@/lib/tank-scene";
+import type { LaunchFigures } from "@/lib/launch-preview";
 import { money, statusLabel, type Episode, type State } from "@/lib/types";
 import styles from "./agent-tank.module.css";
 
@@ -32,7 +33,7 @@ function PixelAgent({ kind }: { kind: number }) {
   </g>;
 }
 
-function Workstation({ x, index, chart, state }: { x: number; index: number; chart: string; state: State | null }) {
+function Workstation({ x, index, chart, state, equity }: { x: number; index: number; chart: string; state: State | null; equity: string | null }) {
   return <g transform={`translate(${x} 92)`} className={styles.station}>
     <path className={styles.deskShadow} d="M-98 87H100v20H-98z" />
     <path className={styles.deskLeg} d="M-90 70h10v40h-10zM80 70h10v40H80z" />
@@ -44,7 +45,7 @@ function Workstation({ x, index, chart, state }: { x: number; index: number; cha
     {index === 0 && chart && <polyline points={chart} fill="none" className={styles.chartLine} strokeWidth="2" />}
     <text x="-58" y="8" className={styles.screenLabel}>{index === 0 ? "BTC / USDC" : index === 1 ? "RISK CONTROL" : "EXECUTION"}</text>
     {index === 1 && <><text x="-55" y="25" className={styles.terminalValue}>{state ? `${Number(state.policy.risk_fraction) * 100}% MAX LOSS` : "AWAITING DATA"}</text><text x="-55" y="39" className={styles.screenLabel}>{state ? `UP TO ${state.policy.max_leverage}x LEVERAGE` : "LIMITS REQUIRED"}</text></>}
-    {index === 2 && <><text x="-55" y="25" className={styles.terminalValue}>{money(state?.account.equity)}</text><text x="-55" y="39" className={styles.screenLabel}>ACCOUNT EQUITY / USDC</text></>}
+    {index === 2 && <><text x="-55" y="25" className={styles.terminalValue}>{money(equity)}</text><text x="-55" y="39" className={styles.screenLabel}>ACCOUNT EQUITY / USDC</text></>}
     <path className={styles.keyboard} d="M-45 68h73v4h-73zM44 64h9v8h-9z" />
     <g className={styles.terminalActivity}>{[0, 1, 2, 3].map(n => <rect key={n} x={38 + n * 5} y={35 - n * 4} width="3" height={8 + n * 4} style={{animationDelay: `${n * -180}ms`}} />)}</g>
     <path className={styles.cup} d="M74 43h12v17H74zM86 46h5v9h-5" />
@@ -53,13 +54,13 @@ function Workstation({ x, index, chart, state }: { x: number; index: number; cha
   </g>;
 }
 
-export function AgentTank({ state, episode, internal = false }: { state: State | null; episode?: Episode; internal?: boolean }) {
+export function AgentTank({ state, episode, internal = false, illustrative = null }: { state: State | null; episode?: Episode; internal?: boolean; illustrative?: LaunchFigures | null }) {
   const [beat, setBeat] = useState(0);
   useEffect(() => { const timer = setInterval(() => setBeat(b => (b + 1) % routine.length), 1800); return () => clearInterval(timer); }, []);
   const moment = routine[beat];
   const selected = moment.actor;
   const [delta, setDelta] = useState<string | null>(null);
-  const equity = state?.account.equity ?? null;
+  const equity = illustrative?.equity ?? state?.account.equity ?? null;
   const lastEquity = useRef<string | null>(null);
   useEffect(() => {
     setDelta(equityDelta(lastEquity.current, equity));
@@ -96,7 +97,7 @@ export function AgentTank({ state, episode, internal = false }: { state: State |
         {[40, 733].map(x => <g key={x} transform={`translate(${x} 12)`}><rect width="107" height="40" className={styles.windowFrame} /><rect x="5" y="5" width="97" height="30" className={styles.window} /><path d="M10 28h10v-8h9v12h12V16h11v16h11V10h13v22h19" className={styles.skyline} /><path d="M53 5v30" className={styles.windowFrame} stroke="currentColor" /></g>)}
         <rect x="310" y="10" width="260" height="39" rx="2" className={styles.signBoard} /><text x="440" y="35" textAnchor="middle" className={styles.roomSign}>LOBSTER DESK</text>
         <text x="440" y="264" textAnchor="middle" className={styles.floorMark}>SMALL POSITIONS. BIG IDEAS.</text>
-        {stationX.map((x, i) => <Workstation key={i} x={x} index={i} chart={chart} state={available ? state : null} />)}
+        {stationX.map((x, i) => <Workstation key={i} x={x} index={i} chart={chart} state={available ? state : null} equity={illustrative ? equity : available ? equity : null} />)}
         <g className={styles.signalRoute} aria-hidden="true"><path d="M172 214v74h268v-74M440 288h268v-74" /><g className={styles.dispatchPacket}><rect x="-9" y="-6" width="18" height="12" rx="2" /><path d="m-8-5 8 6 8-6" /></g></g>
         <g transform="translate(410 297)"><ellipse cx="30" cy="15" rx="103" ry="31" className={styles.rugEdge} /><ellipse cx="30" cy="12" rx="93" ry="26" className={styles.rug} /><ellipse cx="30" cy="12" rx="65" ry="17" className={styles.rugRing} fill="none" /><text x="30" y="16" textAnchor="middle" className={styles.rugText}>THE COLLECTIVE</text></g>
         {[40, 830].map(x => <g key={x} transform={`translate(${x} 303)`}><path className={styles.pot} d="M-11 3h22l-3 22H-8z" /><path className={styles.plant} d="M-3 4v-28h7V4M-3-7h-13v-15h6v8h7M4-15h10v-16h6v23H4" /></g>)}
