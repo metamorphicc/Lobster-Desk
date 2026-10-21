@@ -113,6 +113,7 @@ export function Desk({ internal = false }: { internal?: boolean }) {
         {([{ id: "tank", label: "The tank", icon: Radio }, { id: "journal", label: "Journal", icon: FileClock }, { id: "research", label: "Research", icon: BookOpen }, ...(internal ? [{ id: "treasury" as const, label: "Treasury", icon: Landmark }, { id: "testnet" as const, label: "Testnet", icon: FlaskConical }] : []), { id: "mainnet", label: internal ? "Mainnet" : "My strategies", icon: Landmark }] as const).map(item =>
           <button key={item.id} className={`nav-item ${tab === item.id ? "is-current" : ""}`} aria-current={tab === item.id ? "page" : undefined} onClick={() => { setTab(item.id); if (item.id === "tank") setSelectedId(null); }}><item.icon size={18} /><span>{item.label}</span>{item.id === "tank" && <span className="nav-dot" />}</button>)}
       </nav>
+      {illustrative && <div className="launch-preview-badge" role="note" aria-label="Local preview" title="Equity, profit and charity figures are invented for this local visual preview. BTC market data and execution settings are unchanged."><span className="status-dot" /><div><strong>LOCAL PREVIEW</strong><span>Illustrative figures</span></div></div>}
       <div className="sidebar-bottom">
         <div className="network-note"><span className="status-dot" /><span>Hyperliquid ecosystem</span><ArrowUpRight size={13} /></div>
         <p>Small positions.<br />Every decision on record.</p>
@@ -124,7 +125,6 @@ export function Desk({ internal = false }: { internal?: boolean }) {
     <div className="workspace">
       <header className="topbar">
         <div className="breadcrumb"><span>Lobster Desk</span><ChevronRight size={13} /><strong>{tab === "tank" ? "The tank" : tab === "journal" ? "Trade journal" : tab === "research" ? "Research" : tab === "testnet" ? "Testnet workbench" : tab === "mainnet" ? (internal ? "Mainnet account" : "My strategies") : "Treasury"}</strong></div>
-        {illustrative && <span className="launch-preview-badge" title="Equity, profit and charity figures are invented for this local visual preview. BTC market data and execution settings are unchanged.">LOCAL PREVIEW · ILLUSTRATIVE FIGURES</span>}
         {internal && <div className="topbar-right"><span className="mode-badge"><FlaskConical size={13} /> {tab === "testnet" ? "TESTNET LAB" : tab === "mainnet" ? "MAINNET · REAL FUNDS" : "PAPER MODE"}</span><button className="icon-button" aria-label="Open operator controls" onClick={() => operatorDialog.current?.showModal()}><SlidersHorizontal size={17} /></button></div>}
       </header>
 

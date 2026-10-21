@@ -2,10 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { isLaunchPreview, launchFigures } from '../src/lib/launch-preview.ts';
 
-test('invented figures require an explicit loopback-only tank URL and cannot enter operator mode', () => {
-  for (const host of ['localhost','127.0.0.1','[::1]']) assert.equal(isLaunchPreview(`http://${host}:3000/?preview=launch`), true);
-  for (const url of ['http://127.0.0.1:3000/', 'http://127.0.0.1:3000/operator?preview=launch', 'https://lobster.example/?preview=launch', 'https://localhost.example/?preview=launch', 'https://127.0.0.1.example/?preview=launch', 'invalid']) assert.equal(isLaunchPreview(url), false);
-  assert.equal(isLaunchPreview('http://127.0.0.1:3000/?preview=launch', true), false);
+test('homepage figures require the configuration switch and stay isolated to loopback tank views', () => {
+  for (const host of ['localhost','127.0.0.1','[::1]']) assert.equal(isLaunchPreview(`http://${host}:3000/`, false, true), true);
+  for (const url of ['http://127.0.0.1:3000/operator', 'https://lobster.example/', 'https://localhost.example/', 'https://127.0.0.1.example/', 'invalid']) assert.equal(isLaunchPreview(url, false, true), false);
+  assert.equal(isLaunchPreview('http://127.0.0.1:3000/', true, true), false);
+  assert.equal(isLaunchPreview('http://127.0.0.1:3000/', false, false), false);
+  assert.equal(isLaunchPreview('http://127.0.0.1:3000/?preview=launch', false, false), false);
+  assert.equal(isLaunchPreview('http://127.0.0.1:3000/'), false);
 });
 
 test('illustrative capital, profit and donation figures stay internally consistent and include losses', () => {

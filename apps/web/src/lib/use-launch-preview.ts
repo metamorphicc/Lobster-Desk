@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { isLaunchPreview, launchFigures } from "./launch-preview";
+import { LOCAL_LAUNCH_PREVIEW_ENABLED } from "./preview-settings";
 
 export function useLaunchPreview(blocked: boolean) {
   const [enabled, setEnabled] = useState(false);
   const [tick, setTick] = useState(0);
   useEffect(() => {
-    const sync = () => setEnabled(isLaunchPreview(window.location.href, blocked));
+    const sync = () => setEnabled(isLaunchPreview(window.location.href, blocked, LOCAL_LAUNCH_PREVIEW_ENABLED));
     sync(); window.addEventListener("popstate", sync);
     return () => window.removeEventListener("popstate", sync);
   }, [blocked]);
