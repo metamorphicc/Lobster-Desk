@@ -1,0 +1,127 @@
+/* Hallmark · component: pixel trading room · genre: playful · theme: existing Midnight
+ * user video reference: timber floor, pixel characters, workstations and speech bubbles
+ * pre-emit critique: P5 H4 E4 S5 R4 V5 */
+.tank {
+  --color-room-wall: #243537;
+  --color-room-floor: #6d5039;
+  --color-room-seam: #5c4433;
+  --color-room-base: #303c38;
+  --color-room-desk: #ba8959;
+  --color-room-edge: #88603f;
+  --color-room-shadow: #201d20;
+  --color-room-window: #14252d;
+  --color-room-skyline: #344d50;
+  --color-room-terminal: #102b30;
+  --color-room-grid: #24454a;
+  --color-room-chart: #83c9ac;
+  --color-room-plate: #273332;
+  --color-room-cream: #faebc9;
+  --color-room-rug: #293e43;
+  --color-room-rug-line: #4d6769;
+  --color-room-pot: #bb7350;
+  --color-room-plant: #759872;
+  --color-room-coral: #fa9979;
+  --color-room-coral-light: #ffd0a7;
+  --color-room-coral-dark: #b95b46;
+  --color-room-mint: #94d8c4;
+  --color-room-mint-light: #d0efd1;
+  --color-room-mint-dark: #4d9085;
+  --color-room-lilac: #c3a7ea;
+  --color-room-lilac-light: #ead4fa;
+  --color-room-lilac-dark: #8a6caa;
+  position: relative;
+  min-width: 0;
+  font-family: var(--font-body);
+}
+.hud { display: flex; align-items: center; gap: var(--space-xs); padding: var(--space-sm) var(--space-md); border-top: 1px solid var(--color-rule); }
+.roomLabel { display: flex; align-items: center; gap: var(--space-xs); font: 9px var(--font-mono); letter-spacing: .06em; color: var(--color-muted); min-width: 0; }
+.roomLabel small { display: block; margin-top: var(--space-2xs); font: 11px var(--font-body); letter-spacing: 0; color: var(--color-ink); }
+.signal { fill: var(--color-positive); background: var(--color-positive); width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+.balance { position: relative; margin-left: auto; text-align: right; }
+.balance > span:first-child { display: block; color: var(--color-muted); font: 8px var(--font-mono); letter-spacing: .05em; }
+.balance strong { display: block; font: 500 clamp(17px, 2vw, 23px) var(--font-mono); letter-spacing: -.055em; color: var(--color-ink); }
+.balanceTick { animation: value-tick 400ms var(--ease-out); }
+.delta { position: absolute; z-index: 2; right: 0; top: 100%; white-space: nowrap; background: var(--color-panel); color: var(--color-positive); padding: var(--space-2xs) var(--space-xs); font: 11px var(--font-mono); border: 1px solid var(--color-rule); animation: value-tick 400ms var(--ease-out); }
+.loss { color: var(--color-negative); }
+.motionButton { display: grid; place-items: center; min-width: 44px; min-height: 44px; border: 1px solid var(--color-rule); border-radius: .35rem; color: var(--color-muted); margin-left: var(--space-xs); }
+.motionButton[aria-pressed=true] { background: var(--color-raised); color: var(--color-ink); }
+.motionButton:focus-visible, .agentButton:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -3px; }
+.motionButton:active, .agentButton:active { transform: translateY(1px); }
+.motionButton:disabled, .agentButton:disabled { opacity: .5; cursor: not-allowed; }
+.room { position: relative; overflow: clip; border-block: 1px solid var(--color-rule); background: var(--color-room-wall); }
+.scene { display: block; width: 100%; height: auto; }
+.wall { fill: var(--color-room-wall); }
+.floor { fill: var(--color-room-floor); }
+.floorSeam { stroke: var(--color-room-seam); stroke-width: 1; }
+.baseboard { fill: var(--color-room-base); }
+.windowFrame { fill: var(--color-room-shadow); color: var(--color-room-shadow); }
+.window { fill: var(--color-room-window); }
+.skyline { fill: var(--color-room-skyline); }
+.signBoard { fill: var(--color-room-terminal); stroke: var(--color-room-rug-line); }
+.roomSign { fill: var(--color-room-cream); font: 17px var(--font-mono); letter-spacing: .22em; }
+.deskShadow, .shadow { fill: var(--color-room-shadow); opacity: .35; }
+.deskLeg { fill: var(--color-room-edge); }
+.deskTop { fill: var(--color-room-desk); }
+.deskEdge { fill: var(--color-room-edge); }
+.hardware { fill: var(--color-room-shadow); }
+.screen { fill: var(--color-room-terminal); }
+.screenGrid { stroke: var(--color-room-grid); stroke-width: .6; }
+.screenLabel { fill: var(--color-room-chart); font: 5px var(--font-mono); }
+.terminalValue { fill: var(--color-room-chart); font: 8px var(--font-mono); }
+.chartLine { stroke: var(--color-room-chart); }
+.keyboard { fill: var(--color-room-plate); }
+.cup { fill: var(--color-room-cream); }
+.nameplate { fill: var(--color-room-plate); }
+.stationName { fill: var(--color-room-cream); font: 8px var(--font-mono); letter-spacing: .1em; }
+.floorMark { fill: var(--color-room-cream); opacity: .18; font: 12px var(--font-mono); letter-spacing: .25em; }
+.rugEdge { fill: var(--color-room-shadow); opacity: .5; }
+.rug { fill: var(--color-room-rug); stroke: var(--color-room-rug-line); stroke-width: 3; }
+.rugRing { stroke: var(--color-room-rug-line); }
+.rugText { fill: var(--color-room-cream); font: 7px var(--font-mono); letter-spacing: .08em; }
+.pot { fill: var(--color-room-pot); }
+.plant { fill: var(--color-room-plant); }
+.floorCaption { fill: var(--color-room-cream); opacity: .7; font: 8px var(--font-mono); letter-spacing: .1em; }
+.agent0 { --agent-color: var(--color-room-coral); --agent-light: var(--color-room-coral-light); --agent-dark: var(--color-room-coral-dark); }
+.agent1 { --agent-color: var(--color-room-mint); --agent-light: var(--color-room-mint-light); --agent-dark: var(--color-room-mint-dark); }
+.agent2 { --agent-color: var(--color-room-lilac); --agent-light: var(--color-room-lilac-light); --agent-dark: var(--color-room-lilac-dark); }
+.agent { transform: translate(var(--agent-x), var(--agent-y)); }
+.shell, .legs { fill: var(--agent-color); }
+.shellDark, .eyeStalk { fill: var(--agent-dark); }
+.shellLight { fill: var(--agent-light); }
+.eyes { fill: var(--color-room-cream); }
+.pupils { fill: var(--color-room-shadow); }
+.accessory { stroke: var(--color-room-terminal); fill: var(--color-room-terminal); }
+.roaming { animation: room-walk 24s linear infinite; animation-delay: var(--walk-delay); }
+.body { animation: body-step 800ms steps(2, end) infinite; }
+.working { transform: translateY(-16px); transition: transform 400ms var(--ease-out); }
+.working .body { animation-duration: 1200ms; }
+.working .claws { animation: body-step 600ms steps(2, end) infinite; }
+.bubble { opacity: 0; transition: opacity var(--dur-short) var(--ease-out); }
+.bubble rect, .bubble path { fill: var(--color-room-cream); }
+.bubble text { fill: var(--color-room-terminal); font: 9px var(--font-mono); }
+.selected .bubble { opacity: 1; }
+.roster { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom: 1px solid var(--color-rule); }
+.agentButton { display: flex; text-align: left; align-items: center; min-height: 60px; min-width: 0; gap: var(--space-xs); padding: var(--space-sm) var(--space-md); border-bottom: 2px solid transparent; }
+.agentButton + .agentButton { border-left: 1px solid var(--color-rule); }
+.agentButton[aria-pressed=true] { border-bottom-color: var(--agent-color); background: var(--color-field); }
+.agentDot { display: block; height: 7px; width: 7px; flex-shrink: 0; background: var(--agent-color); }
+.agentButton > span:nth-child(2) { min-width: 0; font-size: 12px; }
+.agentButton small { display: block; font-size: 9px; color: var(--color-muted); line-height: 1.5; white-space: normal; }
+.agentState { margin-left: auto; color: var(--agent-color); font: 9px var(--font-mono); }
+.commentary { padding: var(--space-md); min-height: 90px; }
+.commentary strong { font-size: 11px; font-weight: 500; }
+.commentary strong span { color: var(--color-muted); font-weight: 400; }
+.commentary p { margin-top: var(--space-2xs); color: var(--color-muted); font-size: 12px; line-height: 1.65; overflow-wrap: anywhere; }
+.verdict { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-xs); padding: var(--space-sm) var(--space-md); border-top: 1px solid var(--color-rule); color: var(--color-muted); font: 9px var(--font-mono); }
+.verdict strong { margin-left: auto; font: 11px var(--font-body); color: var(--color-ink); }
+.tank[data-phase=vetoed] .verdict strong, .tank[data-phase=attention] .verdict strong { color: var(--color-negative); }
+.tank[data-phase=open] .verdict strong { color: var(--color-positive); }
+.tank[data-phase=offline] .signal { background: var(--color-muted); fill: var(--color-muted); }
+.tank[data-paused=true] *, .tank[data-paused=true] *::before { animation-play-state: paused; }
+@media (hover: hover) { .motionButton:hover, .agentButton:hover { background: var(--color-raised); } .room:hover .bubble { opacity: 1; } .room:hover * { animation-play-state: paused; } }
+@keyframes room-walk { 0%, 14%, 92%, 100% { transform: translate(0, 0); } 30%, 42% { transform: translate(28px, 45px); } 60%, 72% { transform: translate(-24px, 62px); } }
+@keyframes body-step { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+@keyframes value-tick { from { opacity: .4; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 39.99rem) { .agentButton { padding: var(--space-sm) var(--space-xs); gap: var(--space-2xs); } .agentState { display: none; } .agentButton > span:nth-child(2) { font-size: 11px; } .roomLabel { font-size: 8px; } .hud { padding: var(--space-xs); } .motionButton { margin-left: 0; } .roomSign { font-size: 20px; } .bubble { display: none; } .scene { aspect-ratio: 880 / 420; } .commentary { min-height: 100px; } }
+@media (max-width: 24rem) { .agentButton small { display: none; } .agentButton { min-height: 52px; } }
+@media (prefers-reduced-motion: reduce) { .tank *, .tank *::before { animation: none !important; transition: none !important; } }

@@ -5,6 +5,7 @@ import { ArrowDownLeft, ArrowRight, ArrowUpRight, BookOpen, ChevronRight, Circle
   FileClock, FlaskConical, Gauge, Landmark, LoaderCircle, Radio, ShieldCheck, SlidersHorizontal,
   Terminal, Waves, X } from "lucide-react";
 import { PriceChart } from "./price-chart";
+import { AgentTank } from "./agent-tank";
 import { UserAccount } from "./user-account";
 import { ProjectActivity, ProjectActivityView, type ProjectActivityData } from "./project-activity";
 import { TestnetWorkbench } from "./testnet-workbench";
@@ -16,11 +17,6 @@ import { money, number, signed, statusLabel, type Episode, type Pitch, type Posi
 type DeskState = State & { activity?: ProjectActivityData };
 type Tab = "tank" | "journal" | "research" | "treasury" | "testnet" | "mainnet";
 const active = new Set(["queued", "analyzing", "risk_check", "capital_check", "approved", "filled", "staged", "submitting", "protected", "closing", "needs_protection", "needs_review", "needs_reconciliation"]);
-const roles = [
-  { name: "Clawdius", role: "Analyst", key: "analyst", line: "Find the setup. Defend the thesis." },
-  { name: "Pinch", role: "Risk manager", key: "risk", line: "First, tell me what we can lose." },
-  { name: "Ledger", role: "Banker & executor", key: "banker", line: "A good idea still needs a budget." },
-] as const;
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`/api${path}`, { cache: "no-store", ...init, signal: init?.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(15000)]) : AbortSignal.timeout(15000) });
@@ -152,14 +148,7 @@ export function Desk({ internal = false }: { internal?: boolean }) {
             <div className="main-column">
               <section className="tank-panel" aria-labelledby="tank-title">
                 <div className="panel-heading"><h2 id="tank-title"><span className="status-dot" /> Inside the tank</h2><span className="micro-label">{internal ? (state?.service.agent_provider === "anthropic" ? "AI REVIEWS" : "SCRIPTED DEMO") : "THE COLLECTIVE"}</span></div>
-                <div className="agent-commentary">
-                  {roles.map(agent => {
-                    const review = current?.reviews[agent.key as "analyst" | "risk"];
-                    const message = review?.summary || (agent.key === "banker" && current?.risk ? current.reason : agent.line);
-                    return <div key={agent.key}><span className="commentary-name">{agent.name}<span>{review ? review.verdict === "approve" ? " / IN" : " / OUT" : ""}</span></span><span className="small-note">{agent.role}</span><p>{message}</p></div>;
-                  })}
-                </div>
-                <div className="episode-bar"><span className="micro-label">{current ? `EP ${current.id.slice(0, 6).toUpperCase()}` : state ? "AWAITING FIRST PITCH" : "AWAITING LATEST DECISION"}</span><span className={`verdict verdict--${current?.status || "idle"}`}>{current ? statusLabel(current.status) : state ? "The floor is yours" : "Waiting for updates"}</span></div>
+                <AgentTank state={state} episode={current} internal={internal} />
               </section>
 
               <section className="market-panel" aria-labelledby="market-title">
