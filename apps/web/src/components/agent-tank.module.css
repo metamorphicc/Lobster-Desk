@@ -43,11 +43,6 @@
 .balanceTick { animation: value-tick 400ms var(--ease-out); }
 .delta { position: absolute; z-index: 2; right: 0; top: 100%; white-space: nowrap; background: var(--color-panel); color: var(--color-positive); padding: var(--space-2xs) var(--space-xs); font: 11px var(--font-mono); border: 1px solid var(--color-rule); animation: value-tick 400ms var(--ease-out); }
 .loss { color: var(--color-negative); }
-.motionButton { display: grid; place-items: center; min-width: 44px; min-height: 44px; border: 1px solid var(--color-rule); border-radius: .35rem; color: var(--color-muted); margin-left: var(--space-xs); }
-.motionButton[aria-pressed=true] { background: var(--color-raised); color: var(--color-ink); }
-.motionButton:focus-visible, .agentButton:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -3px; }
-.motionButton:active, .agentButton:active { transform: translateY(1px); }
-.motionButton:disabled, .agentButton:disabled { opacity: .5; cursor: not-allowed; }
 .room { position: relative; overflow: clip; border-block: 1px solid var(--color-rule); background: var(--color-room-wall); }
 .scene { display: block; width: 100%; height: auto; }
 .wall { fill: var(--color-room-wall); }
@@ -84,26 +79,36 @@
 .agent0 { --agent-color: var(--color-room-coral); --agent-light: var(--color-room-coral-light); --agent-dark: var(--color-room-coral-dark); }
 .agent1 { --agent-color: var(--color-room-mint); --agent-light: var(--color-room-mint-light); --agent-dark: var(--color-room-mint-dark); }
 .agent2 { --agent-color: var(--color-room-lilac); --agent-light: var(--color-room-lilac-light); --agent-dark: var(--color-room-lilac-dark); }
-.agent { transform: translate(var(--agent-x), var(--agent-y)); }
-.shell, .legs { fill: var(--agent-color); }
+.agent { transform: translate(var(--agent-x), var(--agent-y)); transition: transform 850ms linear; }
+.shell, .leftLeg, .rightLeg { fill: var(--agent-color); }
 .shellDark, .eyeStalk { fill: var(--agent-dark); }
 .shellLight { fill: var(--agent-light); }
 .eyes { fill: var(--color-room-cream); }
 .pupils { fill: var(--color-room-shadow); }
 .accessory { stroke: var(--color-room-terminal); fill: var(--color-room-terminal); }
-.roaming { animation: room-walk 24s linear infinite; animation-delay: var(--walk-delay); }
-.body { animation: body-step 800ms steps(2, end) infinite; }
-.working { transform: translateY(-16px); transition: transform 400ms var(--ease-out); }
-.working .body { animation-duration: 1200ms; }
-.working .claws { animation: body-step 600ms steps(2, end) infinite; }
+.body { animation: body-step 200ms steps(2, end) infinite; }
+.leftLeg { animation: leg-step 160ms steps(2, end) infinite; }
+.rightLeg { animation: leg-step 160ms steps(2, end) infinite reverse; }
+.working .body { animation: terminal-type 320ms steps(2, end) infinite; }
+.working .claws { transform-box: fill-box; transform-origin: center; animation: claw-type 220ms steps(2, end) infinite; }
+.working .leftLeg, .working .rightLeg { animation: none; }
+.terminalActivity rect { fill: var(--color-room-chart); transform-box: fill-box; transform-origin: bottom; animation: terminal-meter 700ms steps(4, end) infinite alternate; }
+.signalRoute > path { stroke: var(--color-room-cream); stroke-width: 1.5; stroke-dasharray: 3 8; opacity: .18; fill: none; }
+.dispatchPacket { offset-path: path("M172 214 L172 288 L440 288 L440 214 L440 288 L708 288 L708 214"); animation: packet-flow 3200ms linear infinite; }
+.dispatchPacket rect { fill: var(--color-room-cream); }
+.dispatchPacket path { fill: none; stroke: var(--color-room-edge); stroke-width: 1; }
+.earningsBurst { color: var(--color-positive); animation: earnings-rise 2200ms var(--ease-out) forwards; }
+.earningsBurst text { fill: currentColor; font: bold 20px var(--font-mono); paint-order: stroke; stroke: var(--color-room-terminal); stroke-width: 4px; }
+.earningsBurst rect { fill: var(--color-room-cream); }
 .bubble { opacity: 0; transition: opacity var(--dur-short) var(--ease-out); }
 .bubble rect, .bubble path { fill: var(--color-room-cream); }
 .bubble text { fill: var(--color-room-terminal); font: 9px var(--font-mono); }
+.bubble { opacity: .9; }
 .selected .bubble { opacity: 1; }
 .roster { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom: 1px solid var(--color-rule); }
 .agentButton { display: flex; text-align: left; align-items: center; min-height: 60px; min-width: 0; gap: var(--space-xs); padding: var(--space-sm) var(--space-md); border-bottom: 2px solid transparent; }
 .agentButton + .agentButton { border-left: 1px solid var(--color-rule); }
-.agentButton[aria-pressed=true] { border-bottom-color: var(--agent-color); background: var(--color-field); }
+.agentButton[data-active=true] { border-bottom-color: var(--agent-color); background: var(--color-field); }
 .agentDot { display: block; height: 7px; width: 7px; flex-shrink: 0; background: var(--agent-color); }
 .agentButton > span:nth-child(2) { min-width: 0; font-size: 12px; }
 .agentButton small { display: block; font-size: 9px; color: var(--color-muted); line-height: 1.5; white-space: normal; }
@@ -117,11 +122,14 @@
 .tank[data-phase=vetoed] .verdict strong, .tank[data-phase=attention] .verdict strong { color: var(--color-negative); }
 .tank[data-phase=open] .verdict strong { color: var(--color-positive); }
 .tank[data-phase=offline] .signal { background: var(--color-muted); fill: var(--color-muted); }
-.tank[data-paused=true] *, .tank[data-paused=true] *::before { animation-play-state: paused; }
-@media (hover: hover) { .motionButton:hover, .agentButton:hover { background: var(--color-raised); } .room:hover .bubble { opacity: 1; } .room:hover * { animation-play-state: paused; } }
-@keyframes room-walk { 0%, 14%, 92%, 100% { transform: translate(0, 0); } 30%, 42% { transform: translate(28px, 45px); } 60%, 72% { transform: translate(-24px, 62px); } }
+@keyframes packet-flow { from { offset-distance: 0%; } to { offset-distance: 100%; } }
+@keyframes terminal-meter { from { transform: scaleY(.35); opacity: .45; } to { transform: scaleY(1); opacity: 1; } }
+@keyframes terminal-type { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px) rotate(2deg); } }
+@keyframes claw-type { 0%,100% { transform: rotate(-8deg) translateY(1px); } 50% { transform: rotate(8deg) translateY(-3px); } }
+@keyframes leg-step { 0%,100% { transform: translateY(-3px); } 50% { transform: translateY(2px); } }
+@keyframes earnings-rise { from { opacity: 1; translate: 0 0; } to { opacity: 0; translate: 0 -70px; } }
 @keyframes body-step { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
 @keyframes value-tick { from { opacity: .4; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
-@media (max-width: 39.99rem) { .agentButton { padding: var(--space-sm) var(--space-xs); gap: var(--space-2xs); } .agentState { display: none; } .agentButton > span:nth-child(2) { font-size: 11px; } .roomLabel { font-size: 8px; } .hud { padding: var(--space-xs); } .motionButton { margin-left: 0; } .roomSign { font-size: 20px; } .bubble { display: none; } .scene { aspect-ratio: 880 / 420; } .commentary { min-height: 100px; } }
+@media (max-width: 39.99rem) { .agentButton { padding: var(--space-sm) var(--space-xs); gap: var(--space-2xs); } .agentState { display: none; } .agentButton > span:nth-child(2) { font-size: 11px; } .roomLabel { font-size: 8px; } .hud { padding: var(--space-xs); } .roomSign { font-size: 20px; } .bubble text { font-size: 11px; } .scene { aspect-ratio: 880 / 420; } .commentary { min-height: 100px; } }
 @media (max-width: 24rem) { .agentButton small { display: none; } .agentButton { min-height: 52px; } }
 @media (prefers-reduced-motion: reduce) { .tank *, .tank *::before { animation: none !important; transition: none !important; } }
