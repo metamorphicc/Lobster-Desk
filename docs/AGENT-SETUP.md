@@ -23,7 +23,7 @@ The first cohort can take several minutes to fetch/validate history, call the re
 
 ## Included economics
 
-The Treasury tab shows the agreed 0.05% entry builder fee, 60% bot capital / 40% team allocation and verified user-strategy net-profit sharing (50% author / 50% bot). Only eligible own-agent profits remain subject to the separate token buyback/burn rule. The receipt book remains independent of simulated trading. No virtual profit is presented as received revenue.
+The operator Treasury shows the 0.05% entry builder fee, 60% bot capital / 40% team allocation and user-strategy net-profit sharing (50% author / 50% bot). Current own-agent profit allocates 50% to donations / 50% bot, replacing new token buybacks. The public Charity pool distinguishes accrued from sent; donation payments await a recipient/provider. The receipt book remains independent of paper trading.
 
 ## Separate financial integration setup
 

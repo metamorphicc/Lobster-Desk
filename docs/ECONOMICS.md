@@ -1,5 +1,7 @@
 # Economics: accounting before token decisions
 
+Current owner policy (2026-10-21): eligible own-agent net realized profit allocates 50% to donations / 50% bot, replacing new buybacks. User-strategy profit remains 50% author / 50% bot; received fees remain 40% team / 60% bot. The public charity pool separates accrual from sent payments. Recipient/payment integration is pending. See [DISTRIBUTION.md](DISTRIBUTION.md); older token-policy discussions below describe the preceding design.
+
 The owner selected the fee distribution and profit-funded buyback/burn policy described in `DISTRIBUTION.md`. The token uses Solana; mint and reserve amounts remain unspecified; jurisdiction remains blank and does not block local software. Verified strategy-author accruals and the separate opt-in payout runner are documented in `STRATEGY-SHARING.md`; completed payouts require matching source and recipient transfer observations. There is no token-holder payout or staking entitlement. A tentative US audience is not a legal/product specification. This document defines local accounting, not legal or tax advice.
 
 ## What is revenue

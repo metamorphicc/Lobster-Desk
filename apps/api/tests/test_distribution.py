@@ -29,7 +29,8 @@ def test_loss_recovery_costs_and_spend_do_not_reallocate_previous_half(tmp_path)
     report = distribution(TreasuryBook(path), ready())
     assert report["net_realized_trading_profit_after_expenses"] == "40"
     assert D(report["reserve_bounded_buyback_budget"]) == 0
-    assert D(report["lifetime_buyback_entitlement"]) == 20
+    assert D(report["lifetime_buyback_entitlement"]) == 0
+    assert D(report["donations"]["allocated"]) == 0  # Already spent under the old destination.
     book.append(entry(5, "trading_loss", "50"))
     assert D(distribution(book, ready())["reserve_bounded_buyback_budget"]) == 0
     assert distribution(book, ready())["loss_carryforward"] == "10"

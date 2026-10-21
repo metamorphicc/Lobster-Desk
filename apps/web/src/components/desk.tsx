@@ -136,9 +136,10 @@ export function Desk({ internal = false }: { internal?: boolean }) {
           <button className="button button--primary" onClick={pitch}><span>Pitch a setup</span><ArrowUpRight size={17} /></button>
         </div>
 
-        {tab !== "testnet" && tab !== "mainnet" && <section className="account-strip" aria-label={internal ? "Paper account performance" : "Tank performance"}>
+        {tab !== "testnet" && tab !== "mainnet" && <section className={`account-strip ${internal ? "" : "account-strip--charity"}`} aria-label={internal ? "Paper account performance" : "Tank performance"}>
           <Metric label="Tank equity" value={money(state?.account.equity)} note={internal ? "Simulated USDC" : "USDC"} />
           <Metric label={internal ? "Net realized PnL" : "Trading PnL"} value={signed((internal ? state?.account.net_realized_pnl : state?.account.performance_pnl) ?? null)} note={internal ? "After modeled trading fees" : "Since tracking began"} />
+          {!internal && <Metric label="Charity pool" value={money(state?.donations?.allocated)} note={`Sent ${money(state?.donations?.sent)} · 50% of agent net profit`} />}
           {internal ? <Metric label="Open PnL" value={state?.market ? signed(pnl) : "—"} note={openPosition ? "1 paper position" : "No open position"} /> : <Metric label="Recent setups" value={state ? String(state.episodes.length) : "—"} note="Project journal" />}
           <Metric label="Risk per setup" value={state ? `${Number(state.policy.risk_fraction) * 100}%` : "—"} note="Maximum planned loss" />
         </section>}

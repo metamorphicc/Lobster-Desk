@@ -1,6 +1,6 @@
 # Lobster Desk — product features
 
-Current economics v2 replaces the former donation allocation. Executable donation/provider code, CLI/configuration and UI were removed in Stage 10. Default execution remains paper; implementing accounting does not activate real trading or payments.
+Current economics v3 replaces own-agent token buybacks with a 50% net-profit donation reserve. User-strategy shares and builder fees remain unchanged. The earlier donation provider was removed in Stage 10; the new reserve/public counter does not restore a payment provider. Default execution remains paper.
 
 | ID | Feature | Current behavior |
 | --- | --- | --- |
@@ -13,7 +13,7 @@ Current economics v2 replaces the former donation allocation. Executable donatio
 | F07 | Fee-funded capital | 0.05% entry builder fee, additional to exchange costs: 0.02% of notional to the team and 0.03% to bot capital. Only received, reconciled fees are allocated. |
 | F08 | Strategy-author share | 50% of positive cumulative net realized profit per verified user strategy goes to its author; 50% remains in bot capital. Fees/funding count once, strategy losses must be recovered, and retries do not allocate again. |
 | F09 | Author balances/payments | Private earned/paid/outstanding balances and public aggregate totals. A separate opt-in bounded Hyperliquid USDC payout runner selects verified earned recipients, persists commands before sending and requires matching debit/credit observations. Operator-only recording of an existing transfer is also supported; uncertainty blocks replacement payments. |
-| F10 | Bot-only token policy | Existing 50% eligible own-agent net-profit buyback/burn rule remains for the agents' own strategies. User-strategy profits and author/team liabilities are excluded. Solana mint/funding/acceptance remain external configuration. |
+| F10 | Own-agent donation reserve | 50% of eligible own-agent net realized profit is earmarked for donations; 50% stays with the bot. Costs/losses and previous buyback spending are accounted for; user-strategy profit is excluded. Charity pool and sent amounts are distinct. Recipient/payment integration remains pending; new buybacks are disabled. |
 | F11 | Product data and navigation | Actual public mainnet BTC candles with 1m/5m/15m views. Public capital and trades use registered mainnet project observations; absent/stale capital stays blank. The tank, Journal, Research and My strategies form the main navigation; treasury, fee allocation and operational tools remain in docs and `/operator`. |
 
 ## Fee distribution
@@ -32,6 +32,6 @@ A strategy belongs to the wallet that authenticated before submitting it. Displa
 
 Only closed mainnet project trades accrue real author shares. Net profit includes confirmed fill PnL, trading fees and attributable signed funding. Cumulative losses in that strategy are recovered before further entitlement. For $100 eligible net profit, the author earns $50 and $50 remains with the bot. Payouts reduce outstanding liability and cash; they do not create another trading expense or another profit credit.
 
-Author/team liabilities are reserved before new project entries and before any bot-only token buyback. A cash movement or capital deposit is not new revenue. Accrued author shares do not prove a payment. See [STRATEGY-SHARING.md](STRATEGY-SHARING.md) for endpoints and boundaries.
+Author/team/donation liabilities are reserved before new project entries and author payouts. A cash movement or capital deposit is not new revenue. Accrued shares/reserves do not prove a payment. See [STRATEGY-SHARING.md](STRATEGY-SHARING.md).
 
-There is no donation feature, token-holder dividend, staking entitlement, guaranteed return or arbitrary strategy-code execution. Real reward claiming, treasury funding/routing, wallet acceptance and public launch remain separate from local tests.
+Donation accounting and a public counter exist; donation payments are not implemented for the new policy. There is no token-holder dividend, staking entitlement, guaranteed return or arbitrary strategy-code execution. Real reward claiming, funding/routing, wallet acceptance and public launch remain separate from local tests.

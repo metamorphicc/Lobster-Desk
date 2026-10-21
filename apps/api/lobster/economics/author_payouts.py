@@ -81,7 +81,7 @@ class AuthorPayouts:
         # Protect every other author and the team while allowing this author's
         # own earmark to be paid. Never spend deposits as a new entitlement.
         free = max(D(0), D(report["recorded_cash"])-D(report["outstanding_earmarks"]["team"])
-            -(D(report["outstanding_earmarks"]["strategy_authors"])-due)-reserves)
+            -(D(report["outstanding_earmarks"]["strategy_authors"])-due)-D(report["outstanding_earmarks"]["donations"])-reserves)
         return min(due, free, self.settings.batch_usdc)
 
     async def flat(self):

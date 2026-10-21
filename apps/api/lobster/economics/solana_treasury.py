@@ -149,6 +149,8 @@ class SolanaTreasury:
         self.operations = SolanaOperations(book, settings.owner, settings.mint)
 
     async def prepare_buyback(self, amount):
+        if self.settings.policy().profit_buyback_share == "0":
+            raise ValueError("New buybacks are disabled: own-agent profit now funds the donation reserve.")
         amount = D(amount)
         if not amount.is_finite() or amount <= 0 or amount != amount.quantize(D("0.000001")) or amount > self.settings.max_buyback_usdc:
             raise ValueError("Bounded exact USDC purchase amount required.")
@@ -198,6 +200,8 @@ class SolanaTreasury:
         row = self.operations.get(operation_id)
         if row["status"] != "prepared": return await self.reconcile(operation_id)
         plan = row["plan"]
+        if plan["kind"] == "buyback" and self.settings.policy().profit_buyback_share == "0":
+            raise ValueError("Unsigned buybacks are disabled by the donation policy; cancel this plan. Existing signatures remain reconcilable.")
         if int(utcnow().timestamp()*1000) >= plan["expires_ms"]: raise ValueError("Unsigned treasury quote/plan expired; cancel and review a new plan.")
         await self.rpc.mainnet()
         key = Keypair.from_base58_string(self.settings.private_key.get_secret_value())

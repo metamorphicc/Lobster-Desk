@@ -84,6 +84,19 @@ def test_automatic_payout_is_bounded_signed_exactly_once_and_records_both_observ
     asyncio.run(run())
 
 
+def test_author_payout_cannot_consume_donation_earmarks(context):
+    store, book, settings, _, _, response = context
+    book.append(receipt(2, "trading_profit", "100", provenance="owner_supplied_unverified"))
+    book.append(receipt(3, "capital_out", "140", provenance="owner_supplied_unverified"))
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(response)) as client:
+            payments = AuthorPayouts(store, book, settings, client, armed=True)
+            with book.transaction() as db:
+                assert payments.limits(book.read(db), OWNER) == D("10")
+            assert D(distribution(book)["donations"]["outstanding"]) == 50
+    asyncio.run(run())
+
+
 def test_unknown_transfer_remains_reserved_even_when_matching_history_exists(context):
     store, book, settings, _, state, response = context
     state["mode"] = "timeout"

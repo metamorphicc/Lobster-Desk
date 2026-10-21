@@ -5,6 +5,7 @@ import { useLocalReport } from "@/lib/use-local-report";
 import { money, signed } from "@/lib/types";
 
 export type EconomicsReport = { record_count: number; recorded_cash: string;
+  donations?: { allocated: string; sent: string; outstanding: string; payments_enabled: false };
   revenue_observer?: { network: "mainnet"; status: "not_configured" | "stopped" | "running" | "unavailable"; last_success_at: string | null };
   fee_allocation: { agents: string; team: string };
   user_strategy_profit: { net_realized: string; author_entitlement: string; author_paid: string; author_outstanding: string; bot_retained: string };
@@ -25,6 +26,7 @@ export function EconomicsView({ data, error, loading, refresh }: { data: Economi
     <div className="economics-body"><p>0.05% builder fee on executed entries, additional to exchange costs. Collection requires approved user fills; paper fills generate no fees.</p>
       <dl className="economics-split"><div><dt>Bot capital</dt><dd>60%<small>0.03% of entry volume</small></dd></div><div><dt>Team</dt><dd>40%<small>0.02% of entry volume</small></dd></div></dl>
       <p><strong>User-strategy net profit: 50% to its verified author, 50% back to bot capital.</strong> Only closed project trades count, after trading fees, funding and strategy loss recovery. Accrued shares are separate from completed payments.</p>
+      <p>Own-agent strategy net profit: 50% to the charity pool, 50% retained by the bot. This replaces new token buybacks. Allocations are separate from sent donations.</p>
       {loading && !data && <p role="status">Loading the independent receipt book…</p>}
       {error && <p className="notice notice--error" role="alert">{error}</p>}
       {data && <><p className="small-note">{data.record_count} local receipts · Owner-supplied observations remain unverified. Paper capital and paper profits are not included.</p>
@@ -32,12 +34,13 @@ export function EconomicsView({ data, error, loading, refresh }: { data: Economi
         <dl className="levels"><div><dt>Recorded treasury cash</dt><dd>{money(data.recorded_cash)}</dd></div>
           <div><dt>Agent fee allocation</dt><dd>{money(data.fee_allocation.agents)}</dd></div><div><dt>Team fee allocation</dt><dd>{money(data.fee_allocation.team)}</dd></div>
           <div><dt>Net realized trading profit / costs</dt><dd>{signed(data.net_realized_trading_profit_after_expenses)}</dd></div><div><dt>Unrecovered loss</dt><dd>{money(data.loss_carryforward)}</dd></div>
+          {data.donations && <><div><dt>Charity pool · allocated</dt><dd>{money(data.donations.allocated)}</dd></div><div><dt>Charity pool · sent</dt><dd>{money(data.donations.sent)}</dd></div></>}
           <div><dt>User-strategy net realized profit</dt><dd>{signed(data.user_strategy_profit.net_realized)}</dd></div>
           <div><dt>Strategy authors · earned</dt><dd>{money(data.user_strategy_profit.author_entitlement)}</dd></div><div><dt>Strategy authors · paid</dt><dd>{money(data.user_strategy_profit.author_paid)}</dd></div>
           <div><dt>Strategy authors · outstanding</dt><dd>{money(data.user_strategy_profit.author_outstanding)}</dd></div><div><dt>User-strategy profit retained by bot</dt><dd>{signed(data.user_strategy_profit.bot_retained)}</dd></div><div><dt>Recorded buyback spending</dt><dd>{money(data.recorded_buyback_spend)}</dd></div>
           <div><dt>Reserve-bounded buyback budget</dt><dd>{data.reserve_bounded_buyback_budget == null ? "Not configured" : money(data.reserve_bounded_buyback_budget)}</dd></div></dl>
         {!!data.blockers.length && <ul className="economics-blockers">{data.blockers.map(line => <li key={line}>{line}</li>)}</ul>}
-        {data.solana && <div className="financial-jobs"><h3>Own-agent strategy buybacks</h3><p className="small-note">The existing token policy applies only to eligible profits from the agents&apos; own strategies. User-strategy profits and author liabilities are excluded.</p>
+        {data.solana && <div className="financial-jobs"><h3>Historical token operations</h3><p className="small-note">New buybacks are disabled by the donation policy. Previously signed operations remain reconcilable; previously purchased lots retain their burn evidence.</p>
           {!data.solana.configured && <p className="small-note">The project token uses Solana. Its mint and funded treasury wallet are not configured.</p>}
           {data.solana.configured && !data.solana.operations.length && <p className="small-note">No purchase or burn transactions recorded.</p>}
           {!!data.solana.operations.length && <ul className="user-position-list">{data.solana.operations.slice(0, 6).map(operation => <li key={operation.id}>

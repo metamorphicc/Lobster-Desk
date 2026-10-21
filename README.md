@@ -6,7 +6,7 @@ A collective trading desk on Hyperliquid: pitch a BTC strategy, follow three cru
 
 ## Structure
 
-- `docs/FEATURES.md`: agreed product features, fee distribution, profit-funded buyback/burn rule and honest implementation status.
+- `docs/FEATURES.md`: agreed product features, fee distribution, own-agent donation reserve and implementation status.
 - `apps/api`: FastAPI, deterministic risk/capital controls, paper broker, market feeds, agent adapters, persistent audit journal.
 - `apps/web`: Next.js trading tank and pitch interface.
 - `docs/ROADMAP.md`: stages, substages, acceptance criteria, and completion status.
@@ -88,7 +88,7 @@ node scripts/python.mjs -m uvicorn lobster.main:create_app --factory --app-dir a
 
 ## Delivery status
 
-The local paper application and separately gated project/user financial execution code are implemented; default operation remains paper. Stage 10 removes donations and implements 0.05% entry fees split 0.02% team / 0.03% bot, plus verified user-strategy net-profit accruals split 50% author / 50% bot. Signed-in users submit attributed strategies and inspect private balances. Payments use a separate opt-in bounded Hyperliquid author payout process, or operator verification of an existing transfer. Source/recipient observations are required; the API does not send payouts. See [strategy sharing](docs/STRATEGY-SHARING.md) and [the delivery handoff](docs/HANDOFF.md).
+The local paper application and separately gated project/user execution code are implemented; default operation remains paper. Entry fees split 0.02% team / 0.03% bot. User-strategy net profit splits 50% author / 50% bot. Current own-agent eligible net profit splits 50% donation reserve / 50% bot, replacing new buybacks. The public Charity pool separates accrued from sent; recipient/payment integration remains pending. Signed-in users submit attributed strategies and inspect private balances. Author payments use a separate opt-in bounded Hyperliquid process or operator verification of an existing transfer. Source/recipient observations are required; the API does not send payouts. See [strategy sharing](docs/STRATEGY-SHARING.md) and [the delivery handoff](docs/HANDOFF.md).
 
 Funded exchange/wallet/chain acceptance, treasury routing, independent review and public deployment remain external work. All completed substages are committed locally on `lobster-desk`; nothing is pushed automatically.
 

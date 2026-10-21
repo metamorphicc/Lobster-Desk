@@ -24,7 +24,9 @@ def product_state(runtime):
                     "staged": "Setup reviewed. Awaiting execution."}.get(trade["status"], "Execution status recorded in the journal."),
                 "reviews": trade["reviews"], "risk": None, "approval_hash": trade["approval_hash"], "position_id": None})
     episodes.sort(key=lambda ep: ep["created_at"], reverse=True)
+    from .economics.public_donations import public_donations
     return {"market": market.model_dump(mode="json") if market else None, "episodes": episodes,
+        "donations": public_donations(runtime),
         "positions": [], "events": [], "last_event_id": 0,
         "account": {"equity": capital["equity"] if capital else None,
             "performance_pnl": capital["net_equity_change_excluding_cashflows"] if capital else None,

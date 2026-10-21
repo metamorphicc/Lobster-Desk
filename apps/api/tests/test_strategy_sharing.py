@@ -70,14 +70,15 @@ def test_fee_split_and_retired_donation_writer(tmp_path):
     with pytest.raises(ValueError, match="retired"): book.append(entry(2, "charity_payout", "1"))
 
 
-def test_own_strategy_buybacks_cannot_consume_author_liabilities(tmp_path):
+def test_own_strategy_donations_cannot_consume_author_liabilities(tmp_path):
     book = TreasuryBook(tmp_path/"mixed.db")
     settle(book)
     book.append(entry(2, "trading_profit", "100"))
     report = distribution(book, ready())
-    assert D(report["lifetime_buyback_entitlement"]) == 50
+    assert D(report["lifetime_buyback_entitlement"]) == 0
+    assert D(report["donations"]["allocated"]) == 50
     book.append(entry(3, "capital_out", "140"))
-    assert D(distribution(book, ready())["reserve_bounded_buyback_budget"]) == 10
+    assert D(distribution(book, ready())["reserve_bounded_buyback_budget"]) == 0
 
 
 def test_old_payment_receipts_remain_readable_without_a_new_donation_path(tmp_path):

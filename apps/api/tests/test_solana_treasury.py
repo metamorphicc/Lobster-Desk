@@ -115,8 +115,28 @@ def book(tmp_path):
     return result
 
 
+class HistoricalSolanaSettings(SolanaSettings):
+    """Offline old-policy recovery fixtures; production policy refuses new buys."""
+    def policy(self):
+        from lobster.economics.distribution import DistributionPolicy
+        return DistributionPolicy.model_construct(**(super().policy().model_dump() | {
+            "profit_buyback_share": "0.5", "profit_donation_share": "0"}))
+
+
+def test_current_policy_refuses_new_buybacks_before_any_rpc_or_quote(tmp_path):
+    exchange, ledger = Exchange(), book(tmp_path)
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(exchange.request)) as client:
+            config = SolanaSettings(**settings().model_dump())
+            worker = SolanaTreasury(ledger, config, SolanaRpc(client), armed=True)
+            with pytest.raises(ValueError, match="donation reserve"):
+                await worker.prepare_buyback("10")
+            assert exchange.requests == [] and exchange.sent == []
+    asyncio.run(run())
+
+
 def settings(**changes):
-    return SolanaSettings(_env_file=None, enabled=True, owner=OWNER, mint=MINT, private_key=SecretStr(str(KEY)),
+    return HistoricalSolanaSettings(_env_file=None, enabled=True, owner=OWNER, mint=MINT, private_key=SecretStr(str(KEY)),
         jupiter_api_key=SecretStr("public-fixture-not-a-key"), operating_reserve="0", liability_reserve="0", tax_reserve="0", **changes)
 
 

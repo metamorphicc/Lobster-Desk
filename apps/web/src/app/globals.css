@@ -63,6 +63,9 @@
 }
 
 * { box-sizing: border-box; }
+.account-strip--charity { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 40rem) { .account-strip.account-strip--charity { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (max-width: 39.99rem) { .account-strip--charity > :last-child { grid-column: 1 / -1; } }
 .chart-toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-xs); padding: 0 var(--space-md) var(--space-xs); color: var(--color-muted); font-family: var(--font-mono); font-size: 10px; }
 .chart-toolbar > div { display: flex; gap: var(--space-2xs); }
 .chart-toolbar button { min-height: 36px; min-width: 38px; border-radius: .375rem; }

@@ -16,7 +16,7 @@ Every execution has a unique allocation identity. Duplicate observations/restart
 
 For each strategy, accumulate realized net profit including losses, then round down half of its positive balance to micro-USDC. Sum an author's entitlements and subtract all previously observed payments. Later losses reduce new entitlement; past payments are never silently clawed back or reissued. Direct trading fees and funding are included once; project operating expenses remain separate costs/reserves. These are conservative local accounting rules, not a guarantee of returns.
 
-Outstanding author and team liabilities are removed from available project entry capital and own-agent buyback cash. Prior closed trades settle before another mainnet entry is admitted. Failure of the treasury/reference path blocks new entry; recovery of already owned exposure remains independent. The existing own-agent token policy excludes user-strategy profits and author liabilities.
+Outstanding author, team and donation liabilities are removed from available project entry capital. Author payouts protect the donation reserve as well as other authors/team. Prior closed trades settle before another mainnet entry is admitted. Failure of the treasury/reference path blocks new entry; recovery of already owned exposure remains independent. Own-agent net profit now accrues 50% for donations instead of new token buybacks; user-strategy profit and author shares are excluded from donations.
 
 ## Balances and payment receipts
 

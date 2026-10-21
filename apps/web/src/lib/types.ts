@@ -31,6 +31,7 @@ export type Market = {
   candles: { time: number; open: string; high: string; low: string; close: string }[];
 };
 export type State = {
+  donations?: { allocated: string | null; sent: string | null; outstanding: string | null; payments_enabled: false };
   market: Market | null; episodes: Episode[]; positions: Position[]; events: JournalEvent[]; last_event_id: number;
   account: { equity: string | null; initial_capital?: string; cash?: string; available_cash?: string | null;
     performance_pnl?: string | null; observed_at?: string | null;

@@ -1,5 +1,7 @@
 # Solana buyback and burn runner
 
+**Current policy update — 2026-10-21:** own-agent profit now accrues to donations instead of new token purchases. New buyback preparation/unsigned dispatch is disabled before network requests, regardless of these legacy settings. Existing signatures can still be reconciled and previously purchased lots retain burn handling. The following describes the historical adapter and its recovery boundaries, not authority to initiate a new buyback.
+
 The owner selected Solana. `npm run treasury` inspects configuration without HTTP or financial submission. Copy `.env.treasury.example` to ignored `.env.treasury`; enter the actual classic SPL mint, a dedicated Solana treasury wallet, Jupiter API credential and explicit USDC reserves. The Hyperliquid API wallet is a different key and cannot sign Solana operations. Missing mint, keys, reserves or enablement refuses dispatch. No token creation/issuance feature is included.
 
 ## Executable flow
